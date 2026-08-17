@@ -9,7 +9,7 @@ from http.server import SimpleHTTPRequestHandler
 from socketserver import TCPServer
 import webview
 
-APP_VERSION = "1.3.2"
+APP_VERSION = "1.4.0"
 GITHUB_REPO = "missingc0de/portalmedico"
 
 class ReusableTCPServer(TCPServer):

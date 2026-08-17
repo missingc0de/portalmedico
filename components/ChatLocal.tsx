@@ -453,7 +453,8 @@ export const ChatLocal: React.FC<ChatLocalProps> = ({
           cesfam: loggedInUser.cesfam || '',
           status: myProfile.status || 'Disponible.',
           presenceStatus: pStatus,
-          lastSeen: serverTimestamp()
+          lastSeen: serverTimestamp(),
+          lastSeenMs: Date.now()
         };
         if (myProfile.profilePictureUrl) {
           payload.profilePictureUrl = myProfile.profilePictureUrl;
@@ -506,23 +507,25 @@ export const ChatLocal: React.FC<ChatLocalProps> = ({
       const usersData: PresenceUser[] = [];
       const now = Date.now();
       snapshot.forEach((doc) => {
-        const data = doc.data() as PresenceUser;
+        const data = doc.data() as any;
         let lastSeenMs = now;
-        if (data.lastSeen && data.lastSeen.toMillis) {
+        if (typeof data.lastSeenMs === 'number') {
+          lastSeenMs = data.lastSeenMs;
+        } else if (data.lastSeen && typeof data.lastSeen.toMillis === 'function') {
           lastSeenMs = data.lastSeen.toMillis();
-        } else if (data.lastSeen && data.lastSeen.seconds) {
+        } else if (data.lastSeen && typeof data.lastSeen.seconds === 'number') {
           lastSeenMs = data.lastSeen.seconds * 1000;
         }
 
-        // Considerar online solo si han pasado menos de 60 minutos
-        if (now - lastSeenMs < 60 * 60 * 1000) {
+        // Considerar online si han pasado menos de 120 minutos o si es el usuario actual
+        if (now - lastSeenMs < 120 * 60 * 1000 || doc.id === loggedInUser.username) {
           usersData.push({ id: doc.id, ...data });
         }
       });
       setOnlineUsers(usersData);
     });
     return () => unsubscribePresence();
-  }, []);
+  }, [loggedInUser.username]);
 
   const checkIfMentioned = (text: string) => {
     if (!text) return false;
