@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notificación</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: transparent;
+    }
+    
+    .notification-container {
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+
+    .toast {
+      /* MSN Messenger bluish gradient */
+      background: linear-gradient(to bottom, #f0f8ff, #d4e8f9 40%, #b8d8f0 100%);
+      border: 1px solid #7cb3de;
+      border-radius: 8px;
+      box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.2);
+      display: flex;
+      align-items: center;
+      padding: 10px 15px;
+      margin: 5px;
+      animation: slideUp 0.4s ease-out;
+      cursor: default;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .toast::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 40%;
+      background: linear-gradient(to bottom, rgba(255,255,255,0.8), rgba(255,255,255,0));
+      border-radius: 8px 8px 0 0;
+      pointer-events: none;
+    }
+
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border: 1px solid #a0c4df;
+      border-radius: 4px; /* MSN style slightly rounded square */
+      margin-right: 12px;
+      background-color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      box-shadow: inset 1px 1px 3px rgba(0,0,0,0.1);
+      z-index: 1;
+    }
+
+    .avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      z-index: 1;
+    }
+
+    .title {
+      color: #0b3d60;
+      font-size: 13px;
+      font-weight: bold;
+      margin-bottom: 2px;
+      text-shadow: 1px 1px 0px rgba(255,255,255,0.8);
+    }
+
+    .message {
+      color: #2b5d80;
+      font-size: 12px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-shadow: 1px 1px 0px rgba(255,255,255,0.6);
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      background: none;
+      border: none;
+      color: #5b8da0;
+      cursor: pointer;
+      font-size: 14px;
+      line-height: 1;
+      padding: 0 4px;
+      z-index: 10;
+    }
+
+    .close-btn:hover {
+      color: #0b3d60;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(100%); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    
+    @keyframes fadeOut {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="notification-container">
+    <div class="toast" id="toast">
+      <button class="close-btn" onclick="closeWindow()">×</button>
+      <div class="avatar">
+        <img id="avatar-img" src="" alt="Avatar" style="display: none;">
+        <svg id="default-avatar" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#a0c4df" width="24" height="24">
+          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+        </svg>
+      </div>
+      <div class="content">
+        <div class="title" id="title">...</div>
+        <div class="message" id="message"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const { ipcRenderer } = require('electron');
+
+    ipcRenderer.on('notification-data', (event, data) => {
+      if (data.type === 'login') {
+        document.getElementById('title').innerText = `${data.fullName} acaba de iniciar sesión.`;
+        document.getElementById('message').innerText = '';
+      } else {
+        document.getElementById('title').innerText = `${data.fullName} dice:`;
+        document.getElementById('message').innerText = data.message || '';
+      }
+
+      if (data.avatarUrl) {
+        document.getElementById('avatar-img').src = data.avatarUrl;
+        document.getElementById('avatar-img').style.display = 'block';
+        document.getElementById('default-avatar').style.display = 'none';
+      }
+
+      // Auto close after 5 seconds
+      setTimeout(() => {
+        closeWindow();
+      }, 5000);
+    });
+
+    function closeWindow() {
+      const toast = document.getElementById('toast');
+      toast.style.animation = 'fadeOut 0.4s ease-out forwards';
+      setTimeout(() => {
+        ipcRenderer.send('close-msn-notification');
+      }, 350);
+    }
+  </script>
+</body>
+</html>

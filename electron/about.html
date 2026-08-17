@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Buscar actualizaciones</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f8fafc;
+            color: #334155;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .logo {
+            width: 100px;
+            height: 100px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        h1 {
+            margin: 0 0 10px 0;
+            font-size: 24px;
+            color: #0f172a;
+        }
+        .version {
+            font-size: 14px;
+            color: #64748b;
+            margin-bottom: 30px;
+        }
+        .status {
+            font-size: 14px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            background-color: white;
+            border: 1px solid #e2e8f0;
+            min-width: 200px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="logo">
+        <img src="portalmedico_icon.png" alt="Portal Medico Logo" />
+    </div>
+    <h1>PORTAL MÉDICO</h1>
+    <div class="version">Versión <span id="version">1.0.0</span></div>
+    
+    <div class="status" id="status">Comprobando actualizaciones...</div>
+
+    <script>
+        const { ipcRenderer } = require('electron');
+        
+        ipcRenderer.on('update-message', (event, message) => {
+            document.getElementById('status').innerText = message;
+        });
+
+        // Try to fetch app version from main process if provided
+        ipcRenderer.on('app-version', (event, version) => {
+            document.getElementById('version').innerText = version;
+        });
+    </script>
+</body>
+</html>

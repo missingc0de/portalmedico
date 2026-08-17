@@ -1,0 +1,6 @@
+{
+  "name": "PORTAL MÉDICO",
+  "description": "Una aplicación web para generar varios tipos de certificados médicos PDF, incluyendo constancias de atención, certificados escolares y más, basados en plantillas y datos ingresados.",
+  "prompt": "",
+  "requestFramePermissions": []
+}
