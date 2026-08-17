@@ -70,6 +70,10 @@ if (window.self === window.top) {
     },
     showMsnNotification: (data) => {
       ipcRenderer.send('show-msn-notification', data);
-    }
+    },
+    storageGetAll: () => ipcRenderer.invoke('storage-get-all'),
+    storageSetItem: (key, value) => ipcRenderer.invoke('storage-set-item', key, value),
+    storageRemoveItem: (key) => ipcRenderer.invoke('storage-remove-item', key),
+    storageSaveAll: (allData) => ipcRenderer.invoke('storage-save-all', allData)
   });
 }

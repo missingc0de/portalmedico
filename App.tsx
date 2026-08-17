@@ -351,6 +351,15 @@ const App: React.FC = () => {
   const [isDriveOpen, setIsDriveOpen] = useState(false);
   const [isCalcOpen, setIsCalcOpen] = useState(false);
   const [isNotesOpen, setIsNotesOpen] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState<number>(() => {
+    const saved = localStorage.getItem('appZoomLevel');
+    return saved ? parseInt(saved, 10) : 100;
+  });
+
+  useEffect(() => {
+    (document.body.style as any).zoom = `${zoomLevel}%`;
+    localStorage.setItem('appZoomLevel', zoomLevel.toString());
+  }, [zoomLevel]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -1966,8 +1975,40 @@ const App: React.FC = () => {
                                               : 'PORTAL MÉDICO'}
             </h1>
           </div>
-          {isAuthenticated && loggedInUser && (
-            <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
+            {/* Controles de Zoom */}
+            <div className="flex items-center bg-sky-900/40 hover:bg-sky-900/60 border border-sky-400/30 rounded-lg p-0.5 shadow-inner transition-colors mr-1">
+              <button
+                onClick={() => setZoomLevel(prev => Math.max(prev - 10, 70))}
+                disabled={zoomLevel <= 70}
+                title="Alejar (Disminuir Zoom)"
+                className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-white/20 active:scale-95 disabled:opacity-30 disabled:hover:bg-transparent transition-all cursor-pointer"
+              >
+                <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607zM13 10H7" />
+                </svg>
+              </button>
+              <button
+                onClick={() => setZoomLevel(100)}
+                title="Restablecer Zoom (100%)"
+                className="px-1.5 h-7 flex items-center justify-center rounded-md hover:bg-white/20 text-xs font-mono font-bold tracking-tighter transition-all cursor-pointer text-sky-100 hover:text-white"
+              >
+                {zoomLevel}%
+              </button>
+              <button
+                onClick={() => setZoomLevel(prev => Math.min(prev + 10, 150))}
+                disabled={zoomLevel >= 150}
+                title="Acercar (Aumentar Zoom)"
+                className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-white/20 active:scale-95 disabled:opacity-30 disabled:hover:bg-transparent transition-all cursor-pointer"
+              >
+                <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607zM10 7v6m3-3H7" />
+                </svg>
+              </button>
+            </div>
+
+            {isAuthenticated && loggedInUser && (
+              <>
               {/* Drive ECICEP */}
               <button
                 onClick={() => toggleWindow('drive')}
@@ -2037,8 +2078,9 @@ const App: React.FC = () => {
               </button>
 
               <NotificationBell loggedInUser={loggedInUser} />
-            </div>
+            </>
           )}
+          </div>
         </div>
       </header>
 

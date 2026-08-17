@@ -202,6 +202,65 @@ function createWindow() {
     }
   });
 
+  // --- Persistent Storage in %APPDATA%/PortalMedicoData/ ---
+  const fs = require('fs');
+  const os = require('os');
+  const appDataPath = process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming');
+  const persistentDir = path.join(appDataPath, 'PortalMedicoData');
+  if (!fs.existsSync(persistentDir)) {
+    try {
+      fs.mkdirSync(persistentDir, { recursive: true });
+    } catch (e) {
+      console.error('Error creating persistentDir:', e);
+    }
+  }
+  const persistentFile = path.join(persistentDir, 'portal_permanent_store.json');
+
+  function readPersistentData() {
+    try {
+      if (fs.existsSync(persistentFile)) {
+        const content = fs.readFileSync(persistentFile, 'utf8');
+        return JSON.parse(content);
+      }
+    } catch (e) {
+      console.error('Error reading persistentFile:', e);
+    }
+    return {};
+  }
+
+  function writePersistentData(data) {
+    try {
+      fs.writeFileSync(persistentFile, JSON.stringify(data, null, 2), 'utf8');
+    } catch (e) {
+      console.error('Error writing persistentFile:', e);
+    }
+  }
+
+  ipcMain.handle('storage-get-all', () => {
+    return readPersistentData();
+  });
+
+  ipcMain.handle('storage-set-item', (event, key, value) => {
+    const data = readPersistentData();
+    data[key] = value;
+    writePersistentData(data);
+    return true;
+  });
+
+  ipcMain.handle('storage-remove-item', (event, key) => {
+    const data = readPersistentData();
+    delete data[key];
+    writePersistentData(data);
+    return true;
+  });
+
+  ipcMain.handle('storage-save-all', (event, allData) => {
+    if (allData && typeof allData === 'object') {
+      writePersistentData(allData);
+    }
+    return true;
+  });
+
   mainWindow.webContents.session.on('will-download', (event, item, webContents) => {
     const defaultPath = path.join(app.getPath('desktop'), item.getFilename());
     item.setSavePath(defaultPath);
