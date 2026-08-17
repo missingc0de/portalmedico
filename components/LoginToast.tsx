@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 
 /** Green MSN silhouette — matches reference photo */
 const MsnGreenAvatar = () => (
@@ -18,8 +18,8 @@ const MsnGreenAvatar = () => (
     {/* Head */}
     <div
       style={{
-        width: 20,
-        height: 20,
+        width: 18,
+        height: 18,
         borderRadius: '50%',
         background: 'linear-gradient(to bottom, #5de89e, #26c26a)',
         marginBottom: 3,
@@ -30,9 +30,9 @@ const MsnGreenAvatar = () => (
     {/* Body */}
     <div
       style={{
-        width: 34,
-        height: 18,
-        borderRadius: '17px 17px 0 0',
+        width: 30,
+        height: 16,
+        borderRadius: '15px 15px 0 0',
         background: 'linear-gradient(to bottom, #5de89e, #26c26a)',
         flexShrink: 0,
         boxShadow: 'inset 0 -2px 3px rgba(0,0,0,0.12)',
@@ -49,56 +49,54 @@ interface LoginToastProps {
 
 export const LoginToast: React.FC<LoginToastProps> = ({ userName, avatarUrl, onClose }) => {
   const [phase, setPhase] = useState<'entering' | 'visible' | 'leaving'>('entering');
+  const onCloseRef = useRef(onClose);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   useEffect(() => {
     // Short delay then slide in
-    const t1 = setTimeout(() => setPhase('visible'), 80);
-    // Start leaving
-    const t2 = setTimeout(() => setPhase('leaving'), 5600);
-    // Unmount
-    const t3 = setTimeout(() => onClose(), 6200);
+    const t1 = setTimeout(() => setPhase('visible'), 50);
+    // Start leaving after 4 seconds
+    const t2 = setTimeout(() => setPhase('leaving'), 4000);
+    // Unmount after 4.5 seconds
+    const t3 = setTimeout(() => {
+      if (onCloseRef.current) {
+        onCloseRef.current();
+      }
+    }, 4500);
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
-  }, [onClose]);
+  }, []);
 
   const isVisible = phase === 'visible';
 
   return (
-    // Portal-level wrapper: right-side bottom, ABOVE the chat bar (which is 48px = h-12 + 8px gap)
     <div
       style={{
-        position: 'fixed',
-        // 48px chat bar + 12px gap = 60px from bottom
-        bottom: 64,
-        right: 0,
-        zIndex: 99999,
         pointerEvents: 'all',
-        // Slide from right edge in
-        transform: isVisible
-          ? 'translateX(0) scale(1)'
-          : 'translateX(110%) scale(1)',
+        transform: isVisible ? 'translateX(0) scale(1)' : 'translateX(110%) scale(0.95)',
         opacity: isVisible ? 1 : 0,
-        transition: 'transform 0.42s cubic-bezier(0.22,1,0.36,1), opacity 0.35s ease',
+        transition: 'transform 0.38s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.3s ease',
       }}
       onClick={() => setPhase('leaving')}
     >
       {/*
-       * Main balloon — replicates WinXP Live Messenger style:
-       *   gradient: light steel-blue top → slightly deeper bottom
-       *   border: soft blue-gray 1.5px
-       *   very rounded left corners, flat right (flush to screen edge)
+       * Main standalone balloon card:
+       *   Rounded corners on ALL 4 sides (separated, not flush to edge)
+       *   Soft blue-white gradient & thin blue border
        */}
       <div
         style={{
-          width: 330,
-          minHeight: 68,
-          background: 'linear-gradient(180deg, #dce9f6 0%, #c8d9ee 50%, #bdd0e9 100%)',
-          border: '1.5px solid #8baac6',
-          borderRight: 'none',
-          borderRadius: '20px 0 0 20px',
-          boxShadow: '-3px 4px 20px rgba(30,60,120,0.22)',
+          width: 320,
+          minHeight: 64,
+          background: 'linear-gradient(180deg, #f4f8fe 0%, #e1eefc 100%)',
+          border: '1.5px solid #a0c0e4',
+          borderRadius: '14px',
+          boxShadow: '0 4px 16px rgba(15, 45, 95, 0.14)',
           display: 'flex',
           alignItems: 'center',
-          padding: '10px 16px 10px 12px',
+          padding: '10px 14px',
           gap: 12,
           cursor: 'pointer',
           userSelect: 'none',
@@ -114,22 +112,22 @@ export const LoginToast: React.FC<LoginToastProps> = ({ userName, avatarUrl, onC
             top: 0,
             left: 0,
             right: 0,
-            height: 14,
-            background: 'rgba(255,255,255,0.40)',
-            borderRadius: '20px 0 0 0',
+            height: 12,
+            background: 'rgba(255, 255, 255, 0.45)',
+            borderRadius: '14px 14px 0 0',
             pointerEvents: 'none',
           }}
         />
 
-        {/* Avatar — double-border WinXP style */}
+        {/* Avatar — double-border square box */}
         <div
           style={{
-            width: 50,
-            height: 50,
+            width: 46,
+            height: 46,
             flexShrink: 0,
-            background: 'linear-gradient(180deg, #f6faff 0%, #e8f2fb 100%)',
-            border: '1.5px solid #9ab5d0',
-            borderRadius: 7,
+            background: '#f8fafc',
+            border: '1.5px solid #b2cce7',
+            borderRadius: 6,
             padding: 3,
             boxSizing: 'border-box',
           }}
@@ -138,7 +136,7 @@ export const LoginToast: React.FC<LoginToastProps> = ({ userName, avatarUrl, onC
             style={{
               width: '100%',
               height: '100%',
-              border: '1px solid #c0d4e8',
+              border: '1px solid #d0e1f2',
               borderRadius: 4,
               background: 'white',
               overflow: 'hidden',
@@ -159,17 +157,17 @@ export const LoginToast: React.FC<LoginToastProps> = ({ userName, avatarUrl, onC
         <div
           style={{
             flex: 1,
-            fontFamily: 'Tahoma, "Segoe UI", Arial, sans-serif',
-            color: '#183776',
-            lineHeight: 1.4,
+            fontFamily: '"Segoe UI", Tahoma, Geneva, Verdana, sans-serif',
+            color: '#0f3b8c',
+            lineHeight: 1.35,
             minWidth: 0,
           }}
         >
           <div style={{ fontSize: 13, fontWeight: 800, whiteSpace: 'normal', wordBreak: 'break-word' }}>
-            {userName}
+            <span style={{ fontWeight: 900 }}>{userName.toUpperCase()}</span>
             <span style={{ fontWeight: 700 }}> acaba de</span>
           </div>
-          <div style={{ fontSize: 13, fontWeight: 700 }}>
+          <div style={{ fontSize: 13, fontWeight: 900 }}>
             iniciar sesión.
           </div>
         </div>

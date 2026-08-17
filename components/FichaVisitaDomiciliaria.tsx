@@ -543,53 +543,53 @@ export default function FichaVisitaDomiciliaria({ onBackToMenu, loggedInUser }: 
               </form>
             </div>
 
-        <div className="lg:col-span-4 bg-white p-3 rounded-xl border border-slate-200/90 shadow-sm flex flex-col gap-2.5 lg:h-[calc(100vh-160px)] lg:max-h-[calc(100vh-160px)] overflow-hidden">
-          <div className="bg-[#F8FAFC] p-3.5 rounded-xl border border-slate-200 shadow-sm flex-1 min-h-0 flex flex-col overflow-hidden w-full">
-            <div className="border-b border-sky-200/80 pb-1.5 mb-2.5 w-full flex-shrink-0">
+        <div className="lg:col-span-4 bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-sm flex flex-col gap-2 lg:h-[calc(100vh-215px)] lg:max-h-[calc(100vh-215px)] mb-12 overflow-hidden">
+          <div className="bg-[#F8FAFC] p-2.5 rounded-xl border border-slate-200 shadow-sm flex-1 min-h-0 flex flex-col overflow-hidden w-full">
+            <div className="border-b border-sky-200/80 pb-1 mb-2 w-full flex-shrink-0">
               <h3 className="text-xs font-bold text-sky-800 uppercase tracking-wider">Resumen Ficha Clínica (Editable)</h3>
             </div>
-              <div className="flex-grow w-full gap-4 flex flex-col min-h-0">
+              <div className="flex-1 flex flex-col gap-1.5 min-h-0 overflow-hidden">
                 {/* 1. ANAMNESIS */}
-                <div className="flex-1 flex flex-col min-h-[0]">
-                  <div className="flex justify-between items-center mb-1 flex-shrink-0">
-                    <label className="block text-xs font-semibold text-slate-800">ANAMNESIS</label>
+                <div className="flex-1 flex flex-col min-h-0">
+                  <div className="flex justify-between items-center mb-0.5 flex-shrink-0">
+                    <label className="block text-[11px] font-semibold text-slate-800">ANAMNESIS</label>
                     <CopyButton textToCopy={anamnesisText} />
                   </div>
                   <textarea
                     id="anamnesisText"
                     value={anamnesisText}
                     onChange={(e) => setAnamnesisText(e.target.value)}
-                    className="flex-1 w-full p-2 bg-white border border-slate-300 rounded-md shadow-sm custom-scrollbar text-[11px] text-slate-800 focus:ring-1 focus:ring-sky-500 focus:border-sky-500 outline-none font-mono resize-none leading-relaxed"
+                    className="flex-1 w-full p-1.5 py-1 bg-white border border-slate-300 rounded-md shadow-sm custom-scrollbar text-[10.5px] text-slate-800 focus:ring-1 focus:ring-sky-500 focus:border-sky-500 outline-none font-mono resize-none leading-relaxed"
                     aria-label="Anamnesis - editable"
                   />
                 </div>
 
                 {/* 2. EXPLORACIÓN */}
-                <div className="flex-1 flex flex-col min-h-[0]">
-                  <div className="flex justify-between items-center mb-1 flex-shrink-0">
-                    <label className="block text-xs font-semibold text-slate-800">EXPLORACIÓN</label>
+                <div className="flex-1 flex flex-col min-h-0">
+                  <div className="flex justify-between items-center mb-0.5 flex-shrink-0">
+                    <label className="block text-[11px] font-semibold text-slate-800">EXPLORACIÓN</label>
                     <CopyButton textToCopy={exploracionText} />
                   </div>
                   <textarea
                     id="exploracionText"
                     value={exploracionText}
                     onChange={(e) => setExploracionText(e.target.value)}
-                    className="flex-1 w-full p-2 bg-white border border-slate-300 rounded-md shadow-sm custom-scrollbar text-[11px] text-slate-800 focus:ring-1 focus:ring-sky-500 focus:border-sky-500 outline-none font-mono resize-none leading-relaxed"
+                    className="flex-1 w-full p-1.5 py-1 bg-white border border-slate-300 rounded-md shadow-sm custom-scrollbar text-[10.5px] text-slate-800 focus:ring-1 focus:ring-sky-500 focus:border-sky-500 outline-none font-mono resize-none leading-relaxed"
                     aria-label="Exploración - editable"
                   />
                 </div>
 
                 {/* 3. ACTUACIÓN */}
-                <div className="flex-1 flex flex-col min-h-[0]">
-                  <div className="flex justify-between items-center mb-1 flex-shrink-0">
-                    <label className="block text-xs font-semibold text-slate-800">ACTUACIÓN</label>
+                <div className="flex-1 flex flex-col min-h-0">
+                  <div className="flex justify-between items-center mb-0.5 flex-shrink-0">
+                    <label className="block text-[11px] font-semibold text-slate-800">ACTUACIÓN</label>
                     <CopyButton textToCopy={actuacionText} />
                   </div>
                   <textarea
                     id="actuacionText"
                     value={actuacionText}
                     onChange={(e) => setActuacionText(e.target.value)}
-                    className="flex-1 w-full p-2 bg-white border border-slate-300 rounded-md shadow-sm custom-scrollbar text-[11px] text-slate-800 focus:ring-1 focus:ring-sky-500 focus:border-sky-500 outline-none font-mono resize-none leading-relaxed"
+                    className="flex-1 w-full p-1.5 py-1 bg-white border border-slate-300 rounded-md shadow-sm custom-scrollbar text-[10.5px] text-slate-800 focus:ring-1 focus:ring-sky-500 focus:border-sky-500 outline-none font-mono resize-none leading-relaxed"
                     aria-label="Actuación - editable"
                   />
                 </div>

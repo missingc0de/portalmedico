@@ -583,12 +583,12 @@ const FichaControlEcicep: React.FC<FichaControlEcicepProps> = ({ onBackToMenu, l
             </section>
         </div>
 
-        <div className="mt-8 lg:mt-0 lg:w-2/5 xl:w-5/12 lg:sticky lg:top-20 flex flex-col lg:h-[calc(100vh-120px)]">
-          <h3 className="text-xl font-semibold mb-2 text-sky-700">Resumen Ficha Clínica</h3>
-          <div className="flex justify-end mb-2">
-            <button onClick={() => handleCopyToClipboard(generatedText, 'Ficha Completa')} className="px-3 py-1 text-xs font-semibold text-slate-600 bg-slate-200 rounded-md hover:bg-slate-300">Copiar Todo</button>
+        <div className="mt-8 lg:mt-0 lg:w-2/5 xl:w-5/12 lg:sticky lg:top-20 flex flex-col lg:h-[calc(100vh-215px)] lg:max-h-[calc(100vh-215px)] mb-12 overflow-hidden bg-[#F8FAFC] p-2.5 rounded-xl border border-slate-200 shadow-sm">
+          <div className="flex justify-between items-center mb-2 border-b border-sky-200/80 pb-1 flex-shrink-0">
+            <h3 className="text-xs font-bold text-sky-800 uppercase tracking-wider">Resumen Ficha Clínica (Editable)</h3>
+            <button onClick={() => handleCopyToClipboard(generatedText, 'Ficha Completa')} className="px-2 py-0.5 text-[10px] font-bold text-slate-600 bg-slate-200 rounded uppercase hover:bg-slate-300">Copiar Todo</button>
           </div>
-          <textarea value={generatedText} readOnly className="w-full p-2 bg-white border border-slate-300 rounded-md shadow-sm custom-scrollbar text-xs flex-grow text-slate-800" rows={30} />
+          <textarea value={generatedText} onChange={e => setGeneratedText(e.target.value)} className="flex-1 w-full p-1.5 py-1 bg-white border border-slate-300 rounded-md shadow-sm custom-scrollbar text-[10.5px] text-slate-800 font-mono outline-none focus:ring-1 focus:ring-sky-500 focus:border-sky-500 resize-none" />
         </div>
       </div>
 

@@ -362,12 +362,12 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <aside
-      className={`h-[calc(100vh-48px)] sticky top-12 bg-[#f8fafc] border-r border-slate-200/90 text-slate-800 shrink-0 flex flex-col select-none transition-all duration-300 ease-in-out z-40 font-sans ${isCollapsed ? 'w-16' : 'w-[260px]'
+      className={`h-[calc(100vh/var(--app-zoom-factor,1)-48px)] max-h-[calc(100vh/var(--app-zoom-factor,1)-48px)] sticky top-[calc(48px/var(--app-zoom-factor,1))] bg-[#f8fafc] border-r border-slate-200/90 text-slate-800 shrink-0 flex flex-col select-none transition-all duration-300 ease-in-out z-40 font-sans ${isCollapsed ? 'w-16' : 'w-[260px]'
         }`}
     >
 
       {/* Main Content List matching the requested screenshot layout */}
-      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-4 custom-scrollbar">
+      <div className="flex-1 min-h-0 overflow-y-auto px-3 py-3 space-y-4 custom-scrollbar">
 
         {/* Top Direct Items: Home, Mis Pacientes & SAPU */}
         <div className="space-y-1">
@@ -524,7 +524,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* Bottom Corner User Profile Footer */}
-      <div className="w-full px-3.5 py-3 border-t border-slate-200 bg-[#f8fafc] shrink-0 mt-auto relative" ref={dropdownRef}>
+      <div className="w-full px-3.5 py-3 border-t border-slate-200 bg-[#f8fafc] shrink-0 relative z-20" ref={dropdownRef}>
         {!isCollapsed ? (
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2.5 min-w-0">

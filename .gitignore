@@ -9,15 +9,12 @@ lerna-debug.log*
 
 node_modules
 dist
-!dist/*.exe
-!dist/latest.yml
 dist-ssr
 dist-electron*
 dist-python
 build
 *.spec
 *.local
-*.txt
 
 # Editor directories and files
 .vscode/*

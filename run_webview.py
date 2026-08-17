@@ -1,32 +1,78 @@
 import os
 import sys
-import socket
-import threading
-from http.server import SimpleHTTPRequestHandler
-from socketserver import TCPServer
+import json
+import urllib.request
+import subprocess
 import webview
 
-def find_free_port():
-    # Try a deterministic port first so that localStorage (tied to origin) persists between runs
-    preferred_port = 15432
-    try:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.bind(('127.0.0.1', preferred_port))
-            return preferred_port
-    except OSError:
-        pass
-        
-    # Fallback to random ephemeral port
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind(('127.0.0.1', 0))
-        return s.getsockname()[1]
+APP_VERSION = "1.3.0"
+GITHUB_REPO = "missingc0de/portalmedico"
 
-class SafeHTTPRequestHandler(SimpleHTTPRequestHandler):
-    def end_headers(self):
-        self.send_header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
-        self.send_header('Pragma', 'no-cache')
-        self.send_header('Expires', '0')
-        super().end_headers()
+class Api:
+    def __init__(self):
+        self._window = None
+
+    def set_window(self, window):
+        self._window = window
+
+    def get_version(self):
+        return APP_VERSION
+
+    def check_updates(self):
+        try:
+            url = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
+            req = urllib.request.Request(url, headers={"User-Agent": "PortalMedico-Updater"})
+            with urllib.request.urlopen(req, timeout=8) as resp:
+                data = json.loads(resp.read().decode('utf-8'))
+                latest_tag = data.get("tag_name", "").lstrip('v')
+                body = data.get("body", "")
+                assets = data.get("assets", [])
+                
+                download_url = ""
+                for asset in assets:
+                    name = asset.get("name", "")
+                    if name.endswith(".exe"):
+                        download_url = asset.get("browser_download_url", "")
+                        if "PortalMedico" in name or "Setup" in name:
+                            break
+
+                return {
+                    "hasUpdate": bool(latest_tag and latest_tag != APP_VERSION),
+                    "latestVersion": latest_tag,
+                    "currentVersion": APP_VERSION,
+                    "releaseNotes": body,
+                    "downloadUrl": download_url
+                }
+        except Exception as e:
+            print("Error checking updates:", e)
+            return {"hasUpdate": False, "error": str(e), "currentVersion": APP_VERSION}
+
+    def install_update(self, download_url):
+        if not download_url:
+            return {"success": False, "error": "No download URL provided"}
+        try:
+            temp_dir = os.environ.get("TEMP", os.path.expanduser("~"))
+            installer_path = os.path.join(temp_dir, "PortalMedico_Update.exe")
+            
+            print(f"Downloading update from {download_url} to {installer_path}...")
+            req = urllib.request.Request(download_url, headers={"User-Agent": "PortalMedico-Updater"})
+            with urllib.request.urlopen(req) as resp, open(installer_path, "wb") as f:
+                f.write(resp.read())
+            
+            print("Launching update installer...")
+            subprocess.Popen([installer_path], shell=True)
+            if self._window:
+                self._window.destroy()
+            return {"success": True}
+        except Exception as e:
+            print("Error installing update:", e)
+            return {"success": False, "error": str(e)}
+
+    def quit_app(self):
+        if self._window:
+            self._window.destroy()
+        else:
+            sys.exit(0)
 
 def get_dist_path():
     if getattr(sys, 'frozen', False):
@@ -35,41 +81,34 @@ def get_dist_path():
         base_path = os.path.dirname(os.path.abspath(__file__))
     return os.path.join(base_path, 'dist')
 
-def start_server(port, directory):
-    os.chdir(directory)
-    handler = SafeHTTPRequestHandler
-    with TCPServer(('127.0.0.1', port), handler) as httpd:
-        httpd.serve_forever()
-
 if __name__ == '__main__':
     dist_dir = get_dist_path()
-    if not os.path.exists(dist_dir):
-        print(f"Error: Directory '{dist_dir}' not found.")
+    entry_html = os.path.join(dist_dir, 'index.html')
+    if not os.path.exists(entry_html):
+        print(f"Error: File '{entry_html}' not found.")
         sys.exit(1)
         
-    port = find_free_port()
+    api = Api()
     
-    # Start the server in a daemon thread so it exits automatically when the main app exits
-    server_thread = threading.Thread(target=start_server, args=(port, dist_dir), daemon=True)
-    server_thread.start()
-    
-    url = f'http://127.0.0.1:{port}/'
-    
-    # Create window using native webview (Edge Chromium on Windows)
     window = webview.create_window(
-        'Portal Médico',
-        url,
+        'PORTAL MÉDICO',
+        entry_html,
         width=1200,
         height=800,
         min_size=(800, 600),
-        text_select=True # Enable text selection
+        js_api=api,
+        text_select=True,
+        background_color='#F1F5F9'
     )
     
-    # Define dedicated storage directory in APPDATA for persistence
+    api.set_window(window)
+    
     appdata_dir = os.environ.get('APPDATA')
     if appdata_dir:
-        storage_dir = os.path.join(appdata_dir, 'PortalMedico')
+        storage_dir = os.path.join(appdata_dir, 'PortalMedicoStorage')
     else:
-        storage_dir = os.path.join(os.path.expanduser('~'), '.portalmedico')
+        storage_dir = os.path.join(os.path.expanduser('~'), '.portalmedicostorage')
+    
+    os.makedirs(storage_dir, exist_ok=True)
         
     webview.start(private_mode=False, storage_path=storage_dir)

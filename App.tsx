@@ -76,6 +76,7 @@ import { DriveEcicepWindow } from './components/DriveEcicepWindow';
 import { NotesWindow } from './components/NotesWindow';
 import { CalculatorWindow } from './components/CalculatorWindow';
 import { LoginToast } from './components/LoginToast';
+import { showUserConnectNotification } from './services/notificationService';
 
 const MaskedDateInput: React.FC<{ value: string; onChange: (val: string) => void; className?: string }> = ({ value, onChange, className }) => {
   const [localValue, setLocalValue] = useState(value || '');
@@ -206,14 +207,14 @@ const DigitalClock: React.FC = () => {
   }, []);
 
   return (
-    <div className="flex-shrink-0 w-full bg-[#1a2130] rounded-xl p-5 flex items-center justify-center gap-4 shadow-sm border-none">
+    <div className="flex-shrink-0 w-full bg-[#1a2130] rounded-xl p-4 flex items-center justify-center gap-3 shadow-sm border-none overflow-hidden">
       <svg
         xmlns="http://www.w3.org/2000/svg"
         fill="none"
         viewBox="0 0 24 24"
         strokeWidth={2}
         stroke="#58c7fa"
-        className="w-10 h-10 flex-shrink-0"
+        className="w-8 h-8 sm:w-9 sm:h-9 flex-shrink-0"
       >
         <path
           strokeLinecap="round"
@@ -221,11 +222,11 @@ const DigitalClock: React.FC = () => {
           d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
         />
       </svg>
-      <div className="flex flex-col items-start">
-        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
+      <div className="flex flex-col items-start min-w-0 flex-1">
+        <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5 truncate max-w-full">
           {dateDisplay || 'CARGANDO FECHA...'}
         </span>
-        <div className="text-3xl sm:text-4xl font-mono font-black text-[#58c7fa] tracking-widest leading-none">
+        <div className="text-xl sm:text-2xl lg:text-3xl font-mono font-black text-[#58c7fa] tracking-wider leading-none whitespace-nowrap overflow-hidden">
           {time || '00:00:00'}
         </div>
       </div>
@@ -358,8 +359,94 @@ const App: React.FC = () => {
 
   useEffect(() => {
     (document.body.style as any).zoom = `${zoomLevel}%`;
+    document.body.style.setProperty('--app-zoom-factor', (zoomLevel / 100).toString());
     localStorage.setItem('appZoomLevel', zoomLevel.toString());
   }, [zoomLevel]);
+
+  const [activeMenu, setActiveMenu] = useState<'archivo' | 'vista' | 'ayuda' | null>(null);
+  const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const [isDownloadingUpdate, setIsDownloadingUpdate] = useState(false);
+  const [updateInfo, setUpdateInfo] = useState<{
+    hasUpdate: boolean;
+    latestVersion?: string;
+    currentVersion?: string;
+    releaseNotes?: string;
+    downloadUrl?: string;
+    checking?: boolean;
+    error?: string;
+  } | null>(null);
+
+  const APP_VERSION = '1.2.4';
+  const menuDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutsideMenu = (event: MouseEvent) => {
+      if (menuDropdownRef.current && !menuDropdownRef.current.contains(event.target as Node)) {
+        setActiveMenu(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutsideMenu);
+    return () => document.removeEventListener('mousedown', handleClickOutsideMenu);
+  }, []);
+
+  const checkAppUpdates = useCallback(async (manual: boolean = false) => {
+    setUpdateInfo(prev => ({ ...prev, checking: true, hasUpdate: false, error: undefined }));
+    try {
+      let result: any = null;
+      if ((window as any).pywebview?.api?.check_updates) {
+        result = await (window as any).pywebview.api.check_updates();
+      } else {
+        const resp = await fetch('https://api.github.com/repos/missingc0de/portalmedico/releases/latest');
+        if (resp.ok) {
+          const data = await resp.json();
+          const latestTag = (data.tag_name || '').replace(/^v/, '');
+          const exeAsset = (data.assets || []).find((a: any) => a.name.endsWith('.exe'));
+          result = {
+            hasUpdate: Boolean(latestTag && latestTag !== APP_VERSION),
+            latestVersion: latestTag,
+            currentVersion: APP_VERSION,
+            releaseNotes: data.body || '',
+            downloadUrl: exeAsset?.browser_download_url || ''
+          };
+        }
+      }
+
+      if (result) {
+        setUpdateInfo({ ...result, checking: false });
+        if (result.hasUpdate || manual) {
+          setIsUpdateModalOpen(true);
+        }
+      }
+    } catch (err: any) {
+      console.error("Error checking updates:", err);
+      setUpdateInfo({ hasUpdate: false, checking: false, currentVersion: APP_VERSION, error: err?.message || 'Error al conectar' });
+      if (manual) setIsUpdateModalOpen(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      checkAppUpdates(false);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [checkAppUpdates]);
+
+  const handleInstallUpdate = async () => {
+    if (!updateInfo?.downloadUrl) return;
+    setIsDownloadingUpdate(true);
+    try {
+      if ((window as any).pywebview?.api?.install_update) {
+        await (window as any).pywebview.api.install_update(updateInfo.downloadUrl);
+      } else {
+        window.open(updateInfo.downloadUrl, '_blank');
+      }
+    } catch (e) {
+      alert("Error al actualizar: " + String(e));
+    } finally {
+      setIsDownloadingUpdate(false);
+    }
+  };
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -715,12 +802,15 @@ const App: React.FC = () => {
     if (user) {
       loginUser(user, rememberMe, box, sector);
       
-      // Simulate MSN login toast for the logged in user
+      // MSN login toast
       setTimeout(() => {
-        setLoginToastUser({
-          name: user.fullName,
-          avatar: user.profilePictureUrl
-        });
+        const notifResult = showUserConnectNotification(user.fullName, user.profilePictureUrl);
+        if (notifResult === 'in-app') {
+          setLoginToastUser({
+            name: user.fullName,
+            avatar: user.profilePictureUrl
+          });
+        }
       }, 1000);
     }
   };
@@ -1974,6 +2064,141 @@ const App: React.FC = () => {
                                               ? 'PORTAL MÉDICO: PORTAL CLÍNICO SAPU'
                                               : 'PORTAL MÉDICO'}
             </h1>
+
+            {/* Menús de la Aplicación en la barra azul: Archivo, Vista, Ayuda */}
+            <div className="hidden md:flex items-center gap-1 ml-4 relative" ref={menuDropdownRef}>
+              {/* Archivo */}
+              <div className="relative">
+                <button
+                  onClick={() => setActiveMenu(activeMenu === 'archivo' ? null : 'archivo')}
+                  className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-colors cursor-pointer ${activeMenu === 'archivo' ? 'bg-white/20 text-white' : 'text-sky-100 hover:bg-white/10 hover:text-white'}`}
+                >
+                  Archivo
+                </button>
+                {activeMenu === 'archivo' && (
+                  <div className="absolute left-0 mt-1 w-44 bg-white rounded-lg shadow-xl border border-slate-200 py-1 text-slate-700 z-50 text-xs animate-fadeIn">
+                    <button
+                      onClick={() => {
+                        setActiveMenu(null);
+                        if ((window as any).pywebview?.api?.quit_app) {
+                          (window as any).pywebview.api.quit_app();
+                        } else {
+                          handleLogout();
+                        }
+                      }}
+                      className="w-full text-left px-4 py-2 hover:bg-slate-100 flex items-center justify-between font-medium text-red-600 cursor-pointer"
+                    >
+                      <span>Salir</span>
+                      <span className="text-[10px] text-slate-400 font-mono">Alt+F4</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Vista */}
+              <div className="relative">
+                <button
+                  onClick={() => setActiveMenu(activeMenu === 'vista' ? null : 'vista')}
+                  className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-colors cursor-pointer ${activeMenu === 'vista' ? 'bg-white/20 text-white' : 'text-sky-100 hover:bg-white/10 hover:text-white'}`}
+                >
+                  Vista
+                </button>
+                {activeMenu === 'vista' && (
+                  <div className="absolute left-0 mt-1 w-56 bg-white rounded-lg shadow-xl border border-slate-200 py-1 text-slate-700 z-50 text-xs animate-fadeIn">
+                    <button
+                      onClick={() => { setActiveMenu(null); window.location.reload(); }}
+                      className="w-full text-left px-4 py-1.5 hover:bg-slate-100 flex items-center justify-between font-medium cursor-pointer"
+                    >
+                      <span>Recargar</span>
+                      <span className="text-[10px] text-slate-400 font-mono">F5</span>
+                    </button>
+                    <button
+                      onClick={() => { setActiveMenu(null); window.location.reload(); }}
+                      className="w-full text-left px-4 py-1.5 hover:bg-slate-100 flex items-center justify-between font-medium cursor-pointer"
+                    >
+                      <span>Forzar recarga</span>
+                      <span className="text-[10px] text-slate-400 font-mono">Ctrl+F5</span>
+                    </button>
+                    <hr className="my-1 border-slate-150" />
+                    <button
+                      onClick={() => { setActiveMenu(null); setZoomLevel(prev => Math.min(prev + 10, 150)); }}
+                      className="w-full text-left px-4 py-1.5 hover:bg-slate-100 flex items-center justify-between font-medium cursor-pointer"
+                    >
+                      <span>Acercar Zoom</span>
+                      <span className="text-[10px] text-slate-400 font-mono">Ctrl++</span>
+                    </button>
+                    <button
+                      onClick={() => { setActiveMenu(null); setZoomLevel(prev => Math.max(prev - 10, 70)); }}
+                      className="w-full text-left px-4 py-1.5 hover:bg-slate-100 flex items-center justify-between font-medium cursor-pointer"
+                    >
+                      <span>Alejar Zoom</span>
+                      <span className="text-[10px] text-slate-400 font-mono">Ctrl+-</span>
+                    </button>
+                    <button
+                      onClick={() => { setActiveMenu(null); setZoomLevel(100); }}
+                      className="w-full text-left px-4 py-1.5 hover:bg-slate-100 flex items-center justify-between font-medium cursor-pointer"
+                    >
+                      <span>Restaurar Zoom</span>
+                      <span className="text-[10px] text-slate-400 font-mono">Ctrl+0</span>
+                    </button>
+                    <hr className="my-1 border-slate-150" />
+                    <button
+                      onClick={() => {
+                        setActiveMenu(null);
+                        if (document.fullscreenElement) {
+                          document.exitFullscreen().catch(e => console.log(e));
+                        } else {
+                          document.documentElement.requestFullscreen().catch(e => console.log(e));
+                        }
+                      }}
+                      className="w-full text-left px-4 py-1.5 hover:bg-slate-100 flex items-center justify-between font-medium cursor-pointer"
+                    >
+                      <span>Pantalla Completa</span>
+                      <span className="text-[10px] text-slate-400 font-mono">F11</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Ayuda */}
+              <div className="relative">
+                <button
+                  onClick={() => setActiveMenu(activeMenu === 'ayuda' ? null : 'ayuda')}
+                  className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-colors cursor-pointer ${activeMenu === 'ayuda' ? 'bg-white/20 text-white' : 'text-sky-100 hover:bg-white/10 hover:text-white'}`}
+                >
+                  Ayuda
+                </button>
+                {activeMenu === 'ayuda' && (
+                  <div className="absolute left-0 mt-1 w-64 bg-white rounded-lg shadow-xl border border-slate-200 py-1 text-slate-700 z-50 text-xs animate-fadeIn">
+                    <button
+                      onClick={() => { setActiveMenu(null); checkAppUpdates(true); }}
+                      className="w-full text-left px-4 py-2 hover:bg-slate-100 flex items-center justify-between font-medium text-sky-700 cursor-pointer"
+                    >
+                      <span className="flex items-center gap-2">
+                        <svg className="w-4 h-4 text-sky-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                        Buscar actualizaciones...
+                      </span>
+                    </button>
+                    <hr className="my-1 border-slate-150" />
+                    <a
+                      href="mailto:portalmedico.aps@gmail.com"
+                      onClick={() => setActiveMenu(null)}
+                      className="w-full text-left px-4 py-2 hover:bg-slate-100 flex items-center gap-2 font-medium text-slate-700 cursor-pointer"
+                    >
+                      <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                      Contactar a Soporte
+                    </a>
+                    <button
+                      onClick={() => { setActiveMenu(null); setIsAboutModalOpen(true); }}
+                      className="w-full text-left px-4 py-2 hover:bg-slate-100 flex items-center gap-2 font-medium text-slate-700 cursor-pointer"
+                    >
+                      <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                      Acerca de PORTAL MÉDICO
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             {/* Controles de Zoom */}
@@ -2009,32 +2234,6 @@ const App: React.FC = () => {
 
             {isAuthenticated && loggedInUser && (
               <>
-              {/* Drive ECICEP */}
-              <button
-                onClick={() => toggleWindow('drive')}
-                title="Drive ECICEP"
-                className="relative w-10 h-10 rounded-full text-white hover:text-white/85 hover:bg-white/10 transition-colors duration-150 cursor-pointer flex items-center justify-center shrink-0"
-              >
-                <svg viewBox="0 0 24 24" className="w-[22px] h-[22px]" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M8.5 2.5L1.5 14.5H7.5L14.5 2.5H8.5Z" />
-                  <path d="M14.5 2.5L7.5 14.5H22.5L15.5 2.5H14.5Z" />
-                  <path d="M1.5 14.5H22.5L19 21.5H5L1.5 14.5Z" />
-                </svg>
-              </button>
-
-              {/* CYB Servicios Médicos */}
-              <button
-                onClick={() => {
-                  if ((window as any).__openCybTab) {
-                    (window as any).__openCybTab('https://portal.cybserviciosmedicos.cl/PortalLoginConvenio');
-                  }
-                }}
-                title="CYB Servicios Médicos"
-                className="relative w-10 h-10 rounded-full text-white hover:text-white/85 hover:bg-white/10 transition-colors duration-150 cursor-pointer flex items-center justify-center shrink-0"
-              >
-                <span className="text-xs font-black tracking-tighter leading-none text-white">CYB</span>
-              </button>
-
               {/* Certificado Médico */}
               <button
                 onClick={() => toggleWindow('certificado')}
@@ -2172,11 +2371,139 @@ const App: React.FC = () => {
       
       {/* MSN Login Toast */}
       {loginToastUser && (
-        <LoginToast 
-          userName={loginToastUser.name} 
-          avatarUrl={loginToastUser.avatar} 
-          onClose={() => setLoginToastUser(null)} 
-        />
+        <div className="fixed bottom-[64px] right-6 z-[99999]" style={{ pointerEvents: 'none' }}>
+          <LoginToast 
+            userName={loginToastUser.name} 
+            avatarUrl={loginToastUser.avatar} 
+            onClose={() => setLoginToastUser(null)} 
+          />
+        </div>
+      )}
+
+      {/* Modal de Actualización de la App */}
+      {isUpdateModalOpen && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-fadeIn">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden flex flex-col">
+            <div className="bg-gradient-to-r from-sky-600 to-sky-700 p-5 text-white flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                </div>
+                <div>
+                  <h3 className="text-base font-bold">Buscar Actualizaciones</h3>
+                  <p className="text-xs text-sky-100">Portal Médico APS</p>
+                </div>
+              </div>
+              <button onClick={() => setIsUpdateModalOpen(false)} className="text-white/80 hover:text-white text-xl font-bold p-1 cursor-pointer">&times;</button>
+            </div>
+            
+            <div className="p-6 space-y-4">
+              {updateInfo?.checking ? (
+                <div className="flex flex-col items-center justify-center py-6 gap-3">
+                  <div className="w-8 h-8 border-3 border-sky-600 border-t-transparent rounded-full animate-spin"></div>
+                  <p className="text-sm font-medium text-slate-600">Comprobando si existen actualizaciones en GitHub...</p>
+                </div>
+              ) : updateInfo?.hasUpdate ? (
+                <div className="space-y-3">
+                  <div className="p-3 bg-green-50 border border-green-200 rounded-xl text-green-800 text-xs">
+                    <p className="font-bold text-sm text-green-900 mb-1">¡Nueva versión disponible!</p>
+                    <p>Versión actual: <span className="font-mono font-bold">v{updateInfo.currentVersion}</span> &rarr; Nueva versión: <span className="font-mono font-bold text-green-700">v{updateInfo.latestVersion}</span></p>
+                  </div>
+                  {updateInfo.releaseNotes && (
+                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs text-slate-700 max-h-40 overflow-y-auto font-mono whitespace-pre-wrap">
+                      {updateInfo.releaseNotes}
+                    </div>
+                  )}
+                  <p className="text-xs text-slate-500">¿Desea descargar e instalar la nueva actualización ahora?</p>
+                </div>
+              ) : updateInfo?.error ? (
+                <div className="p-4 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl text-xs">
+                  <p className="font-bold mb-1">No se pudo verificar la actualización</p>
+                  <p>{updateInfo.error}</p>
+                </div>
+              ) : (
+                <div className="py-4 text-center space-y-2">
+                  <div className="w-12 h-12 rounded-full bg-green-100 text-green-600 flex items-center justify-center mx-auto">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
+                  </div>
+                  <p className="font-bold text-slate-800 text-sm">Tienes la última versión instalada</p>
+                  <p className="text-xs text-slate-500 font-mono">Versión actual: v{APP_VERSION}</p>
+                </div>
+              )}
+            </div>
+
+            <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-2">
+              {updateInfo?.hasUpdate ? (
+                <>
+                  <button
+                    onClick={() => setIsUpdateModalOpen(false)}
+                    className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-lg text-xs transition-colors cursor-pointer"
+                  >
+                    Más tarde
+                  </button>
+                  <button
+                    onClick={handleInstallUpdate}
+                    disabled={isDownloadingUpdate}
+                    className="px-5 py-2 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-lg text-xs shadow-md transition-all cursor-pointer flex items-center gap-2 disabled:opacity-50"
+                  >
+                    {isDownloadingUpdate ? (
+                      <>
+                        <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        <span>Descargando...</span>
+                      </>
+                    ) : (
+                      <span>Descargar e Instalar</span>
+                    )}
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => setIsUpdateModalOpen(false)}
+                  className="px-5 py-2 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-lg text-xs shadow-md transition-colors cursor-pointer"
+                >
+                  Cerrar
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Acerca de PORTAL MÉDICO */}
+      {isAboutModalOpen && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-fadeIn">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-sm overflow-hidden flex flex-col text-center">
+            <div className="bg-gradient-to-r from-sky-600 to-sky-700 p-6 text-white flex flex-col items-center justify-center relative">
+              <button onClick={() => setIsAboutModalOpen(false)} className="absolute top-3 right-3 text-white/80 hover:text-white text-xl font-bold p-1 cursor-pointer">&times;</button>
+              <div className="w-16 h-16 rounded-2xl bg-white/10 flex items-center justify-center mb-3 shadow-inner">
+                <svg className="w-10 h-10 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="currentColor">
+                  <rect x="30" y="10" width="40" height="80" rx="5" />
+                  <rect x="10" y="30" width="80" height="40" rx="5" />
+                </svg>
+              </div>
+              <h2 className="text-xl font-black tracking-tight">PORTAL MÉDICO</h2>
+              <p className="text-xs text-sky-100 mt-1 font-mono font-semibold">Versión v{APP_VERSION}</p>
+            </div>
+            
+            <div className="p-6 space-y-3 text-xs text-slate-600">
+              <p className="font-semibold text-slate-800">Plataforma clínica para atención primaria en salud (APS).</p>
+              <p className="text-slate-500">Gestión integrada de fichas clínicas, ECICEP, recetas, certificados y bitácora.</p>
+              <div className="pt-2 border-t border-slate-150 text-[11px] text-slate-400">
+                <p>Soporte: <a href="mailto:portalmedico.aps@gmail.com" className="text-sky-600 hover:underline">portalmedico.aps@gmail.com</a></p>
+                <p className="mt-0.5">© 2026 Portal Médico APS. Todos los derechos reservados.</p>
+              </div>
+            </div>
+
+            <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-center">
+              <button
+                onClick={() => setIsAboutModalOpen(false)}
+                className="px-6 py-2 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-lg text-xs shadow-md transition-colors cursor-pointer"
+              >
+                Aceptar
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
     </ErrorBoundary>

@@ -345,16 +345,25 @@ const MainMenuDashboard: React.FC<MainMenuDashboardProps> = ({
                       const currentAviso = avisos[activeAvisoIndex % avisos.length];
                       if (!currentAviso) return null;
                       const authorName = currentAviso.userFullName || 'Usuario';
+                      const authorAvatar = currentAviso.profilePictureUrl 
+                        || (currentAviso.username && localStorage.getItem(`profile_picture_${currentAviso.username}`))
+                        || (currentAviso.username && localStorage.getItem(`user_avatar_${currentAviso.username}`))
+                        || (currentAviso.username === loggedInUser.username ? loggedInUser.profilePictureUrl : undefined);
+
                       return (
                         <div key={currentAviso.id} className="flex flex-col gap-1 animate-fadeIn w-full flex-1 min-h-0 overflow-hidden">
                           <div className="flex items-center gap-1.5 w-full shrink-0">
                             <div className="p-[1.5px] rounded-full animate-color-fluctuate shrink-0 shadow-sm">
                               <div className="p-[1px] rounded-full bg-white">
-                                {currentAviso.profilePictureUrl ? (
+                                {authorAvatar ? (
                                   <img 
-                                    src={currentAviso.profilePictureUrl} 
+                                    src={authorAvatar} 
                                     alt={authorName} 
                                     className="w-6.5 h-6.5 rounded-full object-cover block shrink-0" 
+                                    onError={(e) => {
+                                      // Fallback on error
+                                      (e.target as HTMLElement).style.display = 'none';
+                                    }}
                                   />
                                 ) : (
                                   <div className="w-6.5 h-6.5 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center font-bold text-[10px] border border-sky-200 shrink-0 font-sans">
@@ -420,17 +429,17 @@ const MainMenuDashboard: React.FC<MainMenuDashboardProps> = ({
               </div>
             </div>
 
-            {/* Right 50%: RELOJ DIGITAL ESTILO CAPTURA (reemplaza el bloque de perfil) */}
-            <div className="bg-[#182030] rounded-2xl shadow-sm border border-slate-700/60 p-5 flex items-center justify-center gap-4.5 h-full min-h-[160px] select-none">
+            {/* Right 50%: RELOJ DIGITAL ESTILO CAPTURA */}
+            <div className="bg-[#182030] rounded-2xl shadow-sm border border-slate-700/60 p-4 sm:p-5 flex items-center justify-center gap-3 sm:gap-4.5 h-full min-h-[160px] max-h-[160px] select-none overflow-hidden">
               {/* Icono de Reloj Azul en Círculo Único */}
-              <Clock className="w-11 h-11 text-[#38bdf8] shrink-0 stroke-[2.2]" />
+              <Clock className="w-10 h-10 sm:w-11 sm:h-11 text-[#38bdf8] shrink-0 stroke-[2.2]" />
 
               {/* Texto: Fecha Arriba + Hora HH:MM:SS en Azul */}
-              <div className="flex flex-col min-w-0">
-                <span className="text-xs font-bold text-[#38bdf8]/80 tracking-widest uppercase">
+              <div className="flex flex-col min-w-0 justify-center flex-1 overflow-hidden">
+                <span className="text-[11px] sm:text-xs font-bold text-[#38bdf8]/80 tracking-widest uppercase truncate max-w-full block">
                   {dayOfWeekString} {dateFormattedString}
                 </span>
-                <span className="text-3xl sm:text-4xl font-black text-[#38bdf8] font-mono tracking-wider">
+                <span className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#38bdf8] font-mono tracking-wider leading-none whitespace-nowrap overflow-hidden block">
                   {timeFormattedString}
                 </span>
               </div>

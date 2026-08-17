@@ -34,8 +34,9 @@ if (Test-Path "run_webview.spec") { Remove-Item -Force "run_webview.spec" }
 # Build the executable
 # --noconsole prevents the command prompt window from showing
 # --onefile bundles everything into a single .exe
+# --icon embeds the portal medico icon
 # --add-data copies the static assets directory
-python -m PyInstaller --noconsole --onefile --add-data "dist;dist" --distpath "dist-python" run_webview.py
+python -m PyInstaller --noconsole --onefile --icon="portalmedico.ico" --add-data "dist;dist" --distpath "dist-python" run_webview.py
 
 if ($LASTEXITCODE -ne 0) {
     Write-Error "PyInstaller bundling failed."

@@ -1,4 +1,4 @@
-﻿import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { FichaControlNinoSanoFormData, User } from '../types';
 import FormField from './FormField';
 import DateField from './DateField';
@@ -305,20 +305,20 @@ const FichaControlNinoSano: React.FC<FichaControlNinoSanoProps> = ({ onBackToMen
                     </section>
                 </div>
 
-                <div className="mt-8 lg:mt-0 lg:w-2/5 xl:w-5/12 lg:sticky lg:top-20 flex flex-col lg:h-[calc(100vh-120px)]">
-                    <h3 className="text-xl font-semibold mb-2 text-sky-700">Resumen Ficha Clínica</h3>
-                    <div className="space-y-2 flex-grow flex flex-col">
-                        <div>
-                            <div className="flex justify-between items-center mb-1"><label className="text-sm font-medium text-slate-700">Anamnesis</label><button onClick={() => handleCopyToClipboard(anamnesisText, 'Anamnesis')} className="px-3 py-1 text-xs bg-slate-200 rounded">Copiar</button></div>
-                            <textarea value={anamnesisText} onChange={(e) => setAnamnesisText(e.target.value)} className="w-full p-2 bg-white border rounded-md text-xs h-48 custom-scrollbar text-slate-800" />
+                <div className="mt-8 lg:mt-0 lg:w-2/5 xl:w-5/12 lg:sticky lg:top-20 flex flex-col lg:h-[calc(100vh-215px)] lg:max-h-[calc(100vh-215px)] mb-12 overflow-hidden bg-[#F8FAFC] p-2.5 rounded-xl border border-slate-200 shadow-sm">
+                    <h3 className="text-xs font-bold text-sky-800 uppercase tracking-wider mb-2 border-b border-sky-200/80 pb-1 flex-shrink-0">Resumen Ficha Clínica (Editable)</h3>
+                    <div className="flex-1 flex flex-col gap-1.5 min-h-0 overflow-hidden w-full">
+                        <div className="flex-1 flex flex-col min-h-0">
+                            <div className="flex justify-between items-center mb-0.5 flex-shrink-0"><label className="block text-[11px] font-semibold text-slate-800">Anamnesis</label><button onClick={() => handleCopyToClipboard(anamnesisText, 'Anamnesis')} className="px-2 py-0.5 text-[10px] bg-slate-200 rounded font-bold">Copiar</button></div>
+                            <textarea value={anamnesisText} onChange={(e) => setAnamnesisText(e.target.value)} className="flex-1 w-full p-1.5 py-1 bg-white border border-slate-300 rounded-md shadow-sm custom-scrollbar text-[10.5px] text-slate-800 font-mono outline-none focus:ring-1 focus:ring-sky-500 focus:border-sky-500 resize-none" />
                         </div>
-                        <div>
-                            <div className="flex justify-between items-center mb-1"><label className="text-sm font-medium text-slate-700">Exploración</label><button onClick={() => handleCopyToClipboard(exploracionText, 'Exploración')} className="px-3 py-1 text-xs bg-slate-200 rounded">Copiar</button></div>
-                            <textarea value={exploracionText} onChange={(e) => setExploracionText(e.target.value)} className="w-full p-2 bg-white border rounded-md text-xs h-32 custom-scrollbar text-slate-800" />
+                        <div className="flex-1 flex flex-col min-h-0">
+                            <div className="flex justify-between items-center mb-0.5 flex-shrink-0"><label className="block text-[11px] font-semibold text-slate-800">Exploración</label><button onClick={() => handleCopyToClipboard(exploracionText, 'Exploración')} className="px-2 py-0.5 text-[10px] bg-slate-200 rounded font-bold">Copiar</button></div>
+                            <textarea value={exploracionText} onChange={(e) => setExploracionText(e.target.value)} className="flex-1 w-full p-1.5 py-1 bg-white border border-slate-300 rounded-md shadow-sm custom-scrollbar text-[10.5px] text-slate-800 font-mono outline-none focus:ring-1 focus:ring-sky-500 focus:border-sky-500 resize-none" />
                         </div>
-                         <div>
-                            <div className="flex justify-between items-center mb-1"><label className="text-sm font-medium text-slate-700">Actuación</label><button onClick={() => handleCopyToClipboard(actuacionText, 'Actuación')} className="px-3 py-1 text-xs bg-slate-200 rounded">Copiar</button></div>
-                            <textarea value={actuacionText} onChange={(e) => setActuacionText(e.target.value)} className="w-full p-2 bg-white border rounded-md text-xs h-40 custom-scrollbar text-slate-800" />
+                        <div className="flex-1 flex flex-col min-h-0">
+                            <div className="flex justify-between items-center mb-0.5 flex-shrink-0"><label className="block text-[11px] font-semibold text-slate-800">Actuación</label><button onClick={() => handleCopyToClipboard(actuacionText, 'Actuación')} className="px-2 py-0.5 text-[10px] bg-slate-200 rounded font-bold">Copiar</button></div>
+                            <textarea value={actuacionText} onChange={(e) => setActuacionText(e.target.value)} className="flex-1 w-full p-1.5 py-1 bg-white border border-slate-300 rounded-md shadow-sm custom-scrollbar text-[10.5px] text-slate-800 font-mono outline-none focus:ring-1 focus:ring-sky-500 focus:border-sky-500 resize-none" />
                         </div>
                     </div>
                 </div>

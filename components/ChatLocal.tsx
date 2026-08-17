@@ -9,8 +9,9 @@ import { NotesWindow } from './NotesWindow';
 import { CalculatorWindow } from './CalculatorWindow';
 import { DriveEcicepWindow } from './DriveEcicepWindow';
 import { GmailWindow } from './GmailWindow';
-import { CopilotWindow } from './CopilotWindow';
 import { soundService } from '../services/soundService';
+import { LoginToast } from './LoginToast';
+import { showUserConnectNotification, showChatMessageNotification, requestNotificationPermission } from '../services/notificationService';
 
 interface Message {
   id: string;
@@ -285,13 +286,19 @@ export const ChatLocal: React.FC<ChatLocalProps> = ({
     });
   }, [messagesPrivate, messagesGeneral, loggedInUser.username, triggerNudge]);
 
-  interface LoginToast {
+  interface LoginToastItem {
     id: string;
     username: string;
     fullName: string;
+    avatarUrl?: string;
   }
-  const [loginToasts, setLoginToasts] = useState<LoginToast[]>([]);
+  const [loginToasts, setLoginToasts] = useState<LoginToastItem[]>([]);
   const prevOnlineUsernamesRef = useRef<Set<string>>(new Set());
+
+  // Request notification permission on mount
+  useEffect(() => {
+    requestNotificationPermission();
+  }, []);
 
   // MSN LOGIN POPUP EFFECT
   const isInitialOnlineSyncDone = useRef(false);
@@ -312,21 +319,10 @@ export const ChatLocal: React.FC<ChatLocalProps> = ({
         if (String(username).toLowerCase().trim() !== loggedInUser.username.toLowerCase().trim()) {
           const userObj = onlineUsers.find(u => u.id === username);
           if (userObj) {
-            soundService.play('/msn_login.mp3');
-
-            if ((window as any).electronAPI) {
-              (window as any).electronAPI.showMsnNotification({
-                type: 'login',
-                fullName: userObj.fullName,
-                avatarUrl: userObj.profilePictureUrl
-              });
-            } else {
+            const notifType = showUserConnectNotification(userObj.fullName, userObj.profilePictureUrl);
+            if (notifType === 'in-app') {
               const toastId = Date.now().toString() + Math.random();
-              setLoginToasts(prev => [...prev, { id: toastId, username, fullName: userObj.fullName }]);
-
-              setTimeout(() => {
-                setLoginToasts(prev => prev.filter(t => t.id !== toastId));
-              }, 5000);
+              setLoginToasts(prev => [...prev, { id: toastId, username, fullName: userObj.fullName, avatarUrl: userObj.profilePictureUrl }]);
             }
           }
         }
@@ -607,15 +603,8 @@ export const ChatLocal: React.FC<ChatLocalProps> = ({
         }
       });
 
-      if (playedNotification) {
-        soundService.play('/notification.mp3');
-        if ((window as any).electronAPI && notificationMsg) {
-          (window as any).electronAPI.showMsnNotification({
-            type: 'message',
-            fullName: (notificationMsg as Message).senderName,
-            message: (notificationMsg as Message).text
-          });
-        }
+      if (playedNotification && notificationMsg) {
+        showChatMessageNotification((notificationMsg as Message).senderName, (notificationMsg as Message).text);
       }
       isFirstLoadGeneral.current = false;
     });
@@ -662,15 +651,8 @@ export const ChatLocal: React.FC<ChatLocalProps> = ({
         }
       });
 
-      if (playedNotification) {
-        soundService.play('/notification.mp3');
-        if ((window as any).electronAPI && notificationMsg) {
-          (window as any).electronAPI.showMsnNotification({
-            type: 'message',
-            fullName: (notificationMsg as Message).senderName,
-            message: (notificationMsg as Message).text
-          });
-        }
+      if (playedNotification && notificationMsg) {
+        showChatMessageNotification((notificationMsg as Message).senderName, (notificationMsg as Message).text);
       }
       isFirstLoadPrivate.current = false;
     });
@@ -1093,10 +1075,7 @@ export const ChatLocal: React.FC<ChatLocalProps> = ({
       {!isLowResources && (
         <>
           <SSVBrowserWindow isOpen={isSSVBrowserOpen} onClose={() => setIsSSVBrowserOpen(false)} onOpen={() => setIsSSVBrowserOpen(true)} />
-          <CYBBrowserWindow isOpen={isCYBBrowserOpen} onClose={() => setIsCYBBrowserOpen(false)} onOpen={() => setIsCYBBrowserOpen(true)} />
-          <DriveEcicepWindow isOpen={isDriveOpen} onMinimize={() => setIsDriveOpen(false)} sector={loggedInUser.sector || computerSector} />
           <GmailWindow isOpen={isGmailOpen} onMinimize={() => setIsGmailOpen(false)} />
-          <CopilotWindow isOpen={isCopilotOpen} onMinimize={() => setIsCopilotOpen(false)} />
         </>
       )}
       <NotesWindow isOpen={isNotesOpen} onClose={() => setIsNotesOpen(false)} username={loggedInUser.username} />
@@ -1857,29 +1836,15 @@ export const ChatLocal: React.FC<ChatLocalProps> = ({
 
       {/* Unificated Profile Dialog handled globally */}
 
-      {/* LOGIN TOASTS */}
-      <div className="fixed bottom-[80px] right-6 flex flex-col gap-3 z-[99999]" style={{ pointerEvents: 'none' }}>
+      {/* LOGIN TOASTS FALLBACK */}
+      <div className="fixed bottom-[64px] right-0 flex flex-col gap-2 z-[99999]" style={{ pointerEvents: 'none' }}>
         {loginToasts.map(toast => (
-          <div 
-            key={toast.id} 
-            className="bg-[#e8f2fc] w-[350px] border border-[#a2bcdc] rounded-2xl shadow-[0_4px_14px_rgba(0,0,0,0.08)] flex items-center p-4" 
-            style={{ animation: 'slideInRight 0.3s ease-out' }}
-          >
-            {/* Square Avatar Container */}
-            <div className="w-[42px] h-[42px] border border-[#d2e0f4] p-[3px] rounded bg-white flex items-center justify-center shrink-0 mr-3.5 shadow-2xs">
-              <div className="w-full h-full bg-[#f6f8fa] border border-slate-200 relative overflow-hidden flex flex-col items-center justify-end pb-[5%]">
-                {/* Bright green silhouette */}
-                <div className="w-[38%] aspect-square bg-gradient-to-b from-[#2be075] to-[#04c457] rounded-full mb-[8%] shadow-xs"></div>
-                <div className="w-[68%] h-[38%] bg-gradient-to-t from-[#04c457] to-[#2be075] rounded-t-full shadow-xs"></div>
-              </div>
-            </div>
-            
-            {/* Text Message */}
-            <div className="text-[13px] font-sans flex-1 overflow-hidden">
-              <div className="text-[#0f3b8c] leading-snug">
-                <span className="font-extrabold">{toast.fullName.toUpperCase()}</span> acaba de iniciar sesión.
-              </div>
-            </div>
+          <div key={toast.id} style={{ pointerEvents: 'auto' }}>
+            <LoginToast 
+              userName={toast.fullName} 
+              avatarUrl={toast.avatarUrl} 
+              onClose={() => setLoginToasts(prev => prev.filter(t => t.id !== toast.id))} 
+            />
           </div>
         ))}
       </div>

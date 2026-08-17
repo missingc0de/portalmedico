@@ -491,29 +491,29 @@ const FichaControlDemencias: React.FC<FichaControlDemenciasProps> = ({ onBackToM
           </form>
         </div>
 
-        <div className="lg:w-2/5 xl:w-5/12 lg:sticky lg:top-24 flex flex-col lg:h-[calc(100vh-120px)]">
-          <h3 className="text-xl font-black text-sky-800 mb-4 uppercase tracking-tighter">RESUMEN CONTROL DEMENCIAS</h3>
-          <div className="flex-grow w-full space-y-4 overflow-y-auto custom-scrollbar pr-2">
-            <div>
-              <div className="flex justify-between items-center mb-1">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Anamnesis</label>
-                <button onClick={() => navigator.clipboard.writeText(anamnesisText)} className="text-[10px] bg-slate-200 px-3 py-0.5 font-bold text-slate-600 rounded uppercase">Copiar</button>
+        <div className="mt-8 lg:mt-0 lg:w-2/5 xl:w-5/12 lg:sticky lg:top-20 flex flex-col lg:h-[calc(100vh-215px)] lg:max-h-[calc(100vh-215px)] mb-12 overflow-hidden bg-[#F8FAFC] p-2.5 rounded-xl border border-slate-200 shadow-sm">
+          <h3 className="text-xs font-bold text-sky-800 uppercase tracking-wider mb-2 border-b border-sky-200/80 pb-1 flex-shrink-0">RESUMEN CONTROL DEMENCIAS</h3>
+          <div className="flex-1 flex flex-col gap-1.5 min-h-0 overflow-hidden w-full">
+            <div className="flex-1 flex flex-col min-h-0">
+              <div className="flex justify-between items-center mb-0.5 flex-shrink-0">
+                <label className="block text-[11px] font-semibold text-slate-800">Anamnesis</label>
+                <button onClick={() => navigator.clipboard.writeText(anamnesisText)} className="text-[10px] bg-slate-200 px-2 py-0.5 font-bold text-slate-600 rounded uppercase">Copiar</button>
               </div>
-              <textarea value={anamnesisText} readOnly className="w-full p-3 bg-white border border-slate-200 rounded-xl shadow-inner text-xs text-slate-800 min-h-[150px] font-mono" />
+              <textarea value={anamnesisText} onChange={e => setAnamnesisText(e.target.value)} className="flex-1 w-full p-1.5 py-1 bg-white border border-slate-300 rounded-md shadow-sm custom-scrollbar text-[10.5px] text-slate-800 font-mono outline-none focus:ring-1 focus:ring-sky-500 focus:border-sky-500 resize-none" />
             </div>
-            <div>
-              <div className="flex justify-between items-center mb-1">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Exploración</label>
-                <button onClick={() => navigator.clipboard.writeText(exploracionText)} className="text-[10px] bg-slate-200 px-3 py-0.5 font-bold text-slate-600 rounded uppercase">Copiar</button>
+            <div className="flex-1 flex flex-col min-h-0">
+              <div className="flex justify-between items-center mb-0.5 flex-shrink-0">
+                <label className="block text-[11px] font-semibold text-slate-800">Exploración</label>
+                <button onClick={() => navigator.clipboard.writeText(exploracionText)} className="text-[10px] bg-slate-200 px-2 py-0.5 font-bold text-slate-600 rounded uppercase">Copiar</button>
               </div>
-              <textarea value={exploracionText} readOnly className="w-full p-3 bg-white border border-slate-200 rounded-xl shadow-inner text-xs text-slate-800 min-h-[120px] font-mono" />
+              <textarea value={exploracionText} onChange={e => setExploracionText(e.target.value)} className="flex-1 w-full p-1.5 py-1 bg-white border border-slate-300 rounded-md shadow-sm custom-scrollbar text-[10.5px] text-slate-800 font-mono outline-none focus:ring-1 focus:ring-sky-500 focus:border-sky-500 resize-none" />
             </div>
-            <div>
-              <div className="flex justify-between items-center mb-1">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Actuación</label>
-                <button onClick={() => navigator.clipboard.writeText(actuacionText)} className="text-[10px] bg-slate-200 px-3 py-0.5 font-bold text-slate-600 rounded uppercase">Copiar</button>
+            <div className="flex-1 flex flex-col min-h-0">
+              <div className="flex justify-between items-center mb-0.5 flex-shrink-0">
+                <label className="block text-[11px] font-semibold text-slate-800">Actuación</label>
+                <button onClick={() => navigator.clipboard.writeText(actuacionText)} className="text-[10px] bg-slate-200 px-2 py-0.5 font-bold text-slate-600 rounded uppercase">Copiar</button>
               </div>
-              <textarea value={actuacionText} readOnly className="w-full p-3 bg-white border border-slate-300 rounded-xl shadow-inner text-xs text-slate-800 min-h-[150px] font-mono" />
+              <textarea value={actuacionText} onChange={e => setActuacionText(e.target.value)} className="flex-1 w-full p-1.5 py-1 bg-white border border-slate-300 rounded-md shadow-sm custom-scrollbar text-[10.5px] text-slate-800 font-mono outline-none focus:ring-1 focus:ring-sky-500 focus:border-sky-500 resize-none" />
             </div>
           </div>
         </div>
