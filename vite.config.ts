@@ -22,6 +22,10 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
     ],
+    build: {
+      emptyOutDir: false,
+      outDir: 'dist'
+    },
     define: {
       'process.env.GEMINI_API_KEY': JSON.stringify(geminiKey),
       'import.meta.env.VITE_GEMINI_API_KEY': JSON.stringify(geminiKey),

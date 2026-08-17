@@ -13,34 +13,56 @@ def find_free_port():
 
 def get_dist_dir():
     if getattr(sys, 'frozen', False):
-        # Bundled by PyInstaller
         base_dir = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
         dist_dir = os.path.join(base_dir, 'dist')
+        if not os.path.exists(os.path.join(dist_dir, 'index.html')) and os.path.exists(os.path.join(base_dir, 'index.html')):
+            dist_dir = base_dir
     else:
         dist_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dist')
     return dist_dir
 
-class QuietHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
-    def log_message(self, format, *args):
-        pass
+def make_handler(dist_directory):
+    class SPAHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, directory=dist_directory, **kwargs)
+
+        def translate_path(self, path):
+            # Clean path from query strings and fragments
+            clean_path = path.split('?', 1)[0].split('#', 1)[0]
+            if clean_path in ('', '/', '/index', '/index.html', '/index.htm'):
+                return os.path.join(dist_directory, 'index.html')
+            
+            rel_path = clean_path.lstrip('/')
+            full_path = os.path.join(dist_directory, rel_path)
+            if not os.path.exists(full_path):
+                return os.path.join(dist_directory, 'index.html')
+            return full_path
+
+        def log_message(self, format, *args):
+            pass
+
+    return SPAHTTPRequestHandler
 
 def start_server(dist_dir, port):
     os.chdir(dist_dir)
-    handler = QuietHTTPRequestHandler
-    httpd = socketserver.TCPServer(('127.0.0.1', port), handler)
-    httpd.serve_forever()
+    handler_class = make_handler(dist_dir)
+    socketserver.TCPServer.allow_reuse_address = True
+    with socketserver.TCPServer(('127.0.0.1', port), handler_class) as httpd:
+        httpd.serve_forever()
 
 def main():
     dist_dir = get_dist_dir()
-    if not os.path.exists(dist_dir):
-        print(f"Error: Directory '{dist_dir}' not found.")
+    index_html = os.path.join(dist_dir, 'index.html')
+    
+    if not os.path.exists(index_html):
+        print(f"Error: 'index.html' not found in '{dist_dir}'.")
         sys.exit(1)
 
     port = find_free_port()
     server_thread = threading.Thread(target=start_server, args=(dist_dir, port), daemon=True)
     server_thread.start()
 
-    url = f'http://127.0.0.1:{port}'
+    url = f'http://127.0.0.1:{port}/'
     
     window = webview.create_window(
         title='PORTAL MÉDICO',
