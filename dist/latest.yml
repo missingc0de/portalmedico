@@ -1,7 +1,8 @@
 version: 1.2.1
 files:
   - url: Portal-Medico-Setup-1.2.1.exe
-    sha512: ""
+    sha512: mL49L9nz8mf5CAwe6kC4Al7dzE0tHjFcRm0FL1fxRb2fJPD25qzlo90N5zXpvycnkzyozod5Xe4Sf2nwHV7+BA==
     size: 16901396
 path: Portal-Medico-Setup-1.2.1.exe
-releaseDate: '2026-08-16T23:27:00.000Z'
+sha512: mL49L9nz8mf5CAwe6kC4Al7dzE0tHjFcRm0FL1fxRb2fJPD25qzlo90N5zXpvycnkzyozod5Xe4Sf2nwHV7+BA==
+releaseDate: '2026-08-16T23:31:00.000Z'
