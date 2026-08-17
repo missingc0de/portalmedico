@@ -377,8 +377,22 @@ const App: React.FC = () => {
     error?: string;
   } | null>(null);
 
-  const APP_VERSION = '1.2.4';
+  const APP_VERSION = '1.3.1';
   const menuDropdownRef = useRef<HTMLDivElement>(null);
+
+  const isNewerVersion = (latest: string, current: string): boolean => {
+    if (!latest || !current) return false;
+    const parse = (v: string) => v.replace(/^v/, '').split('.').map(n => parseInt(n, 10) || 0);
+    const l = parse(latest);
+    const c = parse(current);
+    for (let i = 0; i < Math.max(l.length, c.length); i++) {
+      const lNum = l[i] || 0;
+      const cNum = c[i] || 0;
+      if (lNum > cNum) return true;
+      if (lNum < cNum) return false;
+    }
+    return false;
+  };
 
   useEffect(() => {
     const handleClickOutsideMenu = (event: MouseEvent) => {
@@ -403,7 +417,7 @@ const App: React.FC = () => {
           const latestTag = (data.tag_name || '').replace(/^v/, '');
           const exeAsset = (data.assets || []).find((a: any) => a.name.endsWith('.exe'));
           result = {
-            hasUpdate: Boolean(latestTag && latestTag !== APP_VERSION),
+            hasUpdate: isNewerVersion(latestTag, APP_VERSION),
             latestVersion: latestTag,
             currentVersion: APP_VERSION,
             releaseNotes: data.body || '',
@@ -413,8 +427,10 @@ const App: React.FC = () => {
       }
 
       if (result) {
-        setUpdateInfo({ ...result, checking: false });
-        if (result.hasUpdate || manual) {
+        const hasUpdate = isNewerVersion(result.latestVersion || '', result.currentVersion || APP_VERSION);
+        const finalResult = { ...result, hasUpdate, checking: false };
+        setUpdateInfo(finalResult);
+        if (hasUpdate || manual) {
           setIsUpdateModalOpen(true);
         }
       }

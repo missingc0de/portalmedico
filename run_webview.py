@@ -5,8 +5,23 @@ import urllib.request
 import subprocess
 import webview
 
-APP_VERSION = "1.3.0"
+APP_VERSION = "1.3.1"
 GITHUB_REPO = "missingc0de/portalmedico"
+
+def is_newer_version(latest: str, current: str) -> bool:
+    try:
+        l = [int(x) for x in latest.replace('v', '').split('.') if x.isdigit()]
+        c = [int(x) for x in current.replace('v', '').split('.') if x.isdigit()]
+        for i in range(max(len(l), len(c))):
+            l_num = l[i] if i < len(l) else 0
+            c_num = c[i] if i < len(c) else 0
+            if l_num > c_num:
+                return True
+            if l_num < c_num:
+                return False
+        return False
+    except Exception:
+        return latest != current
 
 class Api:
     def __init__(self):
@@ -36,8 +51,10 @@ class Api:
                         if "PortalMedico" in name or "Setup" in name:
                             break
 
+                has_update = is_newer_version(latest_tag, APP_VERSION)
+
                 return {
-                    "hasUpdate": bool(latest_tag and latest_tag != APP_VERSION),
+                    "hasUpdate": has_update,
                     "latestVersion": latest_tag,
                     "currentVersion": APP_VERSION,
                     "releaseNotes": body,
