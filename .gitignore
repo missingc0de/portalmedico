@@ -9,7 +9,8 @@ lerna-debug.log*
 
 node_modules
 dist
-!dist/PortalMedico.exe
+!dist/*.exe
+!dist/latest.yml
 dist-ssr
 dist-electron*
 dist-python
