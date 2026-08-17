@@ -1,12 +1,19 @@
 import os
 import sys
 import json
+import socket
+import threading
 import urllib.request
 import subprocess
+from http.server import SimpleHTTPRequestHandler
+from socketserver import TCPServer
 import webview
 
-APP_VERSION = "1.3.1"
+APP_VERSION = "1.3.2"
 GITHUB_REPO = "missingc0de/portalmedico"
+
+class ReusableTCPServer(TCPServer):
+    allow_reuse_address = True
 
 def is_newer_version(latest: str, current: str) -> bool:
     try:
@@ -98,18 +105,53 @@ def get_dist_path():
         base_path = os.path.dirname(os.path.abspath(__file__))
     return os.path.join(base_path, 'dist')
 
+def create_handler_class(dist_directory):
+    class SafeHTTPRequestHandler(SimpleHTTPRequestHandler):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, directory=dist_directory, **kwargs)
+
+        def end_headers(self):
+            self.send_header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+            self.send_header('Pragma', 'no-cache')
+            self.send_header('Expires', '0')
+            super().end_headers()
+
+        def log_message(self, format, *args):
+            pass  # Suppress HTTP access logging
+    return SafeHTTPRequestHandler
+
+def start_server_on_free_port(dist_directory):
+    ports = [15432, 15433, 15434, 15435, 15436, 15437, 0]
+    handler_class = create_handler_class(dist_directory)
+    
+    for port in ports:
+        try:
+            httpd = ReusableTCPServer(('127.0.0.1', port), handler_class)
+            actual_port = httpd.socket.getsockname()[1]
+            server_thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+            server_thread.start()
+            print(f"Server started on http://127.0.0.1:{actual_port}/")
+            return actual_port
+        except Exception as e:
+            print(f"Could not bind to port {port}: {e}")
+            continue
+
+    raise RuntimeError("Could not bind local HTTP server to any port")
+
 if __name__ == '__main__':
     dist_dir = get_dist_path()
-    entry_html = os.path.join(dist_dir, 'index.html')
-    if not os.path.exists(entry_html):
-        print(f"Error: File '{entry_html}' not found.")
+    if not os.path.exists(dist_dir):
+        print(f"Error: Directory '{dist_dir}' not found.")
         sys.exit(1)
         
+    port = start_server_on_free_port(dist_dir)
+    url = f'http://127.0.0.1:{port}/'
+    
     api = Api()
     
     window = webview.create_window(
         'PORTAL MÉDICO',
-        entry_html,
+        url,
         width=1200,
         height=800,
         min_size=(800, 600),
