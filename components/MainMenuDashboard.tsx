@@ -430,18 +430,20 @@ const MainMenuDashboard: React.FC<MainMenuDashboardProps> = ({
             </div>
 
             {/* Right 50%: RELOJ DIGITAL ESTILO CAPTURA */}
-            <div className="bg-[#182030] rounded-2xl shadow-sm border border-slate-700/60 p-4 sm:p-5 flex items-center justify-center gap-3 sm:gap-4.5 h-full min-h-[160px] max-h-[160px] select-none overflow-hidden">
-              {/* Icono de Reloj Azul en Círculo Único */}
-              <Clock className="w-10 h-10 sm:w-11 sm:h-11 text-[#38bdf8] shrink-0 stroke-[2.2]" />
+            <div className="bg-[#182030] rounded-2xl shadow-sm border border-slate-700/60 p-4 sm:p-5 flex items-center justify-center text-center h-full min-h-[160px] max-h-[160px] select-none overflow-hidden">
+              <div className="flex flex-row items-center justify-center text-center gap-3 sm:gap-4 mx-auto">
+                {/* Icono de Reloj Azul en Círculo Único */}
+                <Clock className="w-10 h-10 sm:w-11 sm:h-11 text-[#38bdf8] shrink-0 stroke-[2.2]" />
 
-              {/* Texto: Fecha Arriba + Hora HH:MM:SS en Azul */}
-              <div className="flex flex-col min-w-0 justify-center flex-1 overflow-hidden">
-                <span className="text-[11px] sm:text-xs font-bold text-[#38bdf8]/80 tracking-widest uppercase truncate max-w-full block">
-                  {dayOfWeekString} {dateFormattedString}
-                </span>
-                <span className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#38bdf8] font-mono tracking-wider leading-none whitespace-nowrap overflow-hidden block">
-                  {timeFormattedString}
-                </span>
+                {/* Texto: Fecha Arriba + Hora HH:MM:SS en Azul */}
+                <div className="flex flex-col min-w-0 items-center justify-center text-center overflow-hidden">
+                  <span className="text-[12px] sm:text-[13px] lg:text-[14px] font-extrabold text-[#38bdf8]/90 tracking-wider uppercase truncate w-full block text-center mb-0.5">
+                    {dayOfWeekString} {dateFormattedString}
+                  </span>
+                  <span className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#38bdf8] font-mono tracking-wider leading-none whitespace-nowrap overflow-hidden block text-center">
+                    {timeFormattedString}
+                  </span>
+                </div>
               </div>
             </div>
 

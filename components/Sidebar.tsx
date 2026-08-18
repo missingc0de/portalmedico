@@ -115,9 +115,22 @@ const DRIVE_LINKS: Record<string, string> = {
   'Amarillo': 'https://docs.google.com/spreadsheets/d/1paEDMTrLz2Ig_jpayPoc1z1GsnJTfSAR/edit?gid=1909397780#gid=1909397780',
 };
 
-const getPrefix = (profession: Profession): string => {
+const FEMALE_NAMES = [
+  'romina', 'daniela', 'carolina', 'caro', 'gabriela', 'cecilia', 'emperatriz',
+  'génesis', 'genesis', 'camila', 'sofia', 'sofía', 'mariany', 'abby'
+];
+
+const getPrefix = (profession?: Profession, fullName?: string): string => {
+  if (profession === 'medicina') {
+    if (fullName) {
+      const lower = fullName.toLowerCase();
+      if (FEMALE_NAMES.some(name => lower.includes(name))) {
+        return 'Dra. ';
+      }
+    }
+    return 'Dr. ';
+  }
   switch (profession) {
-    case 'medicina': return 'Dr. ';
     case 'nutricion': return 'Nta. ';
     case 'psicologia': return 'Ps. ';
     case 'enfermeria': return 'Enf. ';
@@ -545,7 +558,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               </div>
               <div className="flex flex-col min-w-0 leading-tight">
                 <span className="text-xs font-bold text-slate-900 truncate">
-                  {getPrefix(loggedInUser?.profession || 'medicina')}{profileName || loggedInUser?.fullName || 'Usuario'}
+                  {getPrefix(loggedInUser?.profession, profileName || loggedInUser?.fullName)}{profileName || loggedInUser?.fullName || 'Usuario'}
                 </span>
                 <span className="text-[11px] font-medium text-slate-500 truncate mt-0.5">
                   {loggedInUser?.cesfam === 'CESFAM San Juan' ? 'CESFAM San Juan' : (loggedInUser?.cesfam || '')}

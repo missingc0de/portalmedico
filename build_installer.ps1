@@ -1,4 +1,4 @@
-# PowerShell Script to create the official Windows Setup Installer for PORTAL MÉDICO v1.4.0
+# PowerShell Script to create the official Windows Setup Installer for PORTAL MÉDICO v1.4.5
 
 $WorkspaceDir = "c:\Users\missi\.gemini\antigravity\scratch\PORTALMEDICO_CLIENTEWEB"
 Set-Location $WorkspaceDir
@@ -31,6 +31,7 @@ using System.Reflection;
 using System.Diagnostics;
 using System.Windows.Forms;
 using System.Drawing;
+using System.Runtime.InteropServices;
 using Microsoft.Win32;
 
 public class SetupForm : Form
@@ -46,7 +47,7 @@ public class SetupForm : Form
 
     public SetupForm()
     {
-        this.Text = "Instalador de PORTAL MÉDICO v1.4.0";
+        this.Text = "Instalador de PORTAL MÉDICO v1.4.5";
         this.Size = new Size(540, 350);
         this.StartPosition = FormStartPosition.CenterScreen;
         this.FormBorderStyle = FormBorderStyle.FixedDialog;
@@ -59,7 +60,7 @@ public class SetupForm : Form
         installPath = Path.Combine(appData, @"Programs\PortalMedico");
 
         lblTitle = new Label() {
-            Text = "Instalación de PORTAL MÉDICO v1.4.0",
+            Text = "Instalación de PORTAL MÉDICO v1.4.5",
             Font = new Font("Segoe UI", 12f, FontStyle.Bold),
             ForeColor = Color.FromArgb(14, 116, 144),
             Location = new Point(24, 20),
@@ -212,10 +213,10 @@ public class SetupForm : Form
             using (RegistryKey key = Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Uninstall\PortalMedico"))
             {
                 key.SetValue("DisplayName", "PORTAL MÉDICO");
-                key.SetValue("ApplicationVersion", "1.4.0");
+                key.SetValue("ApplicationVersion", "1.4.5");
                 key.SetValue("Publisher", "PORTAL MÉDICO APS");
                 key.SetValue("DisplayIcon", exe);
-                key.SetValue("DisplayVersion", "1.4.0");
+                key.SetValue("DisplayVersion", "1.4.5");
                 key.SetValue("InstallLocation", dir);
                 key.SetValue("UninstallString", "cmd.exe /c rmdir /s /q \"" + dir + "\"");
             }
@@ -223,9 +224,16 @@ public class SetupForm : Form
         catch { }
     }
 
+    [DllImport("user32.dll")]
+    private static extern bool SetProcessDPIAware();
+
+    [DllImport("shcore.dll")]
+    private static extern int SetProcessDpiAwareness(int awareness);
+
     [STAThread]
     public static void Main()
     {
+        try { SetProcessDpiAwareness(2); } catch { try { SetProcessDPIAware(); } catch {} }
         Application.EnableVisualStyles();
         Application.SetCompatibleTextRenderingDefault(false);
         Application.Run(new SetupForm());
@@ -234,13 +242,14 @@ public class SetupForm : Form
 "@
 
 $SourceFile = Join-Path $InstallerDir "InstallerSource.cs"
-Set-Content -Path $SourceFile -Value $CSharpCode -Encoding UTF8
+$Utf8EncodingWithBom = New-Object System.Text.UTF8Encoding $true
+[System.IO.File]::WriteAllText($SourceFile, $CSharpCode, $Utf8EncodingWithBom)
 
 $PayloadExe = Join-Path $WorkspaceDir "dist-python\run_webview.exe"
-$OutInstallerExe = Join-Path $InstallerDir "PortalMedico_Setup_v1.4.0.exe"
+$OutInstallerExe = Join-Path $InstallerDir "PortalMedico_Setup_v1.4.5.exe"
 
 $CscPath = "C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
-$CscArgs = @("/target:winexe", "/out:$OutInstallerExe", "/r:System.dll", "/r:System.Windows.Forms.dll", "/r:System.Drawing.dll", "/r:System.Core.dll", "/resource:$PayloadExe,PortalMedico.exe")
+$CscArgs = @("/target:winexe", "/codepage:65001", "/out:$OutInstallerExe", "/r:System.dll", "/r:System.Windows.Forms.dll", "/r:System.Drawing.dll", "/r:System.Core.dll", "/resource:$PayloadExe,PortalMedico.exe")
 
 if ($HasIcon) {
     $CscArgs += "/win32icon:$IconPath"

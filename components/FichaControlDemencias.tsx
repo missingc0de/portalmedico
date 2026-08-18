@@ -451,7 +451,7 @@ const FichaControlDemencias: React.FC<FichaControlDemenciasProps> = ({ onBackToM
       </div>
 
       <div className="flex flex-col lg:flex-row lg:gap-8 mt-6">
-        <div className="lg:w-3/5 xl:w-7/12 space-y-6 flex-shrink-0 pr-3">
+        <div className="lg:w-3/5 xl:w-7/12 space-y-6 flex-shrink-0 pr-3 pb-16">
             <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
             
             <section className="p-5 bg-slate-50 rounded-xl border border-slate-200">

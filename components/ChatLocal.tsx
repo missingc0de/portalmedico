@@ -317,12 +317,13 @@ export const ChatLocal: React.FC<ChatLocalProps> = ({
     currentOnlineNames.forEach(username => {
       if (!prevOnlineUsernamesRef.current.has(username)) {
         if (String(username).toLowerCase().trim() !== loggedInUser.username.toLowerCase().trim()) {
-          const userObj = onlineUsers.find(u => u.id === username);
+          const userObj = onlineUsers.find(u => u.id === username) || historicalUsers.find(u => u.id === username) || allUsersData.find(u => u.username.toLowerCase() === username.toLowerCase());
           if (userObj) {
-            const notifType = showUserConnectNotification(userObj.fullName, userObj.profilePictureUrl);
+            const avatarUrl = (userObj as any).profilePictureUrl || (userObj as any).avatarUrl;
+            const notifType = showUserConnectNotification(userObj.fullName, avatarUrl);
             if (notifType === 'in-app') {
               const toastId = Date.now().toString() + Math.random();
-              setLoginToasts(prev => [...prev, { id: toastId, username, fullName: userObj.fullName, avatarUrl: userObj.profilePictureUrl }]);
+              setLoginToasts(prev => [...prev, { id: toastId, username, fullName: userObj.fullName, avatarUrl: avatarUrl }]);
             }
           }
         }
@@ -1839,8 +1840,8 @@ export const ChatLocal: React.FC<ChatLocalProps> = ({
 
       {/* Unificated Profile Dialog handled globally */}
 
-      {/* LOGIN TOASTS FALLBACK */}
-      <div className="fixed bottom-[64px] right-0 flex flex-col gap-2 z-[99999]" style={{ pointerEvents: 'none' }}>
+      {/* LOGIN TOASTS FALLBACK STACKED ON Y AXIS */}
+      <div className="fixed bottom-[64px] right-6 flex flex-col gap-3 items-end z-[99999]" style={{ pointerEvents: 'none' }}>
         {loginToasts.map(toast => (
           <div key={toast.id} style={{ pointerEvents: 'auto' }}>
             <LoginToast 

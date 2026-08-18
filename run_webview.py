@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+import ssl
 import socket
 import threading
 import urllib.request
@@ -9,8 +10,63 @@ from http.server import SimpleHTTPRequestHandler
 from socketserver import TCPServer
 import webview
 
-APP_VERSION = "1.4.0"
+APP_VERSION = "1.4.5"
+
+def check_webview2_runtime():
+    """
+    Check if Microsoft Edge WebView2 Runtime is installed on the system.
+    Returns True if available, False otherwise.
+    Shows a user-friendly error dialog if missing.
+    """
+    try:
+        import winreg
+        # Check both HKLM and HKCU for WebView2 Runtime
+        paths = [
+            (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}"),
+            (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}"),
+            (winreg.HKEY_CURRENT_USER, r"SOFTWARE\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}"),
+        ]
+        for hive, path in paths:
+            try:
+                key = winreg.OpenKey(hive, path)
+                winreg.CloseKey(key)
+                return True  # Found WebView2 Runtime
+            except (FileNotFoundError, OSError):
+                continue
+        # Not found in registry
+        return False
+    except Exception:
+        # If winreg check fails, assume it's present and let pywebview handle it
+        return True
+
+def prompt_install_webview2():
+    """Show a dialog asking the user to install WebView2 Runtime."""
+    try:
+        import ctypes
+        result = ctypes.windll.user32.MessageBoxW(
+            0,
+            "PORTAL MÉDICO requiere Microsoft Edge WebView2 Runtime, que no está instalado en este equipo.\n\n"
+            "¿Desea abrir la página de descarga para instalarlo?\n\n"
+            "Después de instalarlo, reinicie PORTAL MÉDICO.",
+            "Componente requerido no encontrado",
+            0x00000034  # MB_YESNO | MB_ICONWARNING
+        )
+        if result == 6:  # IDYES
+            subprocess.Popen(["start", "https://go.microsoft.com/fwlink/p/?LinkId=2124703"], shell=True)
+    except Exception as e:
+        print(f"Error showing WebView2 install dialog: {e}")
+
 GITHUB_REPO = "missingc0de/portalmedico"
+
+
+def get_safe_ssl_context():
+    try:
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+        return ctx
+    except Exception:
+        return ssl._create_unverified_context()
 
 class ReusableTCPServer(TCPServer):
     allow_reuse_address = True
@@ -44,7 +100,8 @@ class Api:
         try:
             url = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
             req = urllib.request.Request(url, headers={"User-Agent": "PortalMedico-Updater"})
-            with urllib.request.urlopen(req, timeout=8) as resp:
+            ssl_ctx = get_safe_ssl_context()
+            with urllib.request.urlopen(req, timeout=12, context=ssl_ctx) as resp:
                 data = json.loads(resp.read().decode('utf-8'))
                 latest_tag = data.get("tag_name", "").lstrip('v')
                 body = data.get("body", "")
@@ -53,9 +110,15 @@ class Api:
                 download_url = ""
                 for asset in assets:
                     name = asset.get("name", "")
-                    if name.endswith(".exe"):
+                    if "Setup" in name and name.lower().endswith(".exe"):
                         download_url = asset.get("browser_download_url", "")
-                        if "PortalMedico" in name or "Setup" in name:
+                        break
+
+                if not download_url:
+                    for asset in assets:
+                        name = asset.get("name", "")
+                        if name.lower().endswith(".exe"):
+                            download_url = asset.get("browser_download_url", "")
                             break
 
                 has_update = is_newer_version(latest_tag, APP_VERSION)
@@ -80,7 +143,8 @@ class Api:
             
             print(f"Downloading update from {download_url} to {installer_path}...")
             req = urllib.request.Request(download_url, headers={"User-Agent": "PortalMedico-Updater"})
-            with urllib.request.urlopen(req) as resp, open(installer_path, "wb") as f:
+            ssl_ctx = get_safe_ssl_context()
+            with urllib.request.urlopen(req, timeout=120, context=ssl_ctx) as resp, open(installer_path, "wb") as f:
                 f.write(resp.read())
             
             print("Launching update installer...")
@@ -97,6 +161,38 @@ class Api:
             self._window.destroy()
         else:
             sys.exit(0)
+
+    def save_and_open_pdf(self, base64_data, filename="documento.pdf"):
+        try:
+            import base64, os
+            if not base64_data:
+                return {"success": False, "error": "No base64 data provided"}
+            if base64_data.startswith("data:"):
+                base64_data = base64_data.split(",", 1)[1]
+            raw_bytes = base64.b64decode(base64_data)
+            
+            desktop_dir = os.path.join(os.path.expanduser("~"), "Desktop")
+            if not os.path.exists(desktop_dir):
+                desktop_dir = os.environ.get("TEMP", os.path.expanduser("~"))
+                
+            safe_name = "".join(c for c in filename if c.isalnum() or c in "._- ")
+            if not safe_name.lower().endswith(".pdf"):
+                safe_name += ".pdf"
+                
+            filepath = os.path.join(desktop_dir, safe_name)
+            
+            with open(filepath, "wb") as f:
+                f.write(raw_bytes)
+                
+            print(f"Saved PDF to Desktop and opening: {filepath} ({len(raw_bytes)} bytes)")
+            os.startfile(filepath)
+            return {"success": True, "path": filepath}
+        except Exception as e:
+            print("Error saving/opening PDF:", e)
+            return {"success": False, "error": str(e)}
+
+    def open_pdf(self, base64_data, filename="documento.pdf"):
+        return self.save_and_open_pdf(base64_data, filename)
 
 def get_dist_path():
     if getattr(sys, 'frozen', False):
@@ -139,6 +235,11 @@ def start_server_on_free_port(dist_directory):
     raise RuntimeError("Could not bind local HTTP server to any port")
 
 if __name__ == '__main__':
+    # Check for WebView2 Runtime before launching - shows friendly error if missing
+    if not check_webview2_runtime():
+        prompt_install_webview2()
+        sys.exit(1)
+
     dist_dir = get_dist_path()
     if not os.path.exists(dist_dir):
         print(f"Error: Directory '{dist_dir}' not found.")
@@ -171,3 +272,4 @@ if __name__ == '__main__':
     os.makedirs(storage_dir, exist_ok=True)
         
     webview.start(private_mode=False, storage_path=storage_dir)
+

@@ -256,7 +256,7 @@ const FichaIngresoSm: React.FC<FichaIngresoSmProps> = ({ onBackToMenu, loggedInU
         <div className="lg:col-span-8 h-auto lg:h-full lg:overflow-y-auto pr-2 custom-scrollbar flex flex-col gap-4">
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col gap-6">
             <div className="overflow-y-auto custom-scrollbar pr-1 flex-1" style={{ maxHeight: 'calc(100vh - 120px)' }}>
-              <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
+              <form onSubmit={(e) => e.preventDefault()} className="space-y-6 pb-16">
 
                 <section className="p-4 bg-slate-50 rounded-lg border border-slate-200">
                     <h3 className="text-lg font-semibold mb-4 text-sky-700 border-b border-sky-200 pb-2">Identificación del paciente</h3>

@@ -1,4 +1,4 @@
-﻿import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { FormStatus, User, BaseFichaData } from '../types';
 import FormField from './FormField';
 import RutInput from './RutInput';
@@ -132,7 +132,7 @@ const FichaMorbilidad: React.FC<{ onBackToMenu: () => void; loggedInUser: User |
                         </div>
                     </section>
 
-                    <section className="space-y-4">
+                    <section className="space-y-4 pb-12">
                         <FormField label="Antecedentes Mórbidos" id="antecedentes" name="antecedentes" value={formData.antecedentes} onChange={handleChange} isTextArea rows={2} />
                         <div>
                             <FormField label="Fármacos Habituales" id="farmacos" name="farmacos" value={formData.farmacos} onChange={handleChange} isTextArea rows={2} />

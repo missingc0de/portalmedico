@@ -5,6 +5,7 @@ import DateField from './DateField';
 import UserAutocomplete from './UserAutocomplete';
 import { useFormLocalStorage } from '../hooks/useFormLocalStorage';
 import { generateFichaVdiPdf } from '../services/pdfGenerator';
+import { FileText, Trash2, ArrowLeft } from 'lucide-react';
 
 interface Props {
   onBackToMenu: () => void;
@@ -311,13 +312,11 @@ export default function FichaVisitaDomiciliaria({ onBackToMenu, loggedInUser }: 
   };
 
   return (
-    <div className="w-full h-auto lg:h-full flex flex-col">
-      <div className="flex flex-col h-auto lg:h-full overflow-visible lg:overflow-hidden">
-        <div className="flex-grow lg:flex-1 overflow-visible lg:overflow-hidden">
+    <div className="w-full relative">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-2.5 w-full items-start h-auto lg:h-[calc(100vh-72px)] lg:overflow-hidden relative">
         {/* === Columna Izquierda: Formulario === */}
         <div className="lg:col-span-8 h-auto lg:h-full lg:overflow-y-auto pr-2 custom-scrollbar flex flex-col gap-4">
-              <form onSubmit={(e) => e.preventDefault()} className="bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-sm flex flex-col gap-4">
+              <form onSubmit={(e) => e.preventDefault()} className="bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-sm flex flex-col gap-4 pb-16">
 
                 {/* IDENTIFICACIÓN */}
                 <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
@@ -594,49 +593,43 @@ export default function FichaVisitaDomiciliaria({ onBackToMenu, loggedInUser }: 
                   />
                 </div>
               </div>
+            </div>
 
+            {/* Botones de Acción */}
+            <div className="grid grid-cols-3 gap-1.5 w-full shrink-0">
+              <button
+                type="button"
+                onClick={handleGenerateDocument}
+                disabled={status === FormStatus.Generating}
+                className="w-full flex items-center justify-center gap-1 px-1 py-1.5 bg-sky-600 hover:bg-sky-700 text-white font-medium text-[11px] uppercase tracking-tight rounded-lg shadow-2xs transition-all duration-150 cursor-pointer h-[32px] overflow-hidden disabled:bg-slate-400"
+                title="Exportar Resumen PDF"
+              >
+                <FileText className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate">{status === FormStatus.Generating ? 'EXPORTANDO...' : 'EXPORTAR PDF'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleClearForm}
+                className="w-full flex items-center justify-center gap-1 px-1 py-1.5 bg-slate-600 hover:bg-slate-700 text-white font-medium text-[11px] uppercase tracking-tight rounded-lg shadow-2xs transition-all duration-150 cursor-pointer h-[32px] overflow-hidden"
+                title="Limpiar Formulario y Crear Nuevo"
+              >
+                <Trash2 className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate">BORRAR TODO</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={onBackToMenu}
+                className="w-full flex items-center justify-center gap-1 px-1 py-1.5 bg-slate-500 hover:bg-slate-600 text-white font-medium text-[11px] uppercase tracking-tight rounded-lg shadow-2xs transition-all duration-150 cursor-pointer h-[32px] overflow-hidden"
+                title="Volver al Menú Principal"
+              >
+                <ArrowLeft className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate">MENÚ</span>
+              </button>
             </div>
           </div>
         </div>
       </div>
-
-      {/* === Footer Fijo === */}
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4 sm:p-6 border border-slate-200 bg-white mt-6 rounded-xl shadow-sm">
-          <button
-            onClick={onBackToMenu}
-            className="w-full sm:w-auto px-6 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold rounded-lg shadow-sm transition-colors"
-          >
-            Volver al Menú
-          </button>
-          <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
-            <button
-              onClick={handleClearForm}
-              className="w-full sm:w-auto px-6 py-2.5 bg-slate-500 hover:bg-slate-600 text-white font-semibold rounded-lg shadow-sm transition-colors flex items-center justify-center"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-              BORRAR TODO
-            </button>
-            <button
-              onClick={handleGenerateDocument}
-              disabled={status === FormStatus.Generating}
-              className="w-full sm:w-auto px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg shadow-md transition-colors flex items-center justify-center gap-2 disabled:bg-slate-400 disabled:cursor-not-allowed"
-            >
-              {status === FormStatus.Generating ? (
-                <><div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full" /> EXPORTANDO...</>
-              ) : (
-                <>
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  EXPORTAR A PDF
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
   );
 }

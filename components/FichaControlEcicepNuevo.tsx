@@ -290,7 +290,7 @@ const today = new Date();
 const dd = String(today.getDate()).padStart(2, '0');
 const mm = String(today.getMonth() + 1).padStart(2, '0');
 const yyyy = today.getFullYear();
-const todayFormatted = `${dd}-${mm}-${yyyy}`;
+const todayFormatted = `${yyyy}-${mm}-${dd}`;
 
 const initialFormData: FichaControlEcicepFormData = {
   fechaControlActual: todayFormatted,
@@ -620,7 +620,11 @@ export const FichaControlEcicepNuevo: React.FC<FichaControlEcicepNuevoProps> = (
   // Synchronize App.tsx state updates to local form state ONLY on initial mount/reset
   // (not on every keystroke to avoid overwriting what the user is typing)
   useEffect(() => {
-    if (fechaControlProp && !formData.fechaControlActual) {
+    const d = new Date();
+    const isoDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    if (!formData.fechaControlActual) {
+      setFormData(prev => ({ ...prev, fechaControlActual: fechaControlProp || isoDate }));
+    } else if (fechaControlProp && formData.fechaControlActual !== fechaControlProp) {
       setFormData(prev => ({ ...prev, fechaControlActual: fechaControlProp }));
     }
   }, [fechaControlProp]);
@@ -1208,19 +1212,11 @@ export const FichaControlEcicepNuevo: React.FC<FichaControlEcicepNuevoProps> = (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-2.5 w-full items-start h-auto lg:h-[calc(100vh-72px)] lg:overflow-hidden relative">
           {/* Columna Central: Formulario (col-span-8) - Única columna scrolleable */}
           <div className="lg:col-span-8 h-auto lg:h-full lg:overflow-y-auto pr-2 custom-scrollbar flex flex-col gap-4">
-              <form onSubmit={(e) => e.preventDefault()} className="bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-sm flex flex-col gap-4">
+              <form onSubmit={(e) => e.preventDefault()} className="bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-sm flex flex-col gap-4 pb-16">
                   
                 <section id="sec-identificacion" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-2">
                   <h3 className="text-lg font-semibold mb-3 text-sky-700 border-b border-sky-200 pb-2">Identificación</h3>
 
-                  <DateField
-                    label="Fecha de Control"
-                    id="fechaControlActual"
-                    name="fechaControlActual"
-                    value={formData.fechaControlActual}
-                    onChange={handleChange as any}
-                    containerClassName="mb-4"
-                  />
 
                   <div className="mt-4">
                     <label className="block text-sm font-medium text-slate-700 mb-1.5">Dupla Profesional:</label>
@@ -1751,11 +1747,12 @@ export const FichaControlEcicepNuevo: React.FC<FichaControlEcicepNuevoProps> = (
                     alert('Error: Usuario no identificado.');
                     return;
                   }
-                  generateClinicalRecordPdf({ title: 'Ficha Clínica: Control ECICEP', content: `${anamnesisText}\n\n${exploracionText}\n\n${actuacionText}` }, loggedInUser);
+                  generateEcicepResumenPdf(formData as any, loggedInUser);
                 }}
                 className="w-full flex items-center justify-center gap-1 px-1 py-1.5 bg-sky-600 hover:bg-sky-700 text-white font-medium text-[11px] uppercase tracking-tight rounded-lg shadow-2xs transition-all duration-150 cursor-pointer h-[32px] overflow-hidden"
                 title="Imprimir PDF Resumen ECICEP"
               >
+                <Printer className="w-3.5 h-3.5 shrink-0" />
                 <span className="truncate">RESUMEN PDF</span>
               </button>
 
@@ -1765,6 +1762,7 @@ export const FichaControlEcicepNuevo: React.FC<FichaControlEcicepNuevoProps> = (
                 className="w-full flex items-center justify-center gap-1 px-1 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-[11px] uppercase tracking-tight rounded-lg shadow-2xs transition-all duration-150 cursor-pointer h-[32px] overflow-hidden"
                 title="Abrir Planilla Drive ECICEP"
               >
+                <ExternalLink className="w-3.5 h-3.5 shrink-0" />
                 <span className="truncate">EDITAR DRIVE</span>
               </button>
 
@@ -1778,6 +1776,7 @@ export const FichaControlEcicepNuevo: React.FC<FichaControlEcicepNuevoProps> = (
                 className="w-full flex items-center justify-center gap-1 px-1 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-medium text-[11px] uppercase tracking-tight rounded-lg shadow-2xs transition-all duration-150 cursor-pointer h-[32px] overflow-hidden"
                 title="Restablecer todos los campos del formulario"
               >
+                <Trash2 className="w-3.5 h-3.5 shrink-0" />
                 <span className="truncate">BORRAR TODO</span>
               </button>
             </div>

@@ -29,14 +29,9 @@ Start-Sleep -Seconds 1
 # Clean previous build artifacts
 if (Test-Path "dist-python") { Remove-Item -Recurse -Force "dist-python" }
 if (Test-Path "build") { Remove-Item -Recurse -Force "build" }
-if (Test-Path "run_webview.spec") { Remove-Item -Force "run_webview.spec" }
 
-# Build the executable
-# --noconsole prevents the command prompt window from showing
-# --onefile bundles everything into a single .exe
-# --icon embeds the portal medico icon
-# --add-data copies the static assets directory
-python -m PyInstaller --noconsole --onefile --icon="portalmedico.ico" --add-data "dist;dist" --distpath "dist-python" run_webview.py
+# Build using custom spec file that excludes system C++ runtime DLLs
+python -m PyInstaller --distpath "dist-python" run_webview.spec
 
 if ($LASTEXITCODE -ne 0) {
     Write-Error "PyInstaller bundling failed."

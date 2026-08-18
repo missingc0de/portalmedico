@@ -228,7 +228,7 @@ export const FichaControlArtrosis: React.FC<FichaControlArtrosisProps> = ({ onBa
       </div>
 
       <div className="flex flex-col lg:flex-row lg:gap-8 mt-6">
-        <div className="lg:w-3/5 xl:w-7/12 space-y-4 flex-shrink-0 pr-4">
+        <div className="lg:w-3/5 xl:w-7/12 space-y-4 flex-shrink-0 pr-4 pb-16">
           
           <section className="p-4 bg-slate-50 rounded-lg border border-slate-200">
             <h3 className="text-lg font-semibold mb-3 text-sky-700 border-b border-sky-200 pb-2">Datos del Paciente</h3>

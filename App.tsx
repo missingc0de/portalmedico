@@ -144,16 +144,29 @@ const professionLabelsMap: Record<Profession, string> = {
   kinesiologo: 'Kinesiólogo/a',
 };
 
-const getProfessionPrefix = (profession: Profession): string => {
+const FEMALE_NAMES = [
+  'romina', 'daniela', 'carolina', 'caro', 'gabriela', 'cecilia', 'emperatriz',
+  'génesis', 'genesis', 'camila', 'sofia', 'sofía', 'mariany', 'abby'
+];
+
+const getProfessionPrefix = (profession: Profession, fullName?: string): string => {
+  if (profession === 'medicina') {
+    if (fullName) {
+      const lower = fullName.toLowerCase();
+      if (FEMALE_NAMES.some(name => lower.includes(name))) {
+        return 'Dra.';
+      }
+    }
+    return 'Dr.';
+  }
   switch (profession) {
-    case 'medicina': return 'Dr.';
     case 'nutricion': return 'Nta.';
     case 'psicologia': return 'Ps.';
     case 'enfermeria': return 'Enf.';
     case 'tens': return 'TENS.';
     case 'asistente_social': return 'TS.';
-    case 'quimico_farmaceutico': return 'QF';
-    case 'odontologia': return 'OD';
+    case 'quimico_farmaceutico': return 'QF.';
+    case 'odontologia': return 'OD.';
     case 'kinesiologo': return 'Kn.';
     case 'matroneria': return 'Mat.';
     default: return '';
@@ -377,7 +390,7 @@ const App: React.FC = () => {
     error?: string;
   } | null>(null);
 
-  const APP_VERSION = '1.4.0';
+  const APP_VERSION = '1.4.5';
   const menuDropdownRef = useRef<HTMLDivElement>(null);
 
   const isNewerVersion = (latest: string, current: string): boolean => {
@@ -592,7 +605,7 @@ const App: React.FC = () => {
   const [isRecetaWindowOpen, setIsRecetaWindowOpen] = useState<boolean>(false);
   const [showUpdateNotification, setShowUpdateNotification] = useState(false);
   const [installPromptEvent, setInstallPromptEvent] = useState<any | null>(null);
-  const [loginToastUser, setLoginToastUser] = useState<{name: string, avatar?: string} | null>(null);
+  const [loginToastUsers, setLoginToastUsers] = useState<Array<{ id: string; name: string; avatar?: string }>>([]);
   const [isRemOpen, setIsRemOpen] = useState<boolean>(false);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -822,10 +835,8 @@ const App: React.FC = () => {
       setTimeout(() => {
         const notifResult = showUserConnectNotification(user.fullName, user.profilePictureUrl);
         if (notifResult === 'in-app') {
-          setLoginToastUser({
-            name: user.fullName,
-            avatar: user.profilePictureUrl
-          });
+          const toastId = Date.now().toString() + Math.random();
+          setLoginToastUsers(prev => [...prev, { id: toastId, name: user.fullName, avatar: user.profilePictureUrl }]);
         }
       }, 1000);
     }
@@ -1149,7 +1160,7 @@ const App: React.FC = () => {
               ) : (
                 <>
                   <h2 className="text-base font-bold text-slate-900 flex items-center gap-1.5 flex-wrap leading-tight">
-                    <span className="text-slate-400 font-semibold">{getProfessionPrefix(loggedInUser.profession)}</span> {profileName || loggedInUser.fullName}
+                    <span className="text-slate-400 font-semibold">{getProfessionPrefix(loggedInUser.profession, profileName || loggedInUser.fullName)}</span> {profileName || loggedInUser.fullName}
                     <svg className="w-5 h-5 text-blue-500 fill-current shrink-0" viewBox="0 0 20 20" aria-label="Verificado">
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                     </svg>
@@ -1895,19 +1906,19 @@ const App: React.FC = () => {
         return <FichaControlAdultoMayor onBackToMenu={() => navigateTo('menu')} loggedInUser={loggedInUser} />;
       case 'fichaControlNinoSano1Mes':
         return (
-          <div className="w-full h-auto lg:h-full flex flex-col lg:min-h-0 lg:overflow-hidden">
+          <div className="w-full">
             <FichaControlNinoSano1Mes onBackToMenu={() => navigateTo('menu')} loggedInUser={loggedInUser} />
           </div>
         );
       case 'fichaControlNinoSano3Mes':
         return (
-          <div className="w-full h-auto lg:h-full flex flex-col lg:min-h-0 lg:overflow-hidden">
+          <div className="w-full">
             <FichaControlNinoSano3Mes onBackToMenu={() => navigateTo('menu')} loggedInUser={loggedInUser} />
           </div>
         );
       case 'fichaControlNinoSano6Anos':
         return (
-          <div className="w-full h-auto lg:h-full flex flex-col lg:min-h-0 lg:overflow-hidden">
+          <div className="w-full">
             <FichaControlNinoSano6Anos onBackToMenu={() => navigateTo('menu')} loggedInUser={loggedInUser} />
           </div>
         );
@@ -2385,82 +2396,128 @@ const App: React.FC = () => {
       <CertificadoMedicoWindow isOpen={isCertificadoWindowOpen} onClose={() => setIsCertificadoWindowOpen(false)} loggedInUser={loggedInUser} />
       <RecetaMedicaWindow isOpen={isRecetaWindowOpen} onClose={() => setIsRecetaWindowOpen(false)} loggedInUser={loggedInUser} />
       
-      {/* MSN Login Toast */}
-      {loginToastUser && (
-        <div className="fixed bottom-[64px] right-6 z-[99999]" style={{ pointerEvents: 'none' }}>
-          <LoginToast 
-            userName={loginToastUser.name} 
-            avatarUrl={loginToastUser.avatar} 
-            onClose={() => setLoginToastUser(null)} 
-          />
-        </div>
-      )}
+      {/* MSN Login Toast Stacked on Y Axis */}
+      <div className="fixed bottom-[64px] right-6 z-[99999] flex flex-col gap-3 items-end" style={{ pointerEvents: 'none' }}>
+        {loginToastUsers.map(toast => (
+          <div key={toast.id} style={{ pointerEvents: 'auto' }}>
+            <LoginToast 
+              userName={toast.name} 
+              avatarUrl={toast.avatar} 
+              onClose={() => setLoginToastUsers(prev => prev.filter(t => t.id !== toast.id))} 
+            />
+          </div>
+        ))}
+      </div>
 
       {/* Modal de Actualización de la App */}
+      {/* Modal / Ventana de Sistema de Actualizaciones */}
       {isUpdateModalOpen && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-fadeIn">
-          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden flex flex-col">
-            <div className="bg-gradient-to-r from-sky-600 to-sky-700 p-5 text-white flex justify-between items-center">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center shrink-0">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                </div>
-                <div>
-                  <h3 className="text-base font-bold">Buscar Actualizaciones</h3>
-                  <p className="text-xs text-sky-100">Portal Médico APS</p>
-                </div>
+          {/* Main System Window Frame */}
+          <div className="bg-slate-900 text-slate-100 rounded-xl shadow-2xl border border-slate-700 w-full max-w-lg overflow-hidden flex flex-col font-sans">
+            {/* System Window Header Bar */}
+            <div className="bg-slate-800 px-4 py-2.5 flex items-center justify-between border-b border-slate-700 select-none">
+              <div className="flex items-center gap-2.5">
+                <div className="w-3 h-3 rounded-full bg-rose-500 hover:bg-rose-600 transition-colors cursor-pointer" onClick={() => setIsUpdateModalOpen(false)} title="Cerrar" />
+                <div className="w-3 h-3 rounded-full bg-amber-500 hover:bg-amber-600 transition-colors cursor-pointer" title="Minimizar" />
+                <div className="w-3 h-3 rounded-full bg-emerald-500 hover:bg-emerald-600 transition-colors cursor-pointer" title="Maximizar" />
+                <span className="ml-2 text-xs font-semibold tracking-wide text-slate-300">Actualizador de Sistema - Portal Médico</span>
               </div>
-              <button onClick={() => setIsUpdateModalOpen(false)} className="text-white/80 hover:text-white text-xl font-bold p-1 cursor-pointer">&times;</button>
+              <button 
+                onClick={() => setIsUpdateModalOpen(false)}
+                className="text-slate-400 hover:text-white text-base font-bold leading-none px-1 py-0.5 rounded hover:bg-slate-700/60 transition-colors cursor-pointer"
+                title="Cerrar ventana"
+              >
+                &times;
+              </button>
             </div>
-            
-            <div className="p-6 space-y-4">
+
+            {/* Window Content */}
+            <div className="p-6 space-y-4 bg-slate-900 text-slate-200">
+              {/* Info Version Badge */}
+              <div className="flex items-center justify-between bg-slate-800/80 p-3.5 rounded-xl border border-slate-700">
+                <div>
+                  <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Versión Instalada</p>
+                  <p className="text-base font-mono font-bold text-sky-400">v{APP_VERSION}</p>
+                </div>
+                {updateInfo?.latestVersion && (
+                  <div className="text-right">
+                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Última Versión</p>
+                    <p className={`text-base font-mono font-bold ${updateInfo.hasUpdate ? 'text-emerald-400' : 'text-slate-300'}`}>v{updateInfo.latestVersion}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Status Section */}
               {updateInfo?.checking ? (
-                <div className="flex flex-col items-center justify-center py-6 gap-3">
-                  <div className="w-8 h-8 border-3 border-sky-600 border-t-transparent rounded-full animate-spin"></div>
-                  <p className="text-sm font-medium text-slate-600">Comprobando si existen actualizaciones en GitHub...</p>
+                <div className="flex flex-col items-center justify-center py-6 gap-3 bg-slate-800/40 rounded-xl border border-slate-700/50">
+                  <div className="w-8 h-8 border-3 border-sky-400 border-t-transparent rounded-full animate-spin"></div>
+                  <p className="text-xs font-medium text-sky-200">Comprobando automáticamente si existen actualizaciones en GitHub...</p>
                 </div>
               ) : updateInfo?.hasUpdate ? (
                 <div className="space-y-3">
-                  <div className="p-3 bg-green-50 border border-green-200 rounded-xl text-green-800 text-xs">
-                    <p className="font-bold text-sm text-green-900 mb-1">¡Nueva versión disponible!</p>
-                    <p>Versión actual: <span className="font-mono font-bold">v{updateInfo.currentVersion}</span> &rarr; Nueva versión: <span className="font-mono font-bold text-green-700">v{updateInfo.latestVersion}</span></p>
+                  <div className="p-3.5 bg-emerald-950/60 border border-emerald-500/40 rounded-xl text-emerald-200 text-xs">
+                    <p className="font-bold text-sm text-emerald-300 mb-1 flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                      ¡Nueva versión disponible en GitHub!
+                    </p>
+                    <p className="text-slate-300">Se ha detectado la versión <span className="font-mono font-bold text-emerald-300">v{updateInfo.latestVersion}</span> lista para descargar.</p>
                   </div>
                   {updateInfo.releaseNotes && (
-                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs text-slate-700 max-h-40 overflow-y-auto font-mono whitespace-pre-wrap">
-                      {updateInfo.releaseNotes}
+                    <div className="space-y-1">
+                      <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Notas de la versión</p>
+                      <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 text-xs text-slate-300 max-h-36 overflow-y-auto font-mono whitespace-pre-wrap leading-relaxed">
+                        {updateInfo.releaseNotes}
+                      </div>
                     </div>
                   )}
-                  <p className="text-xs text-slate-500">¿Desea descargar e instalar la nueva actualización ahora?</p>
                 </div>
               ) : updateInfo?.error ? (
-                <div className="p-4 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl text-xs">
-                  <p className="font-bold mb-1">No se pudo verificar la actualización</p>
-                  <p>{updateInfo.error}</p>
+                <div className="p-4 bg-rose-950/60 border border-rose-500/40 text-rose-200 rounded-xl text-xs space-y-1">
+                  <p className="font-bold text-rose-300">No se pudo verificar la actualización</p>
+                  <p className="text-slate-300">{updateInfo.error}</p>
                 </div>
               ) : (
-                <div className="py-4 text-center space-y-2">
-                  <div className="w-12 h-12 rounded-full bg-green-100 text-green-600 flex items-center justify-center mx-auto">
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
+                <div className="py-4 text-center space-y-2 bg-slate-800/40 rounded-xl border border-slate-700/50 p-4">
+                  <div className="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto border border-emerald-500/30">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
                   </div>
-                  <p className="font-bold text-slate-800 text-sm">Tienes la última versión instalada</p>
-                  <p className="text-xs text-slate-500 font-mono">Versión actual: v{APP_VERSION}</p>
+                  <p className="font-bold text-slate-100 text-sm">Tu aplicación está actualizada</p>
+                  <p className="text-xs text-slate-400">Tienes instalada la versión oficial más reciente (v{APP_VERSION}).</p>
                 </div>
               )}
             </div>
 
-            <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-2">
-              {updateInfo?.hasUpdate ? (
-                <>
-                  <button
-                    onClick={() => setIsUpdateModalOpen(false)}
-                    className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-lg text-xs transition-colors cursor-pointer"
-                  >
-                    Más tarde
-                  </button>
+            {/* Action Bar */}
+            <div className="p-4 bg-slate-800/90 border-t border-slate-700 flex flex-wrap items-center justify-between gap-2">
+              <button
+                type="button"
+                onClick={() => checkAppUpdates(true)}
+                disabled={updateInfo?.checking}
+                className="px-3.5 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold rounded-lg text-xs transition-colors cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                title="Buscar actualizaciones manualmente"
+              >
+                <svg className={`w-3.5 h-3.5 ${updateInfo?.checking ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                <span>Buscar de nuevo</span>
+              </button>
+
+              <div className="flex items-center gap-2 ml-auto">
+                <a
+                  href="https://github.com/missingc0de/portalmedico/releases"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-sky-400 font-semibold rounded-lg text-xs border border-sky-500/30 transition-colors cursor-pointer flex items-center gap-1.5"
+                  title="Abrir lanzamientos oficiales en GitHub"
+                >
+                  <svg className="w-3.5 h-3.5 shrink-0" fill="currentColor" viewBox="0 0 24 24"><path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+                  <span>Descargar en GitHub</span>
+                </a>
+
+                {updateInfo?.hasUpdate && updateInfo.downloadUrl ? (
                   <button
                     onClick={handleInstallUpdate}
                     disabled={isDownloadingUpdate}
-                    className="px-5 py-2 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-lg text-xs shadow-md transition-all cursor-pointer flex items-center gap-2 disabled:opacity-50"
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-xs shadow-md transition-all cursor-pointer flex items-center gap-2 disabled:opacity-50"
                   >
                     {isDownloadingUpdate ? (
                       <>
@@ -2471,15 +2528,15 @@ const App: React.FC = () => {
                       <span>Descargar e Instalar</span>
                     )}
                   </button>
-                </>
-              ) : (
-                <button
-                  onClick={() => setIsUpdateModalOpen(false)}
-                  className="px-5 py-2 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-lg text-xs shadow-md transition-colors cursor-pointer"
-                >
-                  Cerrar
-                </button>
-              )}
+                ) : (
+                  <button
+                    onClick={() => setIsUpdateModalOpen(false)}
+                    className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white font-semibold rounded-lg text-xs transition-colors cursor-pointer"
+                  >
+                    Cerrar
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>

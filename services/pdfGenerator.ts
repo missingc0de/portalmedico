@@ -12,34 +12,96 @@ const ROD_ASCLEPIUS_URL = '/images/rod_of_asclepius.png'; // Watermark image
 
 const sanitizeFilename = (name: string) => name.replace(/[<>:"/\\\\|?*]+/g, '').replace(/\\s+/g, '_');
 
-const savePdf = async (doc: jsPDF, defaultFileName: string) => {
-  const safeFileName = sanitizeFilename(defaultFileName);
+const openPdfInNewTab = (pdfData: jsPDF | Blob | Uint8Array | ArrayBuffer | string, fileName: string = 'documento.pdf') => {
   try {
-    if ('showSaveFilePicker' in window) {
-      const handle = await (window as any).showSaveFilePicker({
-        suggestedName: safeFileName,
-        types: [{
-          description: 'Documento PDF',
-          accept: { 'application/pdf': ['.pdf'] },
-        }],
-      });
-      const writable = await handle.createWritable();
-      
-      // Convert to ArrayBuffer to avoid empty blobs or translation issues in the write stream
-      const arrayBuffer = doc.output('arraybuffer');
-      await writable.write(arrayBuffer);
-      await writable.close();
+    let blob: Blob;
+    let base64String: string | null = null;
+    const safeFileName = sanitizeFilename(fileName.endsWith('.pdf') ? fileName : `${fileName}.pdf`);
+
+    if (typeof pdfData === 'string') {
+      if (pdfData.startsWith('data:application/pdf')) {
+        base64String = pdfData;
+        const base64Content = pdfData.split(',')[1];
+        const binaryString = atob(base64Content);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+        blob = new Blob([bytes], { type: 'application/pdf' });
+      } else {
+        blob = new Blob([pdfData], { type: 'application/pdf' });
+      }
+    } else if (pdfData instanceof Blob) {
+      blob = pdfData.type === 'application/pdf' ? pdfData : new Blob([pdfData], { type: 'application/pdf' });
+    } else if (pdfData instanceof Uint8Array || pdfData instanceof ArrayBuffer) {
+      blob = new Blob([pdfData as BlobPart], { type: 'application/pdf' });
+    } else if (pdfData && typeof (pdfData as any).output === 'function') {
+      const arr = (pdfData as jsPDF).output('arraybuffer');
+      blob = new Blob([arr], { type: 'application/pdf' });
+    } else {
       return;
     }
-  } catch (error: any) {
-    if (error.name === 'AbortError') {
-      return; // Canceled by user
+
+    const pyApi = (window as any).pywebview?.api;
+    if (pyApi && (typeof pyApi.save_and_open_pdf === 'function' || typeof pyApi.open_pdf === 'function')) {
+      const fn = pyApi.save_and_open_pdf || pyApi.open_pdf;
+      if (base64String) {
+        fn(base64String, safeFileName);
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const b64 = reader.result as string;
+        if (b64) {
+          fn(b64, safeFileName);
+        }
+      };
+      reader.readAsDataURL(blob);
+      return;
     }
-    console.error('Error saving PDF with File System Access API:', error);
+
+    // Fallback for standard browsers & Electron
+    const url = URL.createObjectURL(blob);
+    const newWindow = window.open(url, '_blank');
+    if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = safeFileName;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      a.click();
+    }
+  } catch (err) {
+    console.error('Error opening PDF automatically:', err);
   }
-  
-  // Fallback if API fails or is not available
-  doc.save(safeFileName);
+};
+
+const savePdf = async (doc: jsPDF, defaultFileName: string) => {
+  const safeFileName = sanitizeFilename(defaultFileName.endsWith('.pdf') ? defaultFileName : `${defaultFileName}.pdf`);
+
+  const arrayBuffer = doc.output('arraybuffer');
+  const blob = new Blob([arrayBuffer], { type: 'application/pdf' });
+
+  // Python desktop app: save directly to Desktop + open system reader
+  const pyApi = (window as any).pywebview?.api;
+  if (pyApi && (typeof pyApi.save_and_open_pdf === 'function' || typeof pyApi.open_pdf === 'function')) {
+    const fn = pyApi.save_and_open_pdf || pyApi.open_pdf;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const b64 = reader.result as string;
+      if (b64) {
+        fn(b64, safeFileName);
+      }
+    };
+    reader.readAsDataURL(blob);
+    return;
+  }
+
+  // Web browser fallback: single download link
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = safeFileName;
+  link.click();
 };
 
 async function loadImageAsBase64(url: string): Promise<string> {
@@ -48,6 +110,7 @@ async function loadImageAsBase64(url: string): Promise<string> {
 }
 
 const applyBackgroundAndSave = async (jsPdfDoc: jsPDF, bgUrl: string, fileName: string) => {
+    const safeFileName = sanitizeFilename(fileName.endsWith('.pdf') ? fileName : `${fileName}.pdf`);
     const jsPdfBytes = jsPdfDoc.output('arraybuffer');
     
     let bgPdfBytes;
@@ -63,7 +126,7 @@ const applyBackgroundAndSave = async (jsPdfDoc: jsPDF, bgUrl: string, fileName: 
         bgPdfBytes = await res.arrayBuffer();
     } catch (e) {
         console.warn("Background PDF not found, falling back to standard jsPDF.", e);
-        await savePdf(jsPdfDoc, fileName);
+        await savePdf(jsPdfDoc, safeFileName);
         return;
     }
 
@@ -94,26 +157,27 @@ const applyBackgroundAndSave = async (jsPdfDoc: jsPDF, bgUrl: string, fileName: 
     }
 
     const finalPdfBytes = await bgDoc.save();
-    
-    if ('showSaveFilePicker' in window) {
-        try {
-            const handle = await (window as any).showSaveFilePicker({
-                suggestedName: fileName,
-                types: [{ description: 'Documento PDF', accept: { 'application/pdf': ['.pdf'] } }],
-            });
-            const writable = await handle.createWritable();
-            await writable.write(finalPdfBytes);
-            await writable.close();
-            return;
-        } catch (error: any) {
-            if (error.name === 'AbortError') return;
-        }
-    }
-    
     const blob = new Blob([finalPdfBytes as unknown as BlobPart], { type: 'application/pdf' });
+
+    // Desktop app integration: Save to Desktop + Open in System PDF Reader
+    const pyApi = (window as any).pywebview?.api;
+    if (pyApi && (typeof pyApi.save_and_open_pdf === 'function' || typeof pyApi.open_pdf === 'function')) {
+        const fn = pyApi.save_and_open_pdf || pyApi.open_pdf;
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            const b64 = reader.result as string;
+            if (b64) {
+                fn(b64, safeFileName);
+            }
+        };
+        reader.readAsDataURL(blob);
+        return;
+    }
+
+    // Web browser fallback
     const link = document.createElement('a');
     link.href = window.URL.createObjectURL(blob);
-    link.download = fileName;
+    link.download = safeFileName;
     link.click();
 };
 
@@ -1009,23 +1073,63 @@ export const generateDerivacionesPscvPdf = async (data: DerivacionesPscvFormData
 
 
 export const generateOrdenLaboratorioPdf = async (data: OrdenLaboratorioFormData, loggedInUser: User): Promise<void> => {
-  // Generate date and time at the moment of emission
   const now = new Date();
   const dateVal = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
   const timeVal = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
-  let profText = 'MEDICO';
-  if (loggedInUser.profession === 'enfermeria') profText = 'ENFERMERO/A';
-  else if (loggedInUser.profession === 'nutricion') profText = 'NUTRICIONISTA';
-  else if (loggedInUser.profession === 'matroneria') profText = 'MATRON/A';
-  else if (loggedInUser.profession === 'kinesiologo') profText = 'KINESIOLOGO';
-  else if (loggedInUser.profession === 'psicologia') profText = 'PSICOLOGO/A';
-  else if (loggedInUser.profession === 'asistente_social') profText = 'ASISTENTE SOCIAL';
-  else if (loggedInUser.profession === 'tens') profText = 'TENS';
-  else if (loggedInUser.profession === 'quimico_farmaceutico') profText = 'QUIMICO FARMACEUTICO';
+  const doc = new jsPDF('p', 'mm', 'a4');
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const margin = 15;
+  let currentY = 18;
 
-  // Build the examinations table rows
-  const selectedTestsRows: string[] = [];
+  // Header Titles
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.text('CORPORACIÓN MUNICIPAL GABRIEL GONZÁLEZ VIDELA', margin, currentY);
+  currentY += 5;
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.text('CESFAM San Juan - Coquimbo', margin, currentY);
+  doc.text(`Fecha Emisión: ${dateVal} ${timeVal}`, pageWidth - margin, currentY, { align: 'right' });
+  currentY += 8;
+
+  // Main Document Title
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.text('ORDEN DE EXÁMENES DE LABORATORIO', pageWidth / 2, currentY, { align: 'center' });
+  currentY += 8;
+
+  // Patient Info Box
+  autoTable(doc, {
+    startY: currentY,
+    margin: { left: margin, right: margin },
+    theme: 'plain',
+    styles: { fontSize: 9, font: 'helvetica', textColor: [0, 0, 0], cellPadding: 1.5 },
+    body: [
+      [
+        { content: `Paciente: ${data.nombrePaciente || 'N/I'}`, styles: { fontStyle: 'bold' } },
+        { content: `RUT: ${formatRutChilean(data.rutPaciente || '')}`, styles: { fontStyle: 'bold' } },
+        { content: `NHC / Ficha: ${data.nhcPaciente || data.numeroFicha || 'N/I'}` }
+      ],
+      [
+        { content: `Fecha Nac: ${formatDateToDDMMYYYY(data.fechaNacimiento)}` },
+        { content: `Edad: ${data.edad || 'N/I'}` },
+        { content: `Sexo: ${data.sexo || 'N/I'}` }
+      ],
+      [
+        { content: `Dirección: ${data.direccion || 'N/I'}`, colSpan: 2 },
+        { content: `Teléfono: ${data.telefono || 'N/I'}` }
+      ],
+      [
+        { content: `Diagnóstico: ${data.diagnostico || 'CONTROL GENERAL DE SALUD DE RUTINA'}`, colSpan: 3, styles: { fontStyle: 'italic' } }
+      ]
+    ]
+  });
+
+  currentY = (doc as any).lastAutoTable.finalY + 6;
+
+  // Build Selected Examinations Table Rows
+  const tableBody: string[][] = [];
   Object.keys(data).forEach(key => {
     if ((key.startsWith('hematologia_') || 
          key.startsWith('bioquimica_') ||
@@ -1039,321 +1143,70 @@ export const generateOrdenLaboratorioPdf = async (data: OrdenLaboratorioFormData
       
       const details = labTestDetails[key];
       if (details) {
-        // Strip single leading zero if it exists (e.g. "0305070" -> "305070")
         const code = details.code.startsWith('0') ? details.code.slice(1) : details.code;
-        selectedTestsRows.push(`
-          <tr>
-            <td align="center">&nbsp;</td>
-            <td align="center" style="border: 1px solid black; padding: 4px;">${code}</td>
-            <td style="border: 1px solid black; padding: 4px;">${details.group}</td>
-            <td style="border: 1px solid black; padding: 4px;">${details.label}</td>
-            <td align="center" style="border: 1px solid black; padding: 4px;">Normal</td>
-            <td style="border: 1px solid black; padding: 4px;">${data.observacionesGlobales || ''}</td>
-          </tr>
-        `);
+        tableBody.push([
+          code,
+          details.group,
+          details.label,
+          'Normal',
+          data.observacionesGlobales || ''
+        ]);
       }
     }
   });
 
-  // Build the complete HTML string
-  const htmlContent = `
-<html xmlns="http://www.w3.org/1999/xhtml">
-	<head>
-		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-		<title>Solicitud de Exámenes</title>
-		<style type="text/css">
-		.Estilo1 {
-			font-size: 14px;
-			font-weight: bold;
-			font-family: Arial, Helvetica, sans-serif;
-		}
-		.Estilo2 {
-			font-size: 12px;
-			font-weight: bold;
-			font-family: Arial, Helvetica, sans-serif;
-		}
-		body {
-			font-family: Arial, Helvetica, sans-serif;
-			font-size: 11px;
-			color: #000000;
-			margin: 0;
-			padding: 20px;
-			background-color: #FFFFFF;
-		}
-		table {
-			font-family: Arial, Helvetica, sans-serif;
-			font-size: 11px;
-		}
-		html{
-			overflow-x:hidden;
-		}
-		</style>
-	</head>
-	<body>
-		<table width="100%" border="0" cellpadding="4">
-			<tr>
-				<td>
-					<table border="0" cellpadding="0" cellspacing="0">
-						<tr>
-							<td height="57" width="50">
-								&nbsp;
-							</td>
-							<td>			
-								<em style="font-family: Arial, Helvetica, sans-serif; font-size: 11px;">
-									CENTRO DE SALUD FAMILIAR SAN JUAN<br />
-									J. J. OLIVER S/N<br />
-									Tel.:512331110 <br>
-								</em>
-							</td>
-						</tr>
-					</table>
-				</td>
-			</tr>
-			<tr>
-				<td height="29">
-					<div align="center" class="Estilo1">SOLICITUD DE EXAMEN</div>
-				</td>
-			</tr>
-			
-			<tr>
-				<td height="20">
-					<table border="0" align="center" cellpadding="2" cellspacing="0">
-						<tr>
-							<td style="font-family: Arial, Helvetica, sans-serif;">Fecha</td>
-							<td style="font-family: Arial, Helvetica, sans-serif; font-weight: bold; padding-left: 5px; padding-right: 15px;">${dateVal}</td>
-							<td style="font-family: Arial, Helvetica, sans-serif;">Hora</td>
-							<td style="font-family: Arial, Helvetica, sans-serif; font-weight: bold; padding-left: 5px;">${timeVal}</td>
-						</tr>
-					</table>
-				</td>
-			</tr>
-			<tr>
-				<td height="10">&nbsp;</td>
-			</tr>
-			
-			<tr>
-				<td>
-					<table width="100%" border="1" cellpadding="4" cellspacing="0" style="border-collapse:collapse; border: 1px solid black;">
-						<tr>
-							<td colspan="4" class="Estilo2" bgcolor="#FFFFFF" style="border: 1px solid black; padding: 4px;">Paciente</td>
-						</tr>
-						<tr>
-							<td width="12%" style="border: 1px solid black; padding: 4px;">Nombre</td>
-							<td style="font-weight: bold; border: 1px solid black; padding: 4px;">${data.nombrePaciente || ''}</td>
-							<td width="12%" style="border: 1px solid black; padding: 4px;">Sector</td>
-							<td style="font-weight: bold; border: 1px solid black; padding: 4px;">${data.sectorPaciente || 'NO INFORMADO'}</td>
-						</tr>
-						<tr>
-							<td style="border: 1px solid black; padding: 4px;">R.U.N.</td>
-							<td style="font-weight: bold; border: 1px solid black; padding: 4px;">${formatRutChilean(data.rutPaciente) || ''}</td>
-							<td width="8%" style="border: 1px solid black; padding: 4px;">NHC</td>
-							<td width="42%" style="font-weight: bold; border: 1px solid black; padding: 4px;">${data.nhcPaciente || ''}</td>
-						</tr>
-						<tr>
-							<td style="border: 1px solid black; padding: 4px;">Fecha nac.</td>
-							<td style="font-weight: bold; border: 1px solid black; padding: 4px;">${formatDateToDDMMYYYY(data.fechaNacimiento) || ''}</td>
-							<td style="border: 1px solid black; padding: 4px;">Edad</td>
-							<td style="font-weight: bold; border: 1px solid black; padding: 4px;">${data.edad || ''}</td>
-						</tr>
-						<tr>
-							<td style="border: 1px solid black; padding: 4px;">Sexo</td>
-							<td style="font-weight: bold; border: 1px solid black; padding: 4px;">${data.sexo || ''}</td>
-							<td style="border: 1px solid black; padding: 4px;">Previsión</td>
-							<td style="font-weight: bold; border: 1px solid black; padding: 4px;">${data.prevision || 'DESCONOCIDO'}</td>
-						</tr>	
-						<tr>
-							<td style="border: 1px solid black; padding: 4px;">Dirección</td>
-							<td style="font-weight: bold; border: 1px solid black; padding: 4px;">${data.direccion || ''}</td>
-							<td style="border: 1px solid black; padding: 4px;">Teléfono(s)</td>
-							<td style="font-weight: bold; border: 1px solid black; padding: 4px;">${data.telefono || ''}</td>
-						</tr>
-					</table>
-				</td>
-			</tr>
-			<tr>
-				<td height="10"></td>
-			</tr>
-			<tr>
-				<td>
-					<table width="100%" border="1" cellpadding="4" cellspacing="0" style="border-collapse:collapse; border: 1px solid black;">
-						<tr>
-							<td colspan="4" class="Estilo2" bgcolor="#FFFFFF" style="border: 1px solid black; padding: 4px;">Profesional Solicitante</td>
-						</tr>
-						<tr>
-							<td width="12%" style="border: 1px solid black; padding: 4px;">Nombre</td>
-							<td width="38%" style="font-weight: bold; border: 1px solid black; padding: 4px;">${loggedInUser.fullName || ''}</td>
-							<td width="8%" style="border: 1px solid black; padding: 4px;">R.U.N.</td>
-							<td width="42%" style="font-weight: bold; border: 1px solid black; padding: 4px;">${formatRutChilean(loggedInUser.rut) || ''}</td>
-						</tr>
-						<tr>
-							<td width="12%" style="border: 1px solid black; padding: 4px;">Profesión</td>
-							<td width="88%" colspan="3" style="font-weight: bold; border: 1px solid black; padding: 4px;">${profText}</td>
-						</tr>
-					</table>
-				</td>
-			</tr>
-			<tr>
-				<td height="10"></td>
-			</tr>
-			<tr>
-				<td>
-					<table width="100%" border="1" cellpadding="4" cellspacing="0" style="border-collapse:collapse; border: 1px solid black;">
-						<tr>
-							<td class="Estilo2" bgcolor="#FFFFFF" style="border: 1px solid black; padding: 4px;">Laboratorio</td>
-						</tr>
-						<tr>
-							<td style="border: 1px solid black; padding: 4px;">
-								<table border="0" cellpadding="2" cellspacing="0" width="100%">
-									<tr>
-										<td width="8%" style="font-family: Arial, Helvetica, sans-serif;">Nombre:</td>
-										<td style="font-weight: bold; font-family: Arial, Helvetica, sans-serif;">--- NO DISPONIBLE ---</td>
-										<td width="6%" style="font-family: Arial, Helvetica, sans-serif;">Tipo:</td>
-										<td style="font-weight: bold; font-family: Arial, Helvetica, sans-serif;">EXTERNO</td>
-									</tr>
-								</table>
-							</td>
-						</tr>
-						<tr>
-							<td style="border: 1px solid black; padding: 4px;">
-								<table border="0" cellpadding="2" cellspacing="0" width="100%">
-									<tr>
-										<td width="8%" style="font-family: Arial, Helvetica, sans-serif;">Dirección:</td>
-										<td style="font-weight: bold; font-family: Arial, Helvetica, sans-serif;">--- NO DISPONIBLE ---</td>
-										<td width="8%" style="font-family: Arial, Helvetica, sans-serif;">Teléfono:</td>
-										<td style="font-weight: bold; font-family: Arial, Helvetica, sans-serif;">--- NO DISPONIBLE ---</td>
-									</tr>
-								</table>
-							</td>
-						</tr>
-					</table>
-				</td>
-			</tr>
-			<tr>
-				<td height="10"></td>
-			</tr>
-			<tr>
-				<td>
-					<table width="100%" border="1" cellpadding="4" cellspacing="0" style="border-collapse:collapse; border: 1px solid black;">
-						<tr>
-							<td style="font-weight: bold; border: 1px solid black; padding: 4px;"><span class="Estilo2">Diagnóstico:</span>
-								CONTROL GENERAL DE SALUD DE RUTINA DE SUBPOBLACIONES DEFINIDAS 
-							</td>
-						</tr>
-					</table>
-				</td>
-			</tr>
-			<tr>
-				<td height="10"></td>
-			</tr>
-			<tr>
-				<td>
-					<table width="100%" border="1" cellpadding="4" cellspacing="0" style="border-collapse:collapse; border: 1px solid black;">
-						<tr>
-							<td style="font-weight: bold; border: 1px solid black; padding: 4px;"><span class="Estilo2">Programa de salud:</span>
-								--- NO DISPONIBLE ---
-							</td>
-						</tr>
-					</table>
-				</td>
-			</tr>
-			<tr>
-				<td height="15"></td>
-			</tr>
-			<tr>
-				<td>
-					<table width="100%" border="1" cellpadding="4" cellspacing="0" style="border-collapse:collapse; border: 1px solid black;">
-						<tr bgcolor="#FFFFFF" style="font-weight: bold; text-align: center;">
-							<td width="12%" style="border: 1px solid black; padding: 4px;">CODIGO</td>
-							<td width="12%" style="border: 1px solid black; padding: 4px;">CODIGO FONASA</td>
-							<td width="20%" style="border: 1px solid black; padding: 4px;">TIPO</td>
-							<td width="36%" style="border: 1px solid black; padding: 4px;">DESCRIPCION</td>
-							<td width="10%" style="border: 1px solid black; padding: 4px;">PRIORIDAD</td>
-							<td width="10%" style="border: 1px solid black; padding: 4px;">OBSERVACIONES</td>
-						</tr>
-						${selectedTestsRows.join('')}
-					</table>
-				</td>
-			</tr>
-			<tr>
-				<td height="30"></td>
-			</tr>
-			<tr>
-				<td align="center">
-					<table cellpadding="0" cellspacing="0" border="0" width="100%">
-						<tr>
-							<td align="center" width="50%" valign="bottom">
-								<table border="0" cellpadding="4" align="center">
-									<tr>
-										<td align="center">
-											<p>_______________________________________</p>
-										</td>
-									</tr>
-									<tr>
-										<td align="center" style="font-weight: bold; font-family: Arial, Helvetica, sans-serif;">${loggedInUser.fullName || ''}</td>
-									</tr>
-									<tr>
-										<td align="center" style="font-weight: bold; font-family: Arial, Helvetica, sans-serif;">R.U.N.: ${formatRutChilean(loggedInUser.rut) || ''}</td>
-									</tr>
-								</table>
-							</td>
-							<td align="center" width="50%" valign="bottom">
-								<table border="1" cellpadding="0" cellspacing="0" width="70%" style="border-collapse:collapse; border: 1px solid black; margin: 0 auto;">
-									<tr>
-										<td>
-											<table border="0" cellpadding="4" cellspacing="0" width="100%">
-												<tr height="20">
-													<td align="center" style="font-weight: bold; font-size: 9px; font-family: Arial, Helvetica, sans-serif; border-bottom: 1px solid black;" bgcolor="#FFFFFF">
-														IDENTIFICACION DE QUIEN<br>TOMA LA MUESTRA
-													</td>
-												</tr>
-												<tr height="45">
-													<td>&nbsp;</td>
-												</tr>
-												<tr height="20">
-													<td align="left" style="font-size: 10px; font-family: Arial, Helvetica, sans-serif;">&nbsp;Hora:</td>
-												</tr>
-												<tr height="10">
-													<td>&nbsp;</td>
-												</tr>
-											</table>
-										</td>
-									</tr>
-								</table> 
-							</td>
-						</tr>
-					</table>
-				</td>
-			</tr>
-		</table>
-	</body>
-</html>
-  `;
-
-  // Print via iframe
-  const iframe = document.createElement('iframe');
-  iframe.style.position = 'fixed';
-  iframe.style.right = '0';
-  iframe.style.bottom = '0';
-  iframe.style.width = '0';
-  iframe.style.height = '0';
-  iframe.style.border = '0';
-  document.body.appendChild(iframe);
-  
-  const iframeDoc = iframe.contentWindow?.document || iframe.contentDocument;
-  if (iframeDoc) {
-    iframeDoc.open();
-    iframeDoc.write(htmlContent);
-    iframeDoc.close();
-    
-    await new Promise<void>((resolve) => {
-      setTimeout(() => {
-        iframe.contentWindow?.focus();
-        iframe.contentWindow?.print();
-        document.body.removeChild(iframe);
-        resolve();
-      }, 500);
-    });
+  if (tableBody.length === 0) {
+    tableBody.push(['---', '---', 'Sin exámenes seleccionados', '---', '---']);
   }
+
+  // Examinations autoTable
+  autoTable(doc, {
+    startY: currentY,
+    margin: { left: margin, right: margin },
+    head: [['CÓDIGO', 'CATEGORÍA', 'EXAMEN SOLICITADO', 'PRIORIDAD', 'OBSERVACIONES']],
+    body: tableBody,
+    theme: 'grid',
+    headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold', fontSize: 8.5, lineColor: [0, 0, 0], lineWidth: 0.1 },
+    bodyStyles: { fontSize: 8.5, textColor: [0, 0, 0], lineColor: [0, 0, 0], lineWidth: 0.1 },
+    columnStyles: {
+      0: { cellWidth: 24, halign: 'center' },
+      1: { cellWidth: 32 },
+      2: { cellWidth: 'auto' },
+      3: { cellWidth: 22, halign: 'center' },
+      4: { cellWidth: 45 }
+    }
+  });
+
+  currentY = (doc as any).lastAutoTable.finalY + 20;
+
+  // Check page overflow for signatures
+  if (currentY + 35 > 280) {
+    doc.addPage();
+    currentY = 30;
+  }
+
+  // Professional Signature block
+  let profTitle = 'MÉDICO TRATANTE';
+  if (loggedInUser.profession === 'enfermeria') profTitle = 'ENFERMERO/A TRATANTE';
+  else if (loggedInUser.profession === 'nutricion') profTitle = 'NUTRICIONISTA TRATANTE';
+  else if (loggedInUser.profession === 'matroneria') profTitle = 'MATRÓN/A TRATANTE';
+  else if (loggedInUser.profession === 'kinesiologo') profTitle = 'KINESIÓLOGO TRATANTE';
+  else if (loggedInUser.profession === 'psicologia') profTitle = 'PSICÓLOGO/A TRATANTE';
+  else if (loggedInUser.profession === 'asistente_social') profTitle = 'ASISTENTE SOCIAL';
+
+  doc.setLineWidth(0.3);
+  doc.line(pageWidth / 2 - 35, currentY, pageWidth / 2 + 35, currentY);
+  currentY += 4;
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'bold');
+  doc.text(loggedInUser.fullName || 'PROFESIONAL RESPONSABLE', pageWidth / 2, currentY, { align: 'center' });
+  currentY += 4;
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`${profTitle} - RUT: ${formatRutChilean(loggedInUser.rut || '')}`, pageWidth / 2, currentY, { align: 'center' });
+
+  const safeFileName = `Orden_Laboratorio_${(data.nombrePaciente || 'Paciente').replace(/[<>:"/\\|?*]+/g, '').replace(/\s+/g, '_')}.pdf`;
+  await savePdf(doc, safeFileName);
 };
 
 export const generateRecetaMedicaPdf = async (data: RecetaMedicaFormData, loggedInUser: User): Promise<void> => {
@@ -2159,40 +2012,10 @@ export const generateEcicepResumenPdf = async (data: any, user: User): Promise<v
 
         // Save PDF
         const pdfBytes = await pdfDoc.save();
-        
-        // Use browser download trick 
+        const safeFileName = `Resumen_ECICEP_${(data.nombrePaciente || 'Paciente').replace(/[<>:"/\\|?*]+/g, '').replace(/\s+/g, '_')}.pdf`;
         const blob = new Blob([pdfBytes as unknown as BlobPart], { type: 'application/pdf' });
         
-        // Local File handling with File Access API if available (consistent with rest)
-        const safeFileName = `Resumen_ECICEP_${(data.nombrePaciente || 'Paciente').replace(/[<>:"/\\|?*]+/g, '').replace(/\\s+/g, '_')}.pdf`;
-
-        if ('showSaveFilePicker' in window) {
-            try {
-                const handle = await (window as any).showSaveFilePicker({
-                    suggestedName: safeFileName,
-                    types: [{
-                        description: 'Documento PDF',
-                        accept: { 'application/pdf': ['.pdf'] },
-                    }],
-                });
-                const writable = await handle.createWritable();
-                await writable.write(pdfBytes);
-                await writable.close();
-                return;
-            } catch (error: any) {
-                if (error.name !== 'AbortError') {
-                    console.error('File system API Error', error);
-                } else {
-                    return;
-                }
-            }
-        }
-
-        // Fallback generic download (this triggers electron's interceptor)
-        const link = document.createElement('a');
-        link.href = window.URL.createObjectURL(blob);
-        link.download = safeFileName;
-        link.click();
+        openPdfInNewTab(blob, safeFileName);
         
     } catch (err: any) {
         console.error("Error generating ECICEP Resumen", err);
@@ -2296,9 +2119,9 @@ export const generateGesPdf = async (data: any, user: User): Promise<void> => {
         } 
         
         const pdfBytes = await pdfDoc.save();
-        const blob = new Blob([pdfBytes as unknown as BlobPart], { type: 'application/pdf' });
-        
         const safeFileName = `Constancia_GES_${(data.nombreLegal || 'Paciente').replace(/[<>:"/\\|?*]+/g, '').replace(/\s+/g, '_')}.pdf`;
+        const blob = new Blob([pdfBytes as unknown as BlobPart], { type: 'application/pdf' });
+        openPdfInNewTab(blob, safeFileName);
 
         const link = document.createElement('a');
         link.href = window.URL.createObjectURL(blob);
@@ -2554,7 +2377,7 @@ export const generateFichaVdiPdf = async (
         console.warn("Could not load encabezado.png", e);
     }
 
-    doc.save(safeFileName);
+    await savePdf(doc, safeFileName);
 
   } catch (err: any) {
     console.error("Error generating VDI PDF", err);

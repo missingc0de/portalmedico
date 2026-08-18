@@ -181,7 +181,7 @@ const FichaControlAdultoMayor: React.FC<FichaControlAdultoMayorProps> = ({ onBac
             </header>
 
             <div className="flex flex-col lg:flex-row lg:gap-8 mt-6">
-                <div className="lg:w-3/5 xl:w-7/12 space-y-4 flex-shrink-0 pr-4">
+                <div className="lg:w-3/5 xl:w-7/12 space-y-4 flex-shrink-0 pr-4 pb-16">
                     <DateField label="Fecha de Control" id="fechaControl" name="fechaControl" value={formData.fechaControl} onChange={handleChange} />
                     
                     <div className="p-4 bg-slate-100 rounded-lg border border-slate-300 space-y-4">

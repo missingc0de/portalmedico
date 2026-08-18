@@ -1,4 +1,4 @@
-﻿
+
 import React, { useState, useCallback, useEffect } from 'react';
 import { FichaDemenciaFormData, User, FormStatus } from '../types';
 import FormField from './FormField';
@@ -337,7 +337,7 @@ const IngresoDemenciasForm: React.FC<IngresoDemenciasFormProps> = ({ onBackToMen
       <div className="flex flex-col lg:flex-row lg:gap-8">
         {/* Form Column */}
         <div className="lg:w-3/5 xl:w-7/12 space-y-6 flex-shrink-0 lg:max-h-[calc(100vh-380px)] overflow-y-auto custom-scrollbar pr-3">
-          <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
+          <form onSubmit={(e) => e.preventDefault()} className="space-y-6 pb-16">
             
             {renderSection("Antecedentes", (
               <div className="grid grid-cols-1 gap-4">
