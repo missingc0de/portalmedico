@@ -1862,52 +1862,19 @@ const FichaPreingresoEcicep: React.FC<FichaPreingresoEcicepProps> = ({ onBackToM
                 </section>
 
                 <section id="sec-examenes-pre" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-2">
-                  <div className="flex justify-between items-center mb-3">
-                    <h3 className="text-lg font-semibold text-sky-700">Exámenes (Laboratorio)</h3>
-                    <button
-                      type="button"
-                      onClick={() => labFileRef.current?.click()}
-                      disabled={isLabLoading || loggedInUser?.profession !== 'medicina'}
-                      className="flex items-center px-3 py-1 bg-sky-100 text-sky-700 text-[10px] font-black rounded-md hover:bg-sky-200 disabled:bg-slate-200 uppercase"
-                    >
-                      {isLabLoading ? '...' : (loggedInUser?.profession === 'medicina' ? 'Importar' : 'No disponible')}
-                    </button>
-                    <input type="file" ref={labFileRef} onChange={handleLabFileChange} className="hidden" accept="application/pdf,image/*" />
-                  </div>
+                  <h3 className="text-lg font-semibold text-sky-700 mb-3 border-b border-sky-200 pb-2">Exámenes (Laboratorio)</h3>
                   {labError && <p className="text-red-500 text-xs mt-1 mb-2">{labError}</p>}
                   <DateField label="Fecha Exámenes" id="examenesFecha" name="examenesFecha" value={formData.examenesFecha} onChange={handleChange as any} containerClassName="mb-3" />
                   <FormField label="" id="examenes" name="examenes" value={formData.examenes} onChange={handleChange as any} isTextArea rows={4} placeholder="Detallar resultados de exámenes relevantes..." inputClassName="text-black" />
 
                   {/* EKG */}
-                  <div className="flex justify-between items-center mt-6 mb-2 border-t border-slate-100 pt-4">
-                    <h3 className="text-lg font-semibold text-sky-700">EKG</h3>
-                    <button
-                      type="button"
-                      onClick={() => ekgFileRef.current?.click()}
-                      disabled={isEkgLoading || loggedInUser?.profession !== 'medicina'}
-                      className="flex items-center px-3 py-1 bg-sky-100 text-sky-700 text-[10px] font-black rounded-md hover:bg-sky-200 disabled:bg-slate-200 uppercase"
-                    >
-                      {isEkgLoading ? '...' : (loggedInUser?.profession === 'medicina' ? 'Importar' : 'No disponible')}
-                    </button>
-                    <input type="file" ref={ekgFileRef} onChange={handleEkgFileChange} className="hidden" accept="application/pdf,image/*" />
-                  </div>
+                  <h3 className="text-lg font-semibold text-sky-700 mt-6 mb-2 border-t border-slate-100 pt-4">EKG</h3>
                   {ekgError && <p className="text-red-500 text-xs mt-1 mb-2">{ekgError}</p>}
                   <DateField label="Fecha EKG" id="ekgFecha" name="ekgFecha" value={formData.ekgFecha} onChange={handleChange as any} containerClassName="mb-3" />
                   <FormField label="" id="ekgResultados" name="ekgResultados" value={formData.ekgResultados} onChange={handleChange as any} isTextArea rows={3} placeholder="Detallar resultados de EKG..." inputClassName="text-black" />
 
                   {/* Otras Imágenes */}
-                  <div className="flex justify-between items-center mt-6 mb-2 border-t border-slate-100 pt-4">
-                    <h3 className="text-lg font-semibold text-sky-700">Otras Imágenes</h3>
-                    <button
-                      type="button"
-                      onClick={() => imgFileRef.current?.click()}
-                      disabled={isImgLoading || loggedInUser?.profession !== 'medicina'}
-                      className="flex items-center px-3 py-1 bg-sky-100 text-sky-700 text-[10px] font-black rounded-md hover:bg-sky-200 disabled:bg-slate-200 uppercase"
-                    >
-                      {isImgLoading ? '...' : (loggedInUser?.profession === 'medicina' ? 'Importar' : 'No disponible')}
-                    </button>
-                    <input type="file" ref={imgFileRef} onChange={handleImgFileChange} className="hidden" accept="application/pdf,image/*" />
-                  </div>
+                  <h3 className="text-lg font-semibold text-sky-700 mt-6 mb-2 border-t border-slate-100 pt-4">Otras Imágenes</h3>
                   {imgError && <p className="text-red-500 text-xs mt-1 mb-2">{imgError}</p>}
                   <DateField label="Fecha Otras Imágenes" id="otrasImagenesFecha" name="otrasImagenesFecha" value={formData.otrasImagenesFecha} onChange={handleChange as any} containerClassName="mb-3" />
                   <FormField label="" id="otrasImagenesResultados" name="otrasImagenesResultados" value={formData.otrasImagenesResultados || ''} onChange={handleChange as any} isTextArea rows={3} placeholder="Detallar resultados de otras imágenes..." inputClassName="text-black" />

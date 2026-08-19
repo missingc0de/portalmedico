@@ -300,6 +300,78 @@ const initialFormData: FichaIngresoEcicepFormData = {
   sm_em_intelectual: 'Atención y concentración conservadas. Abstracción y conocimientos generales acordes a escolaridad.',
   sm_em_juicio: 'Interpretación adecuada de situaciones y consecuencias. Toma de decisiones adaptativa.',
   sm_em_insight: 'Reconoce sus dificultades de salud, la necesidad de tratamiento y acepta recomendaciones.',
+  // Hipotiroidismo
+  hipo_sintoma_astenias: false,
+  hipo_sintoma_somnolencia: false,
+  hipo_sintoma_constipacion: false,
+  hipo_sintoma_intolerancia_frio: false,
+  hipo_sintoma_edema: false,
+  hipo_sintoma_aumento_peso: false,
+  hipo_sintoma_piel_seca: false,
+  hipo_sintoma_caida_cabello: false,
+  hipo_sintoma_calambres: false,
+  hipo_tsh_fecha: '',
+  hipo_tsh_resultado: '',
+  hipo_t4l_resultado: '',
+  hipo_adherencia_levotiroxina: 'Sí',
+  hipo_ayuno_correcto: 'Sí',
+  hipo_farmacos_interferentes: 'Niega',
+  hipo_observaciones: '',
+  // Artrosis
+  art_articulaciones_afectadas: '',
+  art_dolor_eva: '',
+  art_limitacion_funcional: '',
+  art_uso_analgesicos: 'Sí',
+  art_analgesicos_cuales: '',
+  art_kinesiterapia: 'No',
+  art_ayudas_tecnicas: 'No',
+  art_ayudas_tecnicas_cuales: '',
+  art_radiografia_fecha: '',
+  art_radiografia_resultado: '',
+  art_observaciones: '',
+  // Epilepsia
+  epi_tipo_crisis: '',
+  epi_ultima_crisis_fecha: '',
+  epi_frecuencia_crisis: '',
+  epi_farmaco_antiepiléptico: '',
+  epi_adherencia: 'Sí',
+  epi_niveles_plasmaticos_fecha: '',
+  epi_niveles_plasmaticos_resultado: '',
+  epi_efectos_secundarios: 'Niega',
+  epi_restricciones_conduccion: 'Sí',
+  epi_observaciones: '',
+  // Sala IRA
+  ira_diagnostico: '',
+  ira_sintoma_tos: false,
+  ira_sintoma_fiebre: false,
+  ira_sintoma_rinorrea: false,
+  ira_sintoma_odinofagia: false,
+  ira_sintoma_disnea: false,
+  ira_saturacion: '',
+  ira_fr: '',
+  ira_uso_broncodilatador: 'No',
+  ira_broncodilatador_cual: '',
+  ira_nebulizacion: 'No',
+  ira_rx_torax: 'No realizada',
+  ira_rx_resultado: '',
+  ira_observaciones: '',
+  // Demencias
+  dem_diagnostico: '',
+  dem_estadio: '',
+  dem_mmse_fecha: '',
+  dem_mmse_puntaje: '',
+  dem_barthel_puntaje: '',
+  dem_cuidador_principal: '',
+  dem_sobrecarga_cuidador: 'No',
+  dem_sintoma_deambulacion: false,
+  dem_sintoma_alimentacion: false,
+  dem_sintoma_continencia: false,
+  dem_sintoma_conductas: false,
+  dem_sintoma_agitacion: false,
+  dem_farmaco_antidemencia: '',
+  dem_adherencia: 'Sí',
+  dem_derivacion_especialidad: 'No',
+  dem_observaciones: '',
 };
 
 const actividadFisicaOptions = [
@@ -1453,19 +1525,108 @@ export const FichaIngresoEcicep: React.FC<FichaIngresoEcicepProps> = ({ onBackTo
       anamnesis += `\n`;
     }
 
+    if (formData.incluirControlHipotiroidismo) {
+      const fd = formData as any;
+      anamnesis += `CONTROL HIPOTIROIDISMO:\n`;
+      const hipoSintomas = [
+        {k:'hipo_sintoma_astenias',l:'Astenia/fatiga'},{k:'hipo_sintoma_somnolencia',l:'Somnolencia'},
+        {k:'hipo_sintoma_constipacion',l:'Constipación'},{k:'hipo_sintoma_intolerancia_frio',l:'Intolerancia al frío'},
+        {k:'hipo_sintoma_edema',l:'Edema (mixedema)'},{k:'hipo_sintoma_aumento_peso',l:'Aumento de peso'},
+        {k:'hipo_sintoma_piel_seca',l:'Piel seca'},{k:'hipo_sintoma_caida_cabello',l:'Caída de cabello'},
+        {k:'hipo_sintoma_calambres',l:'Calambres musculares'},
+      ];
+      anamnesis += `Síntomas actuales: ${hipoSintomas.filter(s=>fd[s.k]).map(s=>s.l).join(', ') || 'Niega síntomas'}\n`;
+      if (fd.hipo_tsh_fecha || fd.hipo_tsh_resultado) anamnesis += `TSH (${fd.hipo_tsh_fecha||'sin fecha'}): ${fd.hipo_tsh_resultado||'(no ingresado)'}\n`;
+      if (fd.hipo_t4l_resultado) anamnesis += `T4 libre: ${fd.hipo_t4l_resultado}\n`;
+      anamnesis += `Adherencia a Levotiroxina: ${fd.hipo_adherencia_levotiroxina||'(No ingresado)'}\n`;
+      anamnesis += `Ayuno correcto post dosis: ${fd.hipo_ayuno_correcto||'(No ingresado)'}\n`;
+      anamnesis += `Fármacos que interfieren absorción: ${fd.hipo_farmacos_interferentes||'(No ingresado)'}\n`;
+      if (fd.hipo_observaciones) anamnesis += `Observaciones: ${fd.hipo_observaciones}\n`;
+      anamnesis += `\n`;
+    }
+
+    if (formData.incluirControlArtrosis) {
+      const fd = formData as any;
+      anamnesis += `CONTROL ARTROSIS:\n`;
+      anamnesis += `Articulaciones afectadas: ${fd.art_articulaciones_afectadas||'(No ingresado)'}\n`;
+      anamnesis += `Dolor EVA: ${fd.art_dolor_eva||'0'}/10\n`;
+      anamnesis += `Limitación funcional: ${fd.art_limitacion_funcional||'(No ingresado)'}\n`;
+      anamnesis += `Uso de analgésicos: ${fd.art_uso_analgesicos||'(No ingresado)'}${fd.art_analgesicos_cuales ? ` (${fd.art_analgesicos_cuales})` : ''}\n`;
+      anamnesis += `Kinesiterapia: ${fd.art_kinesiterapia||'(No ingresado)'}\n`;
+      anamnesis += `Ayudas técnicas: ${fd.art_ayudas_tecnicas||'(No ingresado)'}\n`;
+      if (fd.art_radiografia_fecha || fd.art_radiografia_resultado) anamnesis += `Radiografía (${fd.art_radiografia_fecha||'sin fecha'}): ${fd.art_radiografia_resultado||'(no ingresado)'}\n`;
+      if (fd.art_observaciones) anamnesis += `Observaciones: ${fd.art_observaciones}\n`;
+      anamnesis += `\n`;
+    }
+
+    if (formData.incluirControlEpilepsia) {
+      const fd = formData as any;
+      anamnesis += `CONTROL EPILEPSIA:\n`;
+      anamnesis += `Tipo de crisis: ${fd.epi_tipo_crisis||'(No ingresado)'}\n`;
+      anamnesis += `Última crisis: ${fd.epi_ultima_crisis_fecha||'(No ingresado)'}\n`;
+      anamnesis += `Frecuencia de crisis: ${fd.epi_frecuencia_crisis||'(No ingresado)'}\n`;
+      anamnesis += `Fármaco antiepiléptico: ${fd.epi_farmaco_antiepiléptico||'(No ingresado)'}\n`;
+      anamnesis += `Adherencia a FAE: ${fd.epi_adherencia||'(No ingresado)'}\n`;
+      if (fd.epi_niveles_plasmaticos_fecha || fd.epi_niveles_plasmaticos_resultado) {
+        anamnesis += `Niveles plasmáticos (${fd.epi_niveles_plasmaticos_fecha||'sin fecha'}): ${fd.epi_niveles_plasmaticos_resultado||'(no ingresado)'}\n`;
+      }
+      anamnesis += `Efectos secundarios referidos: ${fd.epi_efectos_secundarios||'(No ingresado)'}\n`;
+      anamnesis += `Restricción para conducir: ${fd.epi_restricciones_conduccion||'(No ingresado)'}\n`;
+      if (fd.epi_observaciones) anamnesis += `Observaciones: ${fd.epi_observaciones}\n`;
+      anamnesis += `\n`;
+    }
+
     if (formData.incluirControlSalaEra) {
-      anamnesis += `SÍNTOMAS RESPIRATORIOS:\n`;
+      anamnesis += `SÍNTOMAS RESPIRATORIOS (SALA ERA):\n`;
       eraSymptomsItems.forEach(item => {
         const isPresent = formData[item.key as keyof FichaIngresoEcicepFormData];
         anamnesis += `- ${item.label}: ${isPresent ? 'Sí' : 'Niega'}\n`;
       });
       anamnesis += `\n`;
-
       anamnesis += `DESENCADENANTES AMBIENTALES:\n`;
       eraTriggersItems.forEach(item => {
         const isPresent = formData[item.key as keyof FichaIngresoEcicepFormData];
         anamnesis += `- ${item.label}: ${isPresent ? 'Sí' : 'Niega'}\n`;
       });
+      anamnesis += `\n`;
+    }
+
+    if (formData.incluirControlSalaIra) {
+      const fd = formData as any;
+      anamnesis += `CONTROL SALA IRA:\n`;
+      anamnesis += `Diagnóstico: ${fd.ira_diagnostico||'(No ingresado)'}\n`;
+      const iraSintomas = [
+        {k:'ira_sintoma_tos',l:'Tos'},{k:'ira_sintoma_fiebre',l:'Fiebre'},
+        {k:'ira_sintoma_rinorrea',l:'Rinorrea'},{k:'ira_sintoma_odinofagia',l:'Odinofagia'},{k:'ira_sintoma_disnea',l:'Disnea'},
+      ];
+      anamnesis += `Síntomas: ${iraSintomas.filter(s=>fd[s.k]).map(s=>s.l).join(', ') || 'Niega síntomas activos'}\n`;
+      if (fd.ira_saturacion) anamnesis += `Saturación O₂: ${fd.ira_saturacion}%\n`;
+      if (fd.ira_fr) anamnesis += `FR: ${fd.ira_fr} resp/min\n`;
+      anamnesis += `Broncodilatador: ${fd.ira_uso_broncodilatador||'No'}${fd.ira_broncodilatador_cual ? ` (${fd.ira_broncodilatador_cual})` : ''}\n`;
+      anamnesis += `Nebulización: ${fd.ira_nebulizacion||'No'}\n`;
+      anamnesis += `Rx Tórax: ${fd.ira_rx_torax||'No realizada'}${fd.ira_rx_resultado ? ` - ${fd.ira_rx_resultado}` : ''}\n`;
+      if (fd.ira_observaciones) anamnesis += `Observaciones: ${fd.ira_observaciones}\n`;
+      anamnesis += `\n`;
+    }
+
+    if (formData.incluirControlDemencias) {
+      const fd = formData as any;
+      anamnesis += `CONTROL DEMENCIAS:\n`;
+      anamnesis += `Diagnóstico: ${fd.dem_diagnostico||'(No ingresado)'}\n`;
+      anamnesis += `Estadio: ${fd.dem_estadio||'(No ingresado)'}\n`;
+      if (fd.dem_mmse_fecha || fd.dem_mmse_puntaje) anamnesis += `MMSE (${fd.dem_mmse_fecha||'sin fecha'}): ${fd.dem_mmse_puntaje||'(no ingresado)'}\n`;
+      if (fd.dem_barthel_puntaje) anamnesis += `Índice de Barthel: ${fd.dem_barthel_puntaje}\n`;
+      anamnesis += `Cuidador principal: ${fd.dem_cuidador_principal||'(No ingresado)'}\n`;
+      anamnesis += `Sobrecarga del cuidador: ${fd.dem_sobrecarga_cuidador||'No'}\n`;
+      const demSintomas = [
+        {k:'dem_sintoma_deambulacion',l:'Alt. deambulación'},{k:'dem_sintoma_alimentacion',l:'Alt. alimentación'},
+        {k:'dem_sintoma_continencia',l:'Incontinencia'},{k:'dem_sintoma_conductas',l:'Conductas disruptivas'},{k:'dem_sintoma_agitacion',l:'Agitación'},
+      ];
+      anamnesis += `Síntomas conductuales/funcionales: ${demSintomas.filter(s=>fd[s.k]).map(s=>s.l).join(', ') || 'Sin síntomas significativos'}\n`;
+      if (fd.dem_farmaco_antidemencia) anamnesis += `Fármaco antidemencia: ${fd.dem_farmaco_antidemencia}\n`;
+      anamnesis += `Adherencia: ${fd.dem_adherencia||'(No ingresado)'}\n`;
+      anamnesis += `Derivación a especialidad: ${fd.dem_derivacion_especialidad||'No'}\n`;
+      if (fd.dem_observaciones) anamnesis += `Observaciones: ${fd.dem_observaciones}\n`;
       anamnesis += `\n`;
     }
 
@@ -2153,71 +2314,148 @@ export const FichaIngresoEcicep: React.FC<FichaIngresoEcicepProps> = ({ onBackTo
                     </button>
                     {isAdditionalControlsOpen && (
                       <div className="mt-2 bg-white p-3 rounded-lg border border-sky-100 shadow-inner animate-fadeIn">
-                        <label htmlFor="additionalControlSelect" className="block text-sm font-medium text-slate-700 mb-1.5">Seleccionar Control Específico</label>
-                        <select
-                          id="additionalControlSelect"
-                          className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg shadow-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 text-slate-800 outline-none text-sm font-sans font-normal"
-                          onChange={(e) => {
-                            const selectedKey = e.target.value;
-                            setFormData(prev => {
-                              const newState = { ...prev };
-                              additionalControlsItems.forEach(item => {
-                                (newState as any)[item.key] = false;
-                              });
-                              if (selectedKey) {
-                                (newState as any)[selectedKey] = true;
-                              }
-                              return newState;
-                            });
-                          }}
-                          value={additionalControlsItems.find(item => formData[item.key as keyof FichaIngresoEcicepFormData])?.key || ''}
-                        >
-                          <option value="">Ninguno / Solo ECICEP</option>
+                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2">Marcar todos los controles que apliquen:</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                           {additionalControlsItems.map(item => (
-                            <option key={item.key} value={item.key}>{item.label}</option>
+                            <label
+                              key={item.key}
+                              className={`flex items-center gap-2.5 px-3 py-2 rounded-lg border cursor-pointer transition-all text-sm font-medium select-none ${
+                                formData[item.key as keyof FichaIngresoEcicepFormData]
+                                  ? 'bg-sky-50 border-sky-400 text-sky-800 shadow-sm'
+                                  : 'bg-white border-slate-200 text-slate-600 hover:border-sky-300 hover:bg-sky-50/50'
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                name={item.key}
+                                checked={!!formData[item.key as keyof FichaIngresoEcicepFormData]}
+                                onChange={handleChange}
+                                className="h-4 w-4 text-sky-600 border-slate-300 rounded focus:ring-sky-500 shrink-0"
+                              />
+                              <span>{item.label}</span>
+                            </label>
                           ))}
-                        </select>
+                        </div>
 
+                        {/* Panel: Cardiovascular */}
                         {formData.incluirControlCardiovascular && (
                           <div className="mt-4 p-4 bg-slate-50 border border-sky-200 rounded-xl shadow-sm animate-fadeIn">
                             <h4 className="text-[10px] font-black text-sky-800 uppercase mb-3 tracking-widest border-b border-sky-100 pb-1">Síntomas Cardiovasculares</h4>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1">
                               {cvSymptomsItems.map(item => (
                                 <div key={item.key} className="flex items-center gap-2 py-1">
-                                  <input
-                                    type="checkbox"
-                                    id={item.key}
-                                    name={item.key}
-                                    checked={formData[item.key as keyof FichaIngresoEcicepFormData] as boolean}
-                                    onChange={handleChange}
-                                    className="h-3.5 w-3.5 text-sky-600 border-slate-300 rounded focus:ring-sky-500"
-                                  />
-                                  <label htmlFor={item.key} className="text-xs font-medium text-slate-700 cursor-pointer">
-                                    {item.label}
-                                  </label>
+                                  <input type="checkbox" id={item.key} name={item.key} checked={formData[item.key as keyof FichaIngresoEcicepFormData] as boolean} onChange={handleChange} className="h-3.5 w-3.5 text-sky-600 border-slate-300 rounded focus:ring-sky-500" />
+                                  <label htmlFor={item.key} className="text-xs font-medium text-slate-700 cursor-pointer">{item.label}</label>
                                 </div>
                               ))}
                             </div>
                           </div>
                         )}
 
+                        {/* Panel: Hipotiroidismo */}
+                        {formData.incluirControlHipotiroidismo && (
+                          <div className="mt-4 p-4 bg-slate-50 border border-sky-200 rounded-xl shadow-sm animate-fadeIn space-y-4">
+                            <h4 className="text-[10px] font-black text-sky-800 uppercase mb-3 tracking-widest border-b border-sky-100 pb-1">Control Hipotiroidismo</h4>
+                            <div>
+                              <p className="text-xs font-semibold text-slate-600 mb-2">Síntomas actuales:</p>
+                              <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1">
+                                {[
+                                  { key: 'hipo_sintoma_astenias', label: 'Astenia/fatiga' },
+                                  { key: 'hipo_sintoma_somnolencia', label: 'Somnolencia' },
+                                  { key: 'hipo_sintoma_constipacion', label: 'Constipación' },
+                                  { key: 'hipo_sintoma_intolerancia_frio', label: 'Intolerancia al frío' },
+                                  { key: 'hipo_sintoma_edema', label: 'Edema (mixedema)' },
+                                  { key: 'hipo_sintoma_aumento_peso', label: 'Aumento de peso' },
+                                  { key: 'hipo_sintoma_piel_seca', label: 'Piel seca' },
+                                  { key: 'hipo_sintoma_caida_cabello', label: 'Caída de cabello' },
+                                  { key: 'hipo_sintoma_calambres', label: 'Calambres musculares' },
+                                ].map(item => (
+                                  <div key={item.key} className="flex items-center gap-2 py-0.5">
+                                    <input type="checkbox" id={item.key} name={item.key} checked={!!(formData as any)[item.key]} onChange={handleChange} className="h-3.5 w-3.5 text-sky-600 border-slate-300 rounded focus:ring-sky-500" />
+                                    <label htmlFor={item.key} className="text-xs font-medium text-slate-700 cursor-pointer">{item.label}</label>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                              <FormField label="Fecha TSH" id="hipo_tsh_fecha" name="hipo_tsh_fecha" value={(formData as any).hipo_tsh_fecha || ''} onChange={handleChange} placeholder="DD-MM-AAAA" />
+                              <FormField label="TSH (resultado)" id="hipo_tsh_resultado" name="hipo_tsh_resultado" value={(formData as any).hipo_tsh_resultado || ''} onChange={handleChange} placeholder="ej. 4.5 mUI/L" />
+                              <FormField label="T4 libre (resultado)" id="hipo_t4l_resultado" name="hipo_t4l_resultado" value={(formData as any).hipo_t4l_resultado || ''} onChange={handleChange} placeholder="ej. 1.2 ng/dL" />
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                              {renderRadioGroup("Adherencia a Levotiroxina", "hipo_adherencia_levotiroxina" as any, [{value:'Sí',label:'Sí'},{value:'No',label:'No'},{value:'Irregular',label:'Irregular'}])}
+                              {renderRadioGroup("Ayuno correcto (30 min post dosis)", "hipo_ayuno_correcto" as any, [{value:'Sí',label:'Sí'},{value:'No',label:'No'}])}
+                              {renderRadioGroup("Fármacos que interfieren absorción", "hipo_farmacos_interferentes" as any, [{value:'Niega',label:'Niega'},{value:'Sí',label:'Sí'}])}
+                            </div>
+                            <AutoExpandingTextArea label="Observaciones" id="hipo_observaciones" name="hipo_observaciones" value={(formData as any).hipo_observaciones || ''} onChange={handleChange as any} placeholder="Observaciones del control de hipotiroidismo..." />
+                          </div>
+                        )}
+
+                        {/* Panel: Artrosis */}
+                        {formData.incluirControlArtrosis && (
+                          <div className="mt-4 p-4 bg-slate-50 border border-sky-200 rounded-xl shadow-sm animate-fadeIn space-y-4">
+                            <h4 className="text-[10px] font-black text-sky-800 uppercase mb-3 tracking-widest border-b border-sky-100 pb-1">Control Artrosis</h4>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              <AutoExpandingTextArea label="Articulaciones afectadas" id="art_articulaciones_afectadas" name="art_articulaciones_afectadas" value={(formData as any).art_articulaciones_afectadas || ''} onChange={handleChange as any} placeholder="ej. Rodillas bilaterales, cadera izquierda..." />
+                              <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1.5">Dolor (EVA 0-10):</label>
+                                <div className="flex items-center gap-3">
+                                  <input type="range" min="0" max="10" step="1" value={(formData as any).art_dolor_eva || 0} onChange={(e) => setFormData(prev => ({ ...prev, art_dolor_eva: e.target.value } as any))} className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-sky-600" />
+                                  <span className="text-lg font-bold text-sky-700 w-6 text-center">{(formData as any).art_dolor_eva || 0}</span>
+                                </div>
+                              </div>
+                            </div>
+                            <AutoExpandingTextArea label="Limitación funcional" id="art_limitacion_funcional" name="art_limitacion_funcional" value={(formData as any).art_limitacion_funcional || ''} onChange={handleChange as any} placeholder="ej. Dificultad para subir escaleras, limitación para marcha prolongada..." />
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                              {renderRadioGroup("Uso de analgésicos", "art_uso_analgesicos" as any, [{value:'Sí',label:'Sí'},{value:'No',label:'No'},{value:'Ocasional',label:'Ocasional'}])}
+                              {renderRadioGroup("Kinesiterapia", "art_kinesiterapia" as any, [{value:'Sí',label:'Sí'},{value:'No',label:'No'},{value:'Derivado',label:'Derivado'}])}
+                              {renderRadioGroup("Ayudas técnicas", "art_ayudas_tecnicas" as any, [{value:'Sí',label:'Sí'},{value:'No',label:'No'}])}
+                            </div>
+                            {(formData as any).art_uso_analgesicos === 'Sí' && (
+                              <FormField label="¿Cuáles analgésicos?" id="art_analgesicos_cuales" name="art_analgesicos_cuales" value={(formData as any).art_analgesicos_cuales || ''} onChange={handleChange} placeholder="ej. Paracetamol 1g, Ibuprofeno 400mg..." />
+                            )}
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                              <FormField label="Radiografía (fecha)" id="art_radiografia_fecha" name="art_radiografia_fecha" value={(formData as any).art_radiografia_fecha || ''} onChange={handleChange} placeholder="DD-MM-AAAA" />
+                              <div className="sm:col-span-2">
+                                <AutoExpandingTextArea label="Resultado radiografía" id="art_radiografia_resultado" name="art_radiografia_resultado" value={(formData as any).art_radiografia_resultado || ''} onChange={handleChange as any} placeholder="ej. Pinzamiento del espacio articular..." />
+                              </div>
+                            </div>
+                            <AutoExpandingTextArea label="Observaciones" id="art_observaciones" name="art_observaciones" value={(formData as any).art_observaciones || ''} onChange={handleChange as any} placeholder="Observaciones del control de artrosis..." />
+                          </div>
+                        )}
+
+                        {/* Panel: Epilepsia */}
+                        {formData.incluirControlEpilepsia && (
+                          <div className="mt-4 p-4 bg-slate-50 border border-sky-200 rounded-xl shadow-sm animate-fadeIn space-y-4">
+                            <h4 className="text-[10px] font-black text-sky-800 uppercase mb-3 tracking-widest border-b border-sky-100 pb-1">Control Epilepsia</h4>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              <AutoExpandingTextArea label="Tipo de crisis" id="epi_tipo_crisis" name="epi_tipo_crisis" value={(formData as any).epi_tipo_crisis || ''} onChange={handleChange as any} placeholder="ej. Crisis tónico-clónicas generalizadas, crisis focales..." />
+                              <AutoExpandingTextArea label="Fármaco antiepiléptico" id="epi_farmaco_antiepiléptico" name="epi_farmaco_antiepiléptico" value={(formData as any).epi_farmaco_antiepiléptico || ''} onChange={handleChange as any} placeholder="ej. Ácido Valproico 500mg, Carbamazepina 200mg..." />
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                              <FormField label="Última crisis (fecha)" id="epi_ultima_crisis_fecha" name="epi_ultima_crisis_fecha" value={(formData as any).epi_ultima_crisis_fecha || ''} onChange={handleChange} placeholder="DD-MM-AAAA" />
+                              <FormField label="Frecuencia de crisis" id="epi_frecuencia_crisis" name="epi_frecuencia_crisis" value={(formData as any).epi_frecuencia_crisis || ''} onChange={handleChange} placeholder="ej. Sin crisis en 6 meses, 1 al mes..." />
+                              {renderRadioGroup("Adherencia a FAE", "epi_adherencia" as any, [{value:'Sí',label:'Sí'},{value:'No',label:'No'},{value:'Irregular',label:'Irregular'}])}
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                              <FormField label="Niveles plasmáticos (fecha)" id="epi_niveles_plasmaticos_fecha" name="epi_niveles_plasmaticos_fecha" value={(formData as any).epi_niveles_plasmaticos_fecha || ''} onChange={handleChange} placeholder="DD-MM-AAAA" />
+                              <FormField label="Niveles plasmáticos (resultado)" id="epi_niveles_plasmaticos_resultado" name="epi_niveles_plasmaticos_resultado" value={(formData as any).epi_niveles_plasmaticos_resultado || ''} onChange={handleChange} placeholder="ej. VPA 75 μg/mL (normal)" />
+                              {renderRadioGroup("Efectos secundarios referidos", "epi_efectos_secundarios" as any, [{value:'Niega',label:'Niega'},{value:'Sí',label:'Sí'}])}
+                            </div>
+                            {renderRadioGroup("Restricción para conducir vehículos", "epi_restricciones_conduccion" as any, [{value:'Sí, informado',label:'Sí, informado'},{value:'No aplica',label:'No aplica'}])}
+                            <AutoExpandingTextArea label="Observaciones" id="epi_observaciones" name="epi_observaciones" value={(formData as any).epi_observaciones || ''} onChange={handleChange as any} placeholder="Observaciones del control de epilepsia..." />
+                          </div>
+                        )}
+
+                        {/* Panel: Sala ERA */}
                         {formData.incluirControlSalaEra && (
                           <div className="mt-4 p-4 bg-slate-50 border border-sky-200 rounded-xl shadow-sm animate-fadeIn">
-                            <h4 className="text-[10px] font-black text-sky-800 uppercase mb-3 tracking-widest border-b border-sky-100 pb-1">Síntomas Respiratorios</h4>
+                            <h4 className="text-[10px] font-black text-sky-800 uppercase mb-3 tracking-widest border-b border-sky-100 pb-1">Síntomas Respiratorios (Sala ERA)</h4>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1">
                               {eraSymptomsItems.map(item => (
                                 <div key={item.key} className="flex items-center gap-2 py-1">
-                                  <input
-                                    type="checkbox"
-                                    id={item.key}
-                                    name={item.key}
-                                    checked={formData[item.key as keyof FichaIngresoEcicepFormData] as boolean}
-                                    onChange={handleChange}
-                                    className="h-3.5 w-3.5 text-sky-600 border-slate-300 rounded focus:ring-sky-500"
-                                  />
-                                  <label htmlFor={item.key} className="text-xs font-medium text-slate-700 cursor-pointer">
-                                    {item.label}
-                                  </label>
+                                  <input type="checkbox" id={item.key} name={item.key} checked={formData[item.key as keyof FichaIngresoEcicepFormData] as boolean} onChange={handleChange} className="h-3.5 w-3.5 text-sky-600 border-slate-300 rounded focus:ring-sky-500" />
+                                  <label htmlFor={item.key} className="text-xs font-medium text-slate-700 cursor-pointer">{item.label}</label>
                                 </div>
                               ))}
                             </div>
@@ -2225,23 +2463,99 @@ export const FichaIngresoEcicep: React.FC<FichaIngresoEcicepProps> = ({ onBackTo
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1">
                               {eraTriggersItems.map(item => (
                                 <div key={item.key} className="flex items-center gap-2 py-1">
-                                  <input
-                                    type="checkbox"
-                                    id={item.key}
-                                    name={item.key}
-                                    checked={formData[item.key as keyof FichaIngresoEcicepFormData] as boolean}
-                                    onChange={handleChange}
-                                    className="h-3.5 w-3.5 text-sky-600 border-slate-300 rounded focus:ring-sky-500"
-                                  />
-                                  <label htmlFor={item.key} className="text-xs font-medium text-slate-700 cursor-pointer">
-                                    {item.label}
-                                  </label>
+                                  <input type="checkbox" id={item.key} name={item.key} checked={formData[item.key as keyof FichaIngresoEcicepFormData] as boolean} onChange={handleChange} className="h-3.5 w-3.5 text-sky-600 border-slate-300 rounded focus:ring-sky-500" />
+                                  <label htmlFor={item.key} className="text-xs font-medium text-slate-700 cursor-pointer">{item.label}</label>
                                 </div>
                               ))}
                             </div>
                           </div>
                         )}
 
+                        {/* Panel: Sala IRA */}
+                        {formData.incluirControlSalaIra && (
+                          <div className="mt-4 p-4 bg-slate-50 border border-sky-200 rounded-xl shadow-sm animate-fadeIn space-y-4">
+                            <h4 className="text-[10px] font-black text-sky-800 uppercase mb-3 tracking-widest border-b border-sky-100 pb-1">Control Sala IRA</h4>
+                            <AutoExpandingTextArea label="Diagnóstico IRA" id="ira_diagnostico" name="ira_diagnostico" value={(formData as any).ira_diagnostico || ''} onChange={handleChange as any} placeholder="ej. Neumonía adquirida en la comunidad, Broncoespasmo..." />
+                            <div>
+                              <p className="text-xs font-semibold text-slate-600 mb-2">Síntomas actuales:</p>
+                              <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1">
+                                {[
+                                  { key: 'ira_sintoma_tos', label: 'Tos' },
+                                  { key: 'ira_sintoma_fiebre', label: 'Fiebre' },
+                                  { key: 'ira_sintoma_rinorrea', label: 'Rinorrea' },
+                                  { key: 'ira_sintoma_odinofagia', label: 'Odinofagia' },
+                                  { key: 'ira_sintoma_disnea', label: 'Disnea' },
+                                ].map(item => (
+                                  <div key={item.key} className="flex items-center gap-2 py-0.5">
+                                    <input type="checkbox" id={item.key} name={item.key} checked={!!(formData as any)[item.key]} onChange={handleChange} className="h-3.5 w-3.5 text-sky-600 border-slate-300 rounded focus:ring-sky-500" />
+                                    <label htmlFor={item.key} className="text-xs font-medium text-slate-700 cursor-pointer">{item.label}</label>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                              <FormField label="Saturación O₂ (%)" id="ira_saturacion" name="ira_saturacion" value={(formData as any).ira_saturacion || ''} onChange={handleChange} placeholder="ej. 97" />
+                              <FormField label="FR (resp/min)" id="ira_fr" name="ira_fr" value={(formData as any).ira_fr || ''} onChange={handleChange} placeholder="ej. 18" />
+                              {renderRadioGroup("Broncodilatador", "ira_uso_broncodilatador" as any, [{value:'Sí',label:'Sí'},{value:'No',label:'No'}])}
+                            </div>
+                            {(formData as any).ira_uso_broncodilatador === 'Sí' && (
+                              <FormField label="¿Cuál broncodilatador?" id="ira_broncodilatador_cual" name="ira_broncodilatador_cual" value={(formData as any).ira_broncodilatador_cual || ''} onChange={handleChange} placeholder="ej. Salbutamol 100mcg, 2 puff c/8h" />
+                            )}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              {renderRadioGroup("Nebulización", "ira_nebulizacion" as any, [{value:'Sí',label:'Sí'},{value:'No',label:'No'}])}
+                              {renderRadioGroup("Rx Tórax", "ira_rx_torax" as any, [{value:'Normal',label:'Normal'},{value:'Alterada',label:'Alterada'},{value:'No realizada',label:'No realizada'}])}
+                            </div>
+                            {(formData as any).ira_rx_torax === 'Alterada' && (
+                              <AutoExpandingTextArea label="Resultado Rx Tórax" id="ira_rx_resultado" name="ira_rx_resultado" value={(formData as any).ira_rx_resultado || ''} onChange={handleChange as any} placeholder="Descripción del hallazgo radiológico..." />
+                            )}
+                            <AutoExpandingTextArea label="Observaciones" id="ira_observaciones" name="ira_observaciones" value={(formData as any).ira_observaciones || ''} onChange={handleChange as any} placeholder="Observaciones del control IRA..." />
+                          </div>
+                        )}
+
+                        {/* Panel: Demencias */}
+                        {formData.incluirControlDemencias && (
+                          <div className="mt-4 p-4 bg-slate-50 border border-sky-200 rounded-xl shadow-sm animate-fadeIn space-y-4">
+                            <h4 className="text-[10px] font-black text-sky-800 uppercase mb-3 tracking-widest border-b border-sky-100 pb-1">Control Demencias</h4>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              <AutoExpandingTextArea label="Diagnóstico" id="dem_diagnostico" name="dem_diagnostico" value={(formData as any).dem_diagnostico || ''} onChange={handleChange as any} placeholder="ej. Enfermedad de Alzheimer, Demencia vascular..." />
+                              {renderRadioGroup("Estadio", "dem_estadio" as any, [{value:'Leve',label:'Leve'},{value:'Moderado',label:'Moderado'},{value:'Severo',label:'Severo'}])}
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                              <FormField label="MMSE (fecha)" id="dem_mmse_fecha" name="dem_mmse_fecha" value={(formData as any).dem_mmse_fecha || ''} onChange={handleChange} placeholder="DD-MM-AAAA" />
+                              <FormField label="MMSE (puntaje /30)" id="dem_mmse_puntaje" name="dem_mmse_puntaje" value={(formData as any).dem_mmse_puntaje || ''} onChange={handleChange} placeholder="ej. 22/30" />
+                              <FormField label="Barthel (puntaje /100)" id="dem_barthel_puntaje" name="dem_barthel_puntaje" value={(formData as any).dem_barthel_puntaje || ''} onChange={handleChange} placeholder="ej. 85/100" />
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              <FormField label="Cuidador principal" id="dem_cuidador_principal" name="dem_cuidador_principal" value={(formData as any).dem_cuidador_principal || ''} onChange={handleChange} placeholder="ej. Hija, cónyuge, cuidadora contratada..." />
+                              {renderRadioGroup("Sobrecarga del cuidador", "dem_sobrecarga_cuidador" as any, [{value:'No',label:'No'},{value:'Leve',label:'Leve'},{value:'Severa',label:'Severa'}])}
+                            </div>
+                            <div>
+                              <p className="text-xs font-semibold text-slate-600 mb-2">Síntomas conductuales y funcionales:</p>
+                              <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1">
+                                {[
+                                  { key: 'dem_sintoma_deambulacion', label: 'Alt. deambulación' },
+                                  { key: 'dem_sintoma_alimentacion', label: 'Alt. alimentación' },
+                                  { key: 'dem_sintoma_continencia', label: 'Incontinencia' },
+                                  { key: 'dem_sintoma_conductas', label: 'Conductas disruptivas' },
+                                  { key: 'dem_sintoma_agitacion', label: 'Agitación' },
+                                ].map(item => (
+                                  <div key={item.key} className="flex items-center gap-2 py-0.5">
+                                    <input type="checkbox" id={item.key} name={item.key} checked={!!(formData as any)[item.key]} onChange={handleChange} className="h-3.5 w-3.5 text-sky-600 border-slate-300 rounded focus:ring-sky-500" />
+                                    <label htmlFor={item.key} className="text-xs font-medium text-slate-700 cursor-pointer">{item.label}</label>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              <FormField label="Fármaco antidemencia" id="dem_farmaco_antidemencia" name="dem_farmaco_antidemencia" value={(formData as any).dem_farmaco_antidemencia || ''} onChange={handleChange} placeholder="ej. Donepezilo 10mg, Memantina 10mg..." />
+                              {renderRadioGroup("Adherencia farmacológica", "dem_adherencia" as any, [{value:'Sí',label:'Sí'},{value:'No',label:'No'},{value:'Irregular',label:'Irregular'}])}
+                            </div>
+                            {renderRadioGroup("Derivación a especialidad", "dem_derivacion_especialidad" as any, [{value:'No',label:'No'},{value:'Neurología',label:'Neurología'},{value:'Psiquiatría',label:'Psiquiatría'},{value:'Geriatría',label:'Geriatría'}])}
+                            <AutoExpandingTextArea label="Observaciones" id="dem_observaciones" name="dem_observaciones" value={(formData as any).dem_observaciones || ''} onChange={handleChange as any} placeholder="Observaciones del control de demencias..." />
+                          </div>
+                        )}
+
+                        {/* Panel: SM */}
                         {formData.incluirControlSm && (
                           <div className="mt-4 p-4 bg-slate-50 border border-sky-200 rounded-xl shadow-sm animate-fadeIn space-y-6">
                             <div>
