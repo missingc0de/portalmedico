@@ -25,9 +25,9 @@ def main():
     }
 
     repo = 'missingc0de/portalmedico'
-    tag = 'v1.4.5'
+    tag = 'v1.4.6'
     
-    # Check if release v1.4.5 exists
+    # Check if release v1.4.6 exists
     release_id = None
     upload_url_base = None
     
@@ -37,14 +37,14 @@ def main():
             data = json.loads(resp.read().decode('utf-8'))
             release_id = data.get('id')
             upload_url_base = data.get('upload_url', '').split('{')[0]
-            print(f"Found existing Release v1.4.5 (ID: {release_id})")
+            print(f"Found existing Release v1.4.6 (ID: {release_id})")
     except Exception as e:
         print("Release tag not found by URL, attempting creation or lookup...")
         create_payload = {
             'tag_name': tag,
             'target_commitish': 'main',
-            'name': 'Portal Médico v1.4.5',
-            'body': '### Novedades v1.4.5:\n- **Controles Adicionales en Control ECICEP:** Agregada la selección múltiple desplegable (Cardiovascular, Hipotiroidismo, Artrosis, Epilepsia, Sala ERA, Sala IRA, Demencias, Salud Mental) e integración automática al resumen clínico.\n- **Aclaraciones Sí/No:** Optimizado el comportamiento en Evaluación desde último control (el "No" no requiere ni incluye aclaraciones; el "Sí" muestra la aclaración con punto seguido en el resumen).\n- **Atenciones Vigentes:** Integración completa de auto-completado inteligente con `@` e interfaz unificada con Ingreso ECICEP.\n- **Limpieza de interfaz:** Eliminados botones de importación innecesarios en Preingreso ECICEP y ajustados los espaciados en Identificación.',
+            'name': 'Portal Médico v1.4.6',
+            'body': '### Novedades v1.4.6:\n- **Solución al error "Failed to load Python DLL (python314.dll)":** Incluidas y conservadas las librerías C++ Runtime y dependencias dinámicas del intérprete de Python para garantizar la ejecución en cualquier PC sin Python instalado.\n- **Controles Adicionales en Control ECICEP:** Selección múltiple desplegable e integración automática al resumen clínico.\n- **Aclaraciones Sí/No:** Respuestas "No" sin aclaración; respuestas "Sí" con punto seguido.\n- **Atenciones Vigentes:** Auto-completado inteligente con `@`.',
             'draft': False,
             'prerelease': False
         }
@@ -54,24 +54,24 @@ def main():
                 data = json.loads(resp.read().decode('utf-8'))
                 release_id = data.get('id')
                 upload_url_base = data.get('upload_url', '').split('{')[0]
-                print(f"Created Release v1.4.5 (ID: {release_id})")
+                print(f"Created Release v1.4.6 (ID: {release_id})")
         except Exception as create_err:
             print("Notice on creation (might already exist):", create_err)
-            # Fetch all releases to find v1.4.5
+            # Fetch all releases to find v1.4.6
             all_req = urllib.request.Request(f'https://api.github.com/repos/{repo}/releases', headers=headers)
             with urllib.request.urlopen(all_req) as all_resp:
                 all_releases = json.loads(all_resp.read().decode('utf-8'))
                 for r in all_releases:
-                    if r.get('tag_name') == tag or r.get('name') == 'Portal Médico v1.4.5':
+                    if r.get('tag_name') == tag or r.get('name') == 'Portal Médico v1.4.6':
                         release_id = r.get('id')
                         upload_url_base = r.get('upload_url', '').split('{')[0]
-                        print(f"Found Release v1.4.5 via list search (ID: {release_id})")
+                        print(f"Found Release v1.4.6 via list search (ID: {release_id})")
                         break
 
     # List of assets to upload
     assets = [
-        ('dist-installer/PortalMedico_Setup_v1.4.5.exe', 'PortalMedico_Setup_v1.4.5.exe'),
-        ('dist-python/run_webview.exe', 'PortalMedico_v1.4.5.exe')
+        ('dist-installer/PortalMedico_Setup_v1.4.6.exe', 'PortalMedico_Setup_v1.4.6.exe'),
+        ('dist-python/run_webview.exe', 'PortalMedico_v1.4.6.exe')
     ]
 
     # Delete any existing assets with matching names
