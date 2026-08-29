@@ -1,9 +1,8 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FichaFondoOjoFormData, FormStatus, User } from '../types';
 import FormField from './FormField';
 import DateField from './DateField';
 import MedicamentoArsenalInput from './MedicamentoArsenalInput';
-import RutInput from './RutInput';
 import { generateClinicalRecordPdf } from '../services/pdfGenerator';
 import { useFormLocalStorage } from '../hooks/useFormLocalStorage';
 
@@ -34,6 +33,34 @@ const resultadoOptions = [
     { value: 'FO Retinopatía Proliferativa', label: 'Retinopatía Proliferativa' },
 ];
 
+const CopyButton: React.FC<{ textToCopy: string; className?: string }> = ({ textToCopy, className }) => {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = () => {
+    navigator.clipboard.writeText(textToCopy);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+  return (
+    <button onClick={handleCopy} className={`flex items-center gap-1 px-2 py-0.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-[10px] font-bold rounded transition-colors ${className || ''}`}>
+      {copied ? (
+        <>
+          <svg className="w-3 h-3 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+          ¡COPIADO!
+        </>
+      ) : (
+        <>
+          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+          </svg>
+          COPIAR
+        </>
+      )}
+    </button>
+  );
+};
+
 interface FichaFondoOjoProps {
   onBackToMenu: () => void;
   loggedInUser: User | null;
@@ -41,75 +68,69 @@ interface FichaFondoOjoProps {
 
 const FichaFondoOjo: React.FC<FichaFondoOjoProps> = ({ onBackToMenu, loggedInUser }) => {
   const [formData, setFormData] = useFormLocalStorage<FichaFondoOjoFormData>('local_FichaFondoOjo', initialFormData);
-  const [generatedText, setGeneratedText] = useState('');
+  const [anamnesisText, setAnamnesisText] = useState('');
+  const [exploracionText, setExploracionText] = useState('');
+  const [actuacionText, setActuacionText] = useState('');
   const [status, setStatus] = useState<FormStatus>(FormStatus.Idle);
 
   const formatDateForDisplay = (dateString: string): string => {
     if (!dateString) return '(No ingresado)';
-    const date = new Date(dateString + 'T00:00:00'); // Ensure parsing as local date
+    const date = new Date(dateString + 'T00:00:00');
     if (isNaN(date.getTime())) return '(Fecha inválida)';
     return date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
   };
 
-  const generateSummary = useCallback(() => {
-    let summary = `ENTREGA RESULTADO DE FONDO DE OJO\n\n`;
-    summary += `PACIENTE: ${formData.nombrePaciente || '(No ingresado)'}\n`;
-    summary += `RUT: ${formData.rutPaciente || '(No ingresado)'}\n\n`;
-
-    summary += `ANAMNESIS\n`;
-    summary += `Sexo: ${formData.sexo || '(No seleccionado)'}\n`;
-    summary += `Edad: ${formData.edad || '(No ingresado)'}\n`;
-    
+  useEffect(() => {
+    // 1. ANAMNESIS
+    let anamnesis = `ENTREGA RESULTADO DE FONDO DE OJO\n`;
+    anamnesis += `Sexo: ${formData.sexo || '(No seleccionado)'}\n`;
+    anamnesis += `Edad: ${formData.edad || '(No ingresado)'}\n`;
     let tipoAtencionText = `Tipo de atención: ${formData.tipoAtencion || '(No seleccionado)'}`;
     if (formData.tipoAtencion === 'Presencial') {
-        tipoAtencionText += '\nAsiste para retroalimentación de resultado de fondo de ojo.';
+      tipoAtencionText += '\nAsiste para retroalimentación de resultado de fondo de ojo.';
     } else if (formData.tipoAtencion === 'Telefónico') {
-        tipoAtencionText += '\nSe contacta vía telefónica para retroalimentación de resultado de fondo de ojo.';
+      tipoAtencionText += '\nSe contacta vía telefónica para retroalimentación de resultado de fondo de ojo.';
     }
-    summary += `${tipoAtencionText}\n`;
+    anamnesis += `${tipoAtencionText}\n`;
+    anamnesis += `Antecedentes: ${formData.antecedentes || '(No ingresado)'}\n`;
+    anamnesis += `Fármacos: ${formData.farmacos || '(No ingresado)'}`;
+    setAnamnesisText(anamnesis.trim());
 
-    summary += `Antecedentes: ${formData.antecedentes || '(No ingresado)'}\n`;
-    summary += `Fármacos: ${formData.farmacos || '(No ingresado)'}\n`;
-    summary += `Fecha de toma de examen: ${formatDateForDisplay(formData.fechaExamen)}\n\n`;
+    // 2. EXPLORACIÓN
+    let exploracion = `Fecha de toma de examen: ${formatDateForDisplay(formData.fechaExamen)}\n`;
+    exploracion += `Resultado: ${formData.resultado || '(No seleccionado)'}`;
+    setExploracionText(exploracion.trim());
 
-    summary += `RESULTADO:\n${formData.resultado || '(No seleccionado)'}\n\n`;
-
-    summary += `INDICACIONES:\n`;
+    // 3. ACTUACIÓN
+    let actuacion = `Diagnóstico: Retinopatía diabética (DG presuntivo).\n`;
+    actuacion += `Indicaciones:\n`;
     let hasIndications = false;
-    if (formData.indicacionEducacion) { summary += '- Educación sobre su patología.\n'; hasIndications = true; }
-    if (formData.indicacionSeguimientoPscv) { summary += '- Seguimiento en PSCV.\n'; hasIndications = true; }
+    if (formData.indicacionEducacion) { actuacion += '- Educación sobre su patología.\n'; hasIndications = true; }
+    if (formData.indicacionSeguimientoPscv) { actuacion += '- Seguimiento en PSCV.\n'; hasIndications = true; }
     
     const isModerada = formData.resultado === 'FO Retinopatía Diabética Moderada';
     if (isModerada && formData.indicacionOftalmoUapo) {
-        summary += '- Realizo IC Oftalmología UAPO.\n';
-        hasIndications = true;
+      actuacion += '- Realizo IC Oftalmología UAPO.\n';
+      hasIndications = true;
     }
     const isSeveraOProliferativa = formData.resultado === 'FO Retinopatía Severa' || formData.resultado === 'FO Retinopatía Proliferativa';
     if (isSeveraOProliferativa && formData.indicacionOftalmoHospital) {
-        summary += '- Realizo IC a Oftalmología Hospital de La Serena con informe de FO.\n';
-        hasIndications = true;
+      actuacion += '- Realizo IC a Oftalmología Hospital de La Serena con informe de FO.\n';
+      hasIndications = true;
     }
     if (formData.fono.trim()) {
-        summary += `- Fono: ${formData.fono.trim()}\n`;
-        hasIndications = true;
+      actuacion += `- Fono: ${formData.fono.trim()}\n`;
+      hasIndications = true;
     }
     if (formData.indicacionControlesPeriodicos) {
-        summary += '- Mantener controles periódicos o derivar ECICEP (recordar su fecha de próximo control según antecedentes de ficha clínica).\n';
-        hasIndications = true;
+      actuacion += '- Mantener controles periódicos o derivar ECICEP (recordar su fecha de próximo control según antecedentes de ficha clínica).\n';
+      hasIndications = true;
     }
     if (!hasIndications) {
-        summary += '(Sin indicaciones seleccionadas)\n';
+      actuacion += '(Sin indicaciones seleccionadas)';
     }
-    summary += `\n`;
-
-    summary += `DIAGNÓSTICO:\nRetinopatía diabética (DG presuntivo).\n`;
-
-    return summary.trim();
+    setActuacionText(actuacion.trim());
   }, [formData]);
-
-  useEffect(() => {
-    setGeneratedText(generateSummary());
-  }, [formData, generateSummary]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -120,26 +141,12 @@ const FichaFondoOjo: React.FC<FichaFondoOjoProps> = ({ onBackToMenu, loggedInUse
         setFormData(prev => ({ ...prev, [name]: value }));
     }
   };
-  
-  const handleRutChange = useCallback((value: string) => {
-    setFormData(prev => ({ ...prev, rutPaciente: value }));
-  }, []);
-
-  const handleCopyToClipboard = () => {
-    navigator.clipboard.writeText(generatedText)
-      .then(() => alert('Resumen copiado al portapapeles.'))
-      .catch(err => alert('Error al copiar texto.'));
-  };
 
   const handleNewDocument = () => {
     setFormData(initialFormData);
   };
   
   const handleExportPdf = async () => {
-    if (!formData.nombrePaciente || !formData.rutPaciente) {
-      alert('Por favor, ingrese el nombre y RUT del paciente antes de exportar.');
-      return;
-    }
     if (!loggedInUser) {
       alert('Error: Usuario no identificado. No se puede generar el PDF.');
       return;
@@ -147,10 +154,11 @@ const FichaFondoOjo: React.FC<FichaFondoOjoProps> = ({ onBackToMenu, loggedInUse
 
     setStatus(FormStatus.Generating);
     try {
+      const fullContent = `ANAMNESIS\n${anamnesisText}\n\nEXPLORACIÓN\n${exploracionText}\n\nACTUACIÓN\n${actuacionText}`;
       await generateClinicalRecordPdf(
         {
           title: 'Ficha Clínica: Entrega Resultado Fondo de Ojo',
-          content: generatedText,
+          content: fullContent,
         },
         loggedInUser
       );
@@ -162,25 +170,12 @@ const FichaFondoOjo: React.FC<FichaFondoOjoProps> = ({ onBackToMenu, loggedInUse
     }
   };
 
-
   return (
-    <div className="w-full bg-white shadow-xl rounded-xl p-4 sm:p-6">
-      <header className="mb-6 text-center">
-        <h2 className="text-3xl font-semibold text-slate-700">Entrega Resultado de Fondo de Ojo</h2>
-        <p className="text-slate-500 mt-2">Complete los campos para generar el registro clínico.</p>
-      </header>
-
-      <div className="flex flex-col lg:flex-row lg:gap-8 mt-6">
-        <div className="lg:w-3/5 xl:w-7/12 space-y-4 flex-shrink-0 pr-4 pb-16">
+    <div className="w-full bg-white shadow-xl rounded-xl p-4 sm:p-6 flex flex-col h-auto lg:h-[calc(100vh-70px)] lg:overflow-hidden">
+      <div className="flex flex-col lg:flex-row lg:gap-8 flex-1 min-h-0 overflow-hidden">
+        {/* Left Column: Scrollable Form */}
+        <div className="lg:w-3/5 xl:w-7/12 space-y-4 pr-3 pb-8 overflow-y-auto custom-scrollbar flex-1 min-h-0">
           <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
-             <section className="p-4 bg-slate-50 rounded-lg border border-slate-200">
-                <h3 className="text-lg font-semibold mb-3 text-sky-700 border-b border-sky-200 pb-2">Datos del Paciente</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField label="Nombre Paciente" id="nombrePaciente" name="nombrePaciente" value={formData.nombrePaciente} onChange={handleChange} required />
-                  <RutInput label="RUT Paciente" id="rutPaciente" name="rutPaciente" value={formData.rutPaciente} onChange={handleRutChange} required />
-                </div>
-            </section>
-            
             <section className="p-4 bg-slate-50 rounded-lg border border-slate-200">
                 <h3 className="text-lg font-semibold mb-3 text-sky-700 border-b border-sky-200 pb-2">Anamnesis</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -237,16 +232,57 @@ const FichaFondoOjo: React.FC<FichaFondoOjoProps> = ({ onBackToMenu, loggedInUse
           </form>
         </div>
 
-        <div className="mt-8 lg:mt-0 lg:w-2/5 xl:w-5/12 lg:sticky lg:top-20 flex flex-col lg:h-[calc(100vh-215px)] lg:max-h-[calc(100vh-215px)] mb-12 overflow-hidden bg-[#F8FAFC] p-2.5 rounded-xl border border-slate-200 shadow-sm">
-          <div className="flex justify-between items-center mb-2 border-b border-sky-200/80 pb-1 flex-shrink-0">
+        {/* Right Column: 3 Editable Summary Blocks */}
+        <div className="mt-6 lg:mt-0 lg:w-2/5 xl:w-5/12 flex flex-col h-[420px] lg:h-full flex-shrink-0 overflow-hidden bg-[#F8FAFC] p-2.5 rounded-xl border border-slate-200 shadow-sm">
+          <div className="border-b border-sky-200/80 pb-1 mb-2 shrink-0">
             <h3 className="text-xs font-bold text-sky-800 uppercase tracking-wider">Resumen Ficha Clínica (Editable)</h3>
-            <button onClick={handleCopyToClipboard} className="px-2 py-0.5 text-[10px] font-bold text-slate-600 bg-slate-200 rounded uppercase hover:bg-slate-300">Copiar</button>
           </div>
-          <textarea value={generatedText} onChange={e => setGeneratedText(e.target.value)} className="flex-1 w-full p-1.5 py-1 bg-white border border-slate-300 rounded-md shadow-sm custom-scrollbar text-[10.5px] text-slate-800 font-mono outline-none focus:ring-1 focus:ring-sky-500 focus:border-sky-500 resize-none" />
+
+          <div className="flex-1 flex flex-col gap-2 min-h-0 overflow-hidden">
+            {/* 1. ANAMNESIS */}
+            <div className="flex-1 flex flex-col min-h-0">
+              <div className="flex justify-between items-center mb-0.5 shrink-0">
+                <label className="block text-[11px] font-bold text-slate-800 uppercase">1. ANAMNESIS</label>
+                <CopyButton textToCopy={anamnesisText} />
+              </div>
+              <textarea 
+                value={anamnesisText} 
+                onChange={e => setAnamnesisText(e.target.value)} 
+                className="flex-1 w-full p-2 bg-white border border-slate-300 rounded-md shadow-sm custom-scrollbar text-[10.5px] text-slate-800 font-mono outline-none focus:ring-1 focus:ring-sky-500 focus:border-sky-500 resize-none overflow-y-auto leading-relaxed" 
+              />
+            </div>
+
+            {/* 2. EXPLORACIÓN */}
+            <div className="flex-1 flex flex-col min-h-0">
+              <div className="flex justify-between items-center mb-0.5 shrink-0">
+                <label className="block text-[11px] font-bold text-slate-800 uppercase">2. EXPLORACIÓN</label>
+                <CopyButton textToCopy={exploracionText} />
+              </div>
+              <textarea 
+                value={exploracionText} 
+                onChange={e => setExploracionText(e.target.value)} 
+                className="flex-1 w-full p-2 bg-white border border-slate-300 rounded-md shadow-sm custom-scrollbar text-[10.5px] text-slate-800 font-mono outline-none focus:ring-1 focus:ring-sky-500 focus:border-sky-500 resize-none overflow-y-auto leading-relaxed" 
+              />
+            </div>
+
+            {/* 3. ACTUACIÓN */}
+            <div className="flex-1 flex flex-col min-h-0">
+              <div className="flex justify-between items-center mb-0.5 shrink-0">
+                <label className="block text-[11px] font-bold text-slate-800 uppercase">3. ACTUACIÓN</label>
+                <CopyButton textToCopy={actuacionText} />
+              </div>
+              <textarea 
+                value={actuacionText} 
+                onChange={e => setActuacionText(e.target.value)} 
+                className="flex-1 w-full p-2 bg-white border border-slate-300 rounded-md shadow-sm custom-scrollbar text-[10.5px] text-slate-800 font-mono outline-none focus:ring-1 focus:ring-sky-500 focus:border-sky-500 resize-none overflow-y-auto leading-relaxed" 
+              />
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-6 mt-6 border-t border-slate-300">
+      {/* Bottom Action Bar */}
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-4 mt-4 border-t border-slate-300 shrink-0">
         <button type="button" onClick={onBackToMenu} className="w-full sm:w-auto px-6 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold rounded-lg">Volver al Menú</button>
         <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
           <button

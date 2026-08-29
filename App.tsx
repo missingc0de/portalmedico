@@ -14,6 +14,7 @@ import RecetaMedicaForm from './components/RecetaMedicaForm';
 import CertificadoMedicoForm from './components/CertificadoMedicoForm';
 import { CertificadoMedicoWindow } from './components/CertificadoMedicoWindow';
 import { RecetaMedicaWindow } from './components/RecetaMedicaWindow';
+import { FichaFirmarGesWindow } from './components/FichaFirmarGesWindow';
 import OnCallCalendar from './components/OnCallCalendar';
 import MainMenuDashboard from './components/MainMenuDashboard';
 import LoginForm from './components/LoginForm';
@@ -66,7 +67,7 @@ import { subscribeToCalendarEvents } from './services/eventsService';
 import { View, User, CertificateType, Profession, CESFAM, Sector, SpecialEvent } from './types';
 import Bitacora from './components/Bitacora';
 import AutomaticTranscriber from './components/AutomaticTranscriber';
-import { TabNavBar, ComunidadFeed, PerfilFeed } from './components/SocialFeed';
+import { TabNavBar, ComunidadFeed, PerfilFeed, ComunidadView } from './components/SocialFeed';
 import NotificationBell from './components/NotificationBell';
 import { RemWindow } from './components/RemWindow';
 import EmailGenerator from './components/EmailGenerator';
@@ -176,6 +177,7 @@ const getProfessionPrefix = (profession: Profession, fullName?: string): string 
 const getSectorText = (sector?: Sector): string => {
   if (!sector || sector === 'No especificado') return 'Sector no especificado';
   if (sector === 'Naranjo') return 'Sector naranja';
+  if (sector === 'Punta Mira') return 'Sector Punta Mira';
   return `Sector ${sector.toLowerCase()}`;
 };
 
@@ -390,7 +392,7 @@ const App: React.FC = () => {
     error?: string;
   } | null>(null);
 
-  const APP_VERSION = '1.4.5';
+  const APP_VERSION = '1.4.13';
   const menuDropdownRef = useRef<HTMLDivElement>(null);
 
   const isNewerVersion = (latest: string, current: string): boolean => {
@@ -578,15 +580,27 @@ const App: React.FC = () => {
           const data = snapshot.data();
           if (data.profilePictureUrl) {
             setProfilePictureUrl(data.profilePictureUrl);
-            setLoggedInUser(prev => prev ? { ...prev, profilePictureUrl: data.profilePictureUrl } : null);
           }
           if (data.visibleName) {
             setProfileName(data.visibleName);
-            setLoggedInUser(prev => prev ? { ...prev, fullName: data.visibleName } : null);
           }
-          if (data.status) {
+          if (data.status !== undefined) {
             setProfileStatus(data.status);
           }
+          setLoggedInUser(prev => {
+            if (!prev) return null;
+            return {
+              ...prev,
+              fullName: data.fullName || prev.fullName,
+              rut: data.rut !== undefined ? data.rut : prev.rut,
+              cesfam: data.cesfam || prev.cesfam,
+              profession: data.profession || prev.profession,
+              sector: data.sector || prev.sector,
+              electronicSignature: data.electronicSignature !== undefined ? data.electronicSignature : prev.electronicSignature,
+              profilePictureUrl: data.profilePictureUrl || prev.profilePictureUrl,
+              ...(data.password ? { password: data.password } : {})
+            };
+          });
         }
       });
       return () => unsubscribe();
@@ -595,7 +609,7 @@ const App: React.FC = () => {
       setProfileName('');
       setProfileStatus('');
     }
-  }, [isAuthenticated, loggedInUser]);
+  }, [isAuthenticated, loggedInUser?.username]);
 
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState<boolean>(false);
   const [isUserProfileModalOpen, setIsUserProfileModalOpen] = useState<boolean>(false);
@@ -603,6 +617,7 @@ const App: React.FC = () => {
   const [isUrgenciasModalOpen, setIsUrgenciasModalOpen] = useState<boolean>(false);
   const [isCertificadoWindowOpen, setIsCertificadoWindowOpen] = useState<boolean>(false);
   const [isRecetaWindowOpen, setIsRecetaWindowOpen] = useState<boolean>(false);
+  const [isGesWindowOpen, setIsGesWindowOpen] = useState<boolean>(false);
   const [showUpdateNotification, setShowUpdateNotification] = useState(false);
   const [installPromptEvent, setInstallPromptEvent] = useState<any | null>(null);
   const [loginToastUsers, setLoginToastUsers] = useState<Array<{ id: string; name: string; avatar?: string }>>([]);
@@ -614,18 +629,28 @@ const App: React.FC = () => {
       setIsDriveOpen(!isDriveOpen);
       setIsCertificadoWindowOpen(false);
       setIsRecetaWindowOpen(false);
+      setIsGesWindowOpen(false);
       setIsCalcOpen(false);
       setIsNotesOpen(false);
     } else if (windowName === 'certificado') {
       setIsCertificadoWindowOpen(!isCertificadoWindowOpen);
       setIsDriveOpen(false);
       setIsRecetaWindowOpen(false);
+      setIsGesWindowOpen(false);
       setIsCalcOpen(false);
       setIsNotesOpen(false);
     } else if (windowName === 'receta') {
       setIsRecetaWindowOpen(!isRecetaWindowOpen);
       setIsDriveOpen(false);
       setIsCertificadoWindowOpen(false);
+      setIsGesWindowOpen(false);
+      setIsCalcOpen(false);
+      setIsNotesOpen(false);
+    } else if (windowName === 'ges') {
+      setIsGesWindowOpen(!isGesWindowOpen);
+      setIsDriveOpen(false);
+      setIsCertificadoWindowOpen(false);
+      setIsRecetaWindowOpen(false);
       setIsCalcOpen(false);
       setIsNotesOpen(false);
     } else if (windowName === 'calc') {
@@ -633,12 +658,14 @@ const App: React.FC = () => {
       setIsDriveOpen(false);
       setIsCertificadoWindowOpen(false);
       setIsRecetaWindowOpen(false);
+      setIsGesWindowOpen(false);
       setIsNotesOpen(false);
     } else if (windowName === 'notes') {
       setIsNotesOpen(!isNotesOpen);
       setIsDriveOpen(false);
       setIsCertificadoWindowOpen(false);
       setIsRecetaWindowOpen(false);
+      setIsGesWindowOpen(false);
       setIsCalcOpen(false);
     }
   };
@@ -866,7 +893,7 @@ const App: React.FC = () => {
       const newUserState: User = {
         ...loggedInUser,
         fullName: updatedUserData.fullName,
-        rut: updatedUserData.rut || undefined, // Store undefined if empty
+        rut: updatedUserData.rut || undefined,
         cesfam: updatedUserData.cesfam,
         profession: updatedUserData.profession,
         electronicSignature: updatedUserData.electronicSignature,
@@ -878,6 +905,9 @@ const App: React.FC = () => {
       }
       setLoggedInUser(newUserState);
       setProfilePictureUrl(updatedUserData.profilePictureUrl || '');
+      setProfileName(updatedUserData.visibleName || updatedUserData.fullName);
+      setProfileStatus(updatedUserData.status || '');
+
       setUsers(prevUsers => prevUsers.map(u => u.username === loggedInUser.username ? newUserState : u));
       sessionStorage.setItem('loggedInUserFullName', newUserState.fullName);
       sessionStorage.setItem('loggedInUserRut', newUserState.rut || '');
@@ -889,12 +919,25 @@ const App: React.FC = () => {
         sessionStorage.setItem('loggedInUserPassword', newPassword);
       }
       
-      // Update Firestore user_profiles
-      setDoc(doc(db, 'user_profiles', loggedInUser.username), {
+      // Update Firestore user_profiles with complete user data
+      const firestoreData: Record<string, any> = {
+        fullName: updatedUserData.fullName,
+        rut: updatedUserData.rut || '',
+        cesfam: updatedUserData.cesfam,
+        profession: updatedUserData.profession,
+        sector: updatedUserData.sector || 'No especificado',
+        electronicSignature: updatedUserData.electronicSignature || '',
         visibleName: updatedUserData.visibleName || updatedUserData.fullName,
         status: updatedUserData.status || '',
-        profilePictureUrl: updatedUserData.profilePictureUrl || ''
-      }, { merge: true }).catch(err => console.error("Error updating user_profiles in firestore:", err));
+        profilePictureUrl: updatedUserData.profilePictureUrl || '',
+        updatedAt: serverTimestamp()
+      };
+      if (newPassword) {
+        firestoreData.password = newPassword;
+      }
+
+      setDoc(doc(db, 'user_profiles', loggedInUser.username), firestoreData, { merge: true })
+        .catch(err => console.error("Error updating user_profiles in firestore:", err));
 
       // Update Firestore presence and chat_users
       setDoc(doc(db, 'presence', loggedInUser.username), {
@@ -1998,6 +2041,8 @@ const App: React.FC = () => {
         return <Bitacora onBackToMenu={() => navigateTo('menu')} loggedInUser={loggedInUser} />;
       case 'misPacientes':
         return <MisPacientes onSelectMenuItem={(view, patientData) => navigateTo(view, patientData)} loggedInUser={loggedInUser} />;
+      case 'comunidad':
+        return <ComunidadView loggedInUser={loggedInUser} onBackToMenu={() => navigateTo('menu')} />;
       case 'sapu':
         return <SapuMenu onBackToMenu={() => navigateTo('menu')} loggedInUser={loggedInUser} />;
 
@@ -2027,7 +2072,7 @@ const App: React.FC = () => {
   }
 
   const renderMainContent = () => {
-    const isLockedView = currentView === 'menu' || currentView.startsWith('ficha') || currentView === 'sapu';
+    const isLockedView = currentView === 'menu' || currentView.startsWith('ficha') || currentView === 'sapu' || currentView === 'comunidad';
     return (
       <main 
         key={currentView}
@@ -2289,6 +2334,17 @@ const App: React.FC = () => {
                 </svg>
               </button>
 
+              {/* Firmar GES */}
+              <button
+                onClick={() => toggleWindow('ges')}
+                title="Firmar GES"
+                className="relative w-10 h-10 rounded-full text-white hover:text-white/85 hover:bg-white/10 transition-colors duration-150 cursor-pointer flex items-center justify-center shrink-0"
+              >
+                <span className="text-[14px] font-black tracking-tighter leading-none select-none flex items-center justify-center h-[22px] font-sans">
+                  GES
+                </span>
+              </button>
+
               {/* Calculadora */}
               <button
                 onClick={() => toggleWindow('calc')}
@@ -2395,6 +2451,7 @@ const App: React.FC = () => {
       {/* Floating Auxiliary Windows */}
       <CertificadoMedicoWindow isOpen={isCertificadoWindowOpen} onClose={() => setIsCertificadoWindowOpen(false)} loggedInUser={loggedInUser} />
       <RecetaMedicaWindow isOpen={isRecetaWindowOpen} onClose={() => setIsRecetaWindowOpen(false)} loggedInUser={loggedInUser} />
+      <FichaFirmarGesWindow isOpen={isGesWindowOpen} onClose={() => setIsGesWindowOpen(false)} loggedInUser={loggedInUser} />
       
       {/* MSN Login Toast Stacked on Y Axis */}
       <div className="fixed bottom-[64px] right-6 z-[99999] flex flex-col gap-3 items-end" style={{ pointerEvents: 'none' }}>

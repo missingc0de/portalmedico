@@ -1,7 +1,7 @@
 {
   "name": "portal-medico",
   "private": true,
-  "version": "1.4.6",
+  "version": "1.4.13",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/missingc0de/portalmedico.git"

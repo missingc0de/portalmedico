@@ -412,6 +412,20 @@ const Sidebar: React.FC<SidebarProps> = ({
           </button>
 
           <button
+            onClick={() => onSelectMenuItem('comunidad')}
+            className={`w-full flex items-center justify-between px-2.5 py-2 text-left font-bold text-xs tracking-tight transition-all duration-150 cursor-pointer group rounded-xl ${currentView === 'comunidad'
+              ? 'bg-gradient-to-r from-sky-600 to-sky-700 text-white shadow-sm'
+              : 'text-slate-600 hover:bg-slate-200/60 hover:text-slate-900'
+              }`}
+            title="Comunidad"
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <Globe className={`w-4 h-4 shrink-0 ${currentView === 'comunidad' ? 'text-white' : 'text-slate-500 group-hover:text-sky-600'}`} />
+              {!isCollapsed && <span className="truncate">Comunidad</span>}
+            </div>
+          </button>
+
+          <button
             onClick={() => onSelectMenuItem('sapu')}
             className={`w-full flex items-center justify-between px-2.5 py-2 text-left font-bold text-xs tracking-tight transition-all duration-150 cursor-pointer group rounded-xl ${currentView === 'sapu'
               ? 'bg-gradient-to-r from-sky-600 to-sky-700 text-white shadow-sm'

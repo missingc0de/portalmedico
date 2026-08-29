@@ -34,7 +34,7 @@ export interface User {
   profilePictureUrl?: string;
 }
 
-export type Sector = 'Verde' | 'Amarillo' | 'Naranjo' | 'No especificado';
+export type Sector = 'Verde' | 'Amarillo' | 'Naranjo' | 'Punta Mira' | 'No especificado';
 
 export type CertificateType =
   | 'constanciaAtencion'
@@ -104,7 +104,7 @@ export interface ObjetivoAnterior extends PccObjetivo {
   aclaracionNoCumplimiento: string;
 }
 
-export type View = CertificateType | 'login' | 'menu' | 'misPacientes' | 'sapu';
+export type View = CertificateType | 'login' | 'menu' | 'misPacientes' | 'sapu' | 'comunidad';
 
 export type OnCallSchedule = Record<number, Record<number, Record<number, string[]>>>;
 

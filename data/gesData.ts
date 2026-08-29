@@ -90,6 +90,7 @@ export const patologiasGesGenerales: string[] = [
   "88. Tratamiento farmacológico tras alta hospitalaria por cirrosis hepática",
   "89. Tratamiento hospitalario para personas menores de 15 años con depresión grave refractaria o psicótica con riesgo suicida",
   "90. Cesación del consumo de tabaco en personas de 25 años y más",
+  "91. Ayudas técnicas para movilidad y preservación de tejidos para personas de 15 a 64 años",
 ];
 
 export const patologiasGesOncologicas: string[] = [

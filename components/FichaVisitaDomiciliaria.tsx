@@ -59,6 +59,7 @@ const sectorOptions = [
   { value: 'Verde', label: 'Verde' },
   { value: 'Amarillo', label: 'Amarillo' },
   { value: 'Naranjo', label: 'Naranjo' },
+  { value: 'Punta Mira', label: 'Punta Mira' },
 ];
 
 const tenenciaOptions = [
@@ -319,7 +320,7 @@ export default function FichaVisitaDomiciliaria({ onBackToMenu, loggedInUser }: 
               <form onSubmit={(e) => e.preventDefault()} className="bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-sm flex flex-col gap-4 pb-16">
 
                 {/* IDENTIFICACIÓN */}
-                <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-6">
                   <h3 className="text-lg font-semibold mb-3 text-sky-700 border-b border-sky-200 pb-2">Identificación</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -349,7 +350,7 @@ export default function FichaVisitaDomiciliaria({ onBackToMenu, loggedInUser }: 
                 </section>
 
                 {/* INTEGRANTES DEL GRUPO FAMILIAR */}
-                <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-6">
                   <div className="flex justify-between items-center mb-3 border-b border-sky-200 pb-2">
                     <h3 className="text-lg font-semibold text-sky-700">Integrantes del Grupo Familiar</h3>
                     <button onClick={addIntegrante} className="text-white bg-sky-600 hover:bg-sky-700 px-3 py-1 rounded-md text-xs font-bold">+ AGREGAR</button>
@@ -368,7 +369,7 @@ export default function FichaVisitaDomiciliaria({ onBackToMenu, loggedInUser }: 
                 </section>
 
                 {/* OBJETIVOS Y EXPECTATIVAS */}
-                <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-6">
                   <h3 className="text-lg font-semibold mb-3 text-sky-700 border-b border-sky-200 pb-2">Objetivos y Expectativas</h3>
                   <div className="space-y-4">
                     <div>
@@ -389,7 +390,7 @@ export default function FichaVisitaDomiciliaria({ onBackToMenu, loggedInUser }: 
                 </section>
 
                 {/* CUIDADOR */}
-                <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-6">
                   <h3 className="text-lg font-semibold mb-3 text-sky-700 border-b border-sky-200 pb-2">Antecedentes de Cuidador</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField label="Cuidador principal" id="cuidadorPrincipal" name="cuidadorPrincipal" value={formData.cuidadorPrincipal} onChange={handleChange} />
@@ -399,7 +400,7 @@ export default function FichaVisitaDomiciliaria({ onBackToMenu, loggedInUser }: 
                 </section>
 
                 {/* VIVIENDA Y ENTORNO */}
-                <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-6">
                   <h3 className="text-lg font-semibold mb-3 text-sky-700 border-b border-sky-200 pb-2">Vivienda y Entorno</h3>
                   <div className="space-y-4">
                     <div>
@@ -430,7 +431,7 @@ export default function FichaVisitaDomiciliaria({ onBackToMenu, loggedInUser }: 
                 </section>
 
                 {/* PRIORIZACIÓN DE PROBLEMAS */}
-                <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-6">
                   <div className="flex justify-between items-center mb-3 border-b border-sky-200 pb-2">
                     <h3 className="text-lg font-semibold text-sky-700">Análisis y Priorización de Problemas</h3>
                     <button onClick={addProblema} className="text-white bg-sky-600 hover:bg-sky-700 px-3 py-1 rounded-md text-xs font-bold transition-colors">+ AGREGAR</button>
@@ -454,7 +455,7 @@ export default function FichaVisitaDomiciliaria({ onBackToMenu, loggedInUser }: 
                 </section>
 
                 {/* IDENTIFICACIÓN DE RECURSOS */}
-                <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-6">
                   <h3 className="text-lg font-semibold mb-3 text-sky-700 border-b border-sky-200 pb-2">Identificación de los Recursos</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField label="Personales" id="recursosPersonales" name="recursosPersonales" value={formData.recursosPersonales} onChange={handleChange} />
@@ -465,7 +466,7 @@ export default function FichaVisitaDomiciliaria({ onBackToMenu, loggedInUser }: 
                 </section>
 
                 {/* OTRAS INTERVENCIONES E INSTRUMENTOS */}
-                <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-6">
                   <h3 className="text-lg font-semibold mb-3 text-sky-700 border-b border-sky-200 pb-2">Intervenciones e Instrumentos</h3>
                   <div className="space-y-6">
                     <div className="space-y-2">
@@ -502,7 +503,7 @@ export default function FichaVisitaDomiciliaria({ onBackToMenu, loggedInUser }: 
                 </section>
 
                 {/* PLAN Y EVALUACIÓN FINAL */}
-                <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-6">
                   <h3 className="text-lg font-semibold mb-3 text-sky-700 border-b border-sky-200 pb-2">Plan y Evaluación Final</h3>
                   <div className="space-y-6">
                     <div className="space-y-4">

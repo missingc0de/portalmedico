@@ -261,6 +261,14 @@ const MainMenu: React.FC<MainMenuProps> = ({ onSelectMenuItem, profession, onOpe
            </button>
         </div>
 
+        {/* COMUNIDAD */}
+        <div className="w-full flex">
+           <button onClick={() => onSelectMenuItem('comunidad')} className="w-full py-2 px-4 bg-sky-500 hover:bg-sky-600 bg-gradient-to-r from-transparent to-black/10 text-white font-semibold rounded-lg shadow-sm hover:shadow transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-sky-500 flex flex-col items-center justify-center text-center border border-sky-600/50 cursor-pointer">
+             <span className="block text-sm uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">COMUNIDAD</span>
+             <span className="block text-[10px] font-normal text-sky-100 mt-0.5 w-full whitespace-nowrap overflow-hidden text-ellipsis">Publicaciones y avisos compartidos con el equipo (estilo Twitter/Slack).</span>
+           </button>
+        </div>
+
         {/* PORTAL CLÍNICO SAPU */}
         <div className="w-full flex">
            <button onClick={() => onSelectMenuItem('sapu')} className="w-full py-2 px-4 bg-red-500 hover:bg-red-600 bg-gradient-to-r from-transparent to-black/10 text-white font-semibold rounded-lg shadow-sm hover:shadow transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-red-500 flex flex-col items-center justify-center text-center border border-red-600/50 cursor-pointer">

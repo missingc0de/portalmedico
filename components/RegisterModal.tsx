@@ -28,7 +28,7 @@ const CESFAM_OPTIONS: CESFAM[] = [
 ];
 
 const SECTOR_OPTIONS: Sector[] = [
-  'Verde', 'Amarillo', 'Naranjo', 'No especificado'
+  'Verde', 'Amarillo', 'Naranjo', 'Punta Mira', 'No especificado'
 ];
 
 const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose }) => {

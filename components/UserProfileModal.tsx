@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { User, CESFAM, Profession, Sector } from '../types';
 import FormField from './FormField';
-import RutInput from './RutInput';
+import RutInput, { formatRutChilean } from './RutInput';
 
 interface UserProfileModalProps {
   isOpen: boolean;
@@ -47,6 +47,7 @@ const sectorOptions: Sector[] = [
   'Verde',
   'Amarillo',
   'Naranjo',
+  'Punta Mira',
   'No especificado'
 ];
 
@@ -54,13 +55,6 @@ const MsnDefaultAvatar = () => (
   <div className="w-full h-full bg-gradient-to-b from-white to-slate-200 relative p-[5%] shadow-inner flex flex-col items-center justify-end overflow-hidden border border-slate-300">
     <div className="w-[45%] aspect-square bg-gradient-to-b from-green-300 to-green-500 rounded-full mb-[5%] shadow-sm"></div>
     <div className="w-[90%] h-[40%] bg-gradient-to-t from-green-400 to-green-500 rounded-t-full shadow-sm"></div>
-  </div>
-);
-
-const LinkedInDefaultAvatar = () => (
-  <div className="w-full h-full bg-[#e8e4df] flex items-center justify-center relative overflow-hidden">
-    <div className="w-[42%] h-[42%] rounded-full bg-[#788ea5] absolute top-[18%]"></div>
-    <div className="w-[72%] h-[36%] rounded-t-full bg-[#788ea5] absolute bottom-0"></div>
   </div>
 );
 
@@ -103,7 +97,7 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
       setNewPassword('');
       setConfirmNewPassword('');
       
-      setProfilePictureUrl(initialPic || '');
+      setProfilePictureUrl(initialPic || user.profilePictureUrl || '');
       setVisibleName(initialVisibleName || user.fullName);
       setStatus(initialStatus || '');
       setShowPasswordFields(false);
@@ -117,8 +111,13 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
     if (!fullName.trim()) {
       newErrors.fullName = 'El nombre completo es requerido.';
     }
-    if (rut.trim() && !/^\d{1,2}(\.\d{3}){2}-[\dkK]$/.test(rut.trim())) {
-      newErrors.rut = 'Formato de RUT inválido.';
+
+    const trimmedRut = rut.trim();
+    if (trimmedRut) {
+      const formattedRut = formatRutChilean(trimmedRut);
+      if (!/^\d{1,2}(\.\d{3}){2}-[\dkK]$/.test(formattedRut)) {
+        newErrors.rut = 'Formato de RUT inválido (ej: 12.345.678-9).';
+      }
     }
 
     if (newPassword || currentPassword) {
@@ -144,9 +143,10 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (validate()) {
+      const formattedRut = rut.trim() ? formatRutChilean(rut.trim()) : undefined;
       const updatedData = {
         fullName: fullName.trim(),
-        rut: rut.trim() || undefined,
+        rut: formattedRut,
         cesfam: cesfam,
         profession: profession,
         electronicSignature: electronicSignature.trim(),
@@ -180,6 +180,7 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
             Modificar Datos de Perfil
           </h2>
           <button
+            type="button"
             onClick={onClose}
             className="text-white hover:text-sky-200 transition-colors p-1 rounded-full hover:bg-white/10 flex items-center justify-center cursor-pointer"
             aria-label="Cerrar modal"
@@ -190,238 +191,244 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
           </button>
         </header>
 
-        {/* Scrollable Form Body - Unpartitioned list of fields */}
-        <form onSubmit={handleSubmit} className="overflow-y-auto custom-scrollbar flex-grow p-6 space-y-5">
-          
-          {/* Fila superior: Foto de perfil arriba a la izquierda y Apodo/Estado al lado */}
-          <div className="flex flex-col sm:flex-row gap-4 items-start pb-2.5 border-b border-slate-100">
-            {/* Foto de Perfil (Arriba a la izquierda) */}
-            <div className="flex flex-col items-center shrink-0 w-24">
-              <div className="w-20 h-20 rounded-xl overflow-hidden border border-slate-300 bg-white flex items-center justify-center shadow-md mb-2">
-                {profilePictureUrl ? (
-                  <img src={profilePictureUrl} className="w-full h-full object-cover" alt="Vista previa" />
-                ) : (
-                  <div className="w-full h-full"><MsnDefaultAvatar /></div>
-                )}
-              </div>
-              <label className="cursor-pointer text-[10px] font-black text-sky-600 hover:text-sky-700 uppercase tracking-widest text-center">
-                <span>Cambiar foto</span>
-                <input 
-                  type="file" 
-                  accept="image/*" 
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      const reader = new FileReader();
-                      reader.onload = (ev) => {
-                        const img = new Image();
-                        img.onload = () => {
-                          const canvas = document.createElement('canvas');
-                          canvas.width = 102;
-                          canvas.height = 102;
-                          const ctx = canvas.getContext('2d');
-                          if (ctx) {
-                            const size = Math.min(img.width, img.height);
-                            const sx = (img.width - size) / 2;
-                            const sy = (img.height - size) / 2;
-                            ctx.drawImage(img, sx, sy, size, size, 0, 0, 102, 102);
-                            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.9);
-                            setProfilePictureUrl(compressedBase64);
-                          }
+        {/* Scrollable Form Container */}
+        <form onSubmit={handleSubmit} className="flex flex-col min-h-0 flex-grow overflow-hidden">
+          <div className="overflow-y-auto custom-scrollbar flex-grow p-6 space-y-5">
+            
+            {/* Fila superior: Foto de perfil arriba a la izquierda y Apodo/Estado al lado */}
+            <div className="flex flex-col sm:flex-row gap-4 items-start pb-2.5 border-b border-slate-100">
+              {/* Foto de Perfil */}
+              <div className="flex flex-col items-center shrink-0 w-24">
+                <div className="w-20 h-20 rounded-xl overflow-hidden border border-slate-300 bg-white flex items-center justify-center shadow-md mb-2">
+                  {profilePictureUrl ? (
+                    <img src={profilePictureUrl} className="w-full h-full object-cover" alt="Vista previa" />
+                  ) : (
+                    <div className="w-full h-full"><MsnDefaultAvatar /></div>
+                  )}
+                </div>
+                <label className="cursor-pointer text-[10px] font-black text-sky-600 hover:text-sky-700 uppercase tracking-widest text-center">
+                  <span>Cambiar foto</span>
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (ev) => {
+                          const img = new Image();
+                          img.onload = () => {
+                            const canvas = document.createElement('canvas');
+                            canvas.width = 102;
+                            canvas.height = 102;
+                            const ctx = canvas.getContext('2d');
+                            if (ctx) {
+                              const size = Math.min(img.width, img.height);
+                              const sx = (img.width - size) / 2;
+                              const sy = (img.height - size) / 2;
+                              ctx.drawImage(img, sx, sy, size, size, 0, 0, 102, 102);
+                              const compressedBase64 = canvas.toDataURL('image/jpeg', 0.9);
+                              setProfilePictureUrl(compressedBase64);
+                            }
+                          };
+                          img.src = ev.target.result as string;
                         };
-                        img.src = ev.target.result as string;
-                      };
-                      reader.readAsDataURL(file);
-                    }
-                  }} 
+                        reader.readAsDataURL(file);
+                      }
+                    }} 
+                  />
+                </label>
+              </div>
+
+              {/* Apodo y Mensaje de Estado al lado */}
+              <div className="flex-1 w-full space-y-3">
+                <FormField
+                  label="Nombre visible (apodo)"
+                  id="profileVisibleName"
+                  name="profileVisibleName"
+                  value={visibleName}
+                  onChange={(e) => setVisibleName(e.target.value)}
+                  placeholder={fullName}
+                  inputClassName="text-sm h-9.5 p-2.5 text-black border-slate-300 rounded-lg"
                 />
-              </label>
-            </div>
 
-            {/* Apodo y Mensaje de Estado al lado */}
-            <div className="flex-1 w-full space-y-3">
-              <FormField
-                label="Nombre visible (apodo)"
-                id="profileVisibleName"
-                name="profileVisibleName"
-                value={visibleName}
-                onChange={(e) => setVisibleName(e.target.value)}
-                placeholder={fullName}
-                inputClassName="text-sm h-9.5 p-2.5 text-black border-slate-300 rounded-lg"
-              />
-
-              <FormField
-                label="Mensaje de Estado"
-                id="profileStatusText"
-                name="profileStatusText"
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-                placeholder="Disponible"
-                inputClassName="text-sm h-9.5 p-2.5 text-black border-slate-300 rounded-lg"
-              />
-            </div>
-          </div>
-
-          {/* Resto de campos del perfil directamente expuestos */}
-          <div className="space-y-4">
-            <FormField
-              label="Nombre completo"
-              id="profileFullName"
-              name="profileFullName"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              inputClassName="text-sm h-9.5 p-2.5 text-black border-slate-300 rounded-lg"
-              required
-            />
-            {errors.fullName && <p className="text-xs text-red-500 -mt-3 font-bold">{errors.fullName}</p>}
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <RutInput
-                label="RUT (para certificados)"
-                id="profileRut"
-                name="profileRut"
-                value={rut}
-                onChange={setRut}
-                placeholder="Ej: 12.345.678-9"
-                inputClassName="text-sm h-9.5 p-2.5 text-black border-slate-300 rounded-lg"
-              />
-              <div>
-                <label htmlFor="profileProfession" className="block text-sm font-medium text-slate-700 mb-1.5">
-                  Profesión
-                </label>
-                <select 
-                  id="profileProfession" 
-                  name="profileProfession" 
-                  value={profession} 
-                  onChange={(e) => setProfession(e.target.value as Profession)}
-                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg shadow-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition-colors duration-150 ease-in-out text-sm text-slate-700 h-9.5 font-medium"
-                >
-                  {professionOptions.map(option => (
-                    <option key={option.value} value={option.value}>{option.label}</option>
-                  ))}
-                </select>
+                <FormField
+                  label="Mensaje de Estado"
+                  id="profileStatusText"
+                  name="profileStatusText"
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                  placeholder="Disponible"
+                  inputClassName="text-sm h-9.5 p-2.5 text-black border-slate-300 rounded-lg"
+                />
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Resto de campos del perfil */}
+            <div className="space-y-4">
               <div>
-                <label htmlFor="profileCesfam" className="block text-sm font-medium text-slate-700 mb-1.5">
-                  CESFAM
-                </label>
-                <select 
-                  id="profileCesfam" 
-                  name="profileCesfam" 
-                  value={cesfam} 
-                  onChange={(e) => setCesfam(e.target.value as CESFAM)}
-                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg shadow-sm text-sm text-slate-700 h-9.5 font-medium outline-none"
-                >
-                  {cesfamOptions.map(option => (
-                    <option key={option} value={option}>{option}</option>
-                  ))}
-                </select>
+                <FormField
+                  label="Nombre completo"
+                  id="profileFullName"
+                  name="profileFullName"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  inputClassName="text-sm h-9.5 p-2.5 text-black border-slate-300 rounded-lg"
+                  required
+                />
+                {errors.fullName && <p className="text-xs text-red-500 mt-1 font-bold">{errors.fullName}</p>}
               </div>
-              <div>
-                <label htmlFor="profileSector" className="block text-sm font-medium text-slate-700 mb-1.5">
-                  Sector
-                </label>
-                <select 
-                  id="profileSector" 
-                  name="profileSector" 
-                  value={sector} 
-                  onChange={(e) => setSector(e.target.value as Sector)}
-                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg shadow-sm text-sm text-slate-700 h-9.5 font-medium outline-none"
-                >
-                  {sectorOptions.map(option => (
-                    <option key={option} value={option}>{option}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <FormField
-              label="Firma electrónica"
-              id="profileElectronicSignature"
-              name="electronicSignature"
-              value={electronicSignature}
-              onChange={(e) => setElectronicSignature(e.target.value)}
-              isTextArea
-              rows={3}
-              placeholder="Nombre Completo&#10;RUT 12.345.678-9&#10;Médico Cirujano"
-              inputClassName="text-xs p-2.5 font-mono text-black leading-relaxed border-slate-300 rounded-lg"
-            />
-          </div>
-
-          {/* Sección de cambio de contraseña */}
-          {showPasswordFields && (
-            <div className="pt-4 border-t border-slate-100 space-y-4 animate-fadeIn">
-              <FormField
-                label="Contraseña Actual"
-                id="currentPassword"
-                name="currentPassword"
-                type="password"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                inputClassName="text-sm h-9.5 p-2.5 text-black border-slate-300 rounded-lg"
-              />
-              {errors.currentPassword && <p className="text-xs text-red-500 -mt-3 font-bold">{errors.currentPassword}</p>}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <FormField
-                    label="Nueva Contraseña"
-                    id="newPassword"
-                    name="newPassword"
-                    type="password"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
+                  <RutInput
+                    label="RUT (para certificados)"
+                    id="profileRut"
+                    name="profileRut"
+                    value={rut}
+                    onChange={setRut}
+                    placeholder="Ej: 12.345.678-9"
                     inputClassName="text-sm h-9.5 p-2.5 text-black border-slate-300 rounded-lg"
                   />
-                  {errors.newPassword && <p className="text-xs text-red-500 mt-1 font-bold">{errors.newPassword}</p>}
+                  {errors.rut && <p className="text-xs text-red-500 mt-1 font-bold">{errors.rut}</p>}
                 </div>
                 <div>
-                  <FormField
-                    label="Confirmar Nueva Contraseña"
-                    id="confirmNewPassword"
-                    name="confirmNewPassword"
-                    type="password"
-                    value={confirmNewPassword}
-                    onChange={(e) => setConfirmNewPassword(e.target.value)}
-                    inputClassName="text-sm h-9.5 p-2.5 text-black border-slate-300 rounded-lg"
-                  />
-                  {errors.confirmNewPassword && <p className="text-xs text-red-500 mt-1 font-bold">{errors.confirmNewPassword}</p>}
+                  <label htmlFor="profileProfession" className="block text-sm font-medium text-slate-700 mb-1.5">
+                    Profesión
+                  </label>
+                  <select 
+                    id="profileProfession" 
+                    name="profileProfession" 
+                    value={profession} 
+                    onChange={(e) => setProfession(e.target.value as Profession)}
+                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg shadow-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition-colors duration-150 ease-in-out text-sm text-slate-700 h-9.5 font-medium"
+                  >
+                    {professionOptions.map(option => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="profileCesfam" className="block text-sm font-medium text-slate-700 mb-1.5">
+                    CESFAM
+                  </label>
+                  <select 
+                    id="profileCesfam" 
+                    name="profileCesfam" 
+                    value={cesfam} 
+                    onChange={(e) => setCesfam(e.target.value as CESFAM)}
+                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg shadow-sm text-sm text-slate-700 h-9.5 font-medium outline-none"
+                  >
+                    {cesfamOptions.map(option => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="profileSector" className="block text-sm font-medium text-slate-700 mb-1.5">
+                    Sector
+                  </label>
+                  <select 
+                    id="profileSector" 
+                    name="profileSector" 
+                    value={sector} 
+                    onChange={(e) => setSector(e.target.value as Sector)}
+                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg shadow-sm text-sm text-slate-700 h-9.5 font-medium outline-none"
+                  >
+                    {sectorOptions.map(option => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <FormField
+                label="Firma electrónica"
+                id="profileElectronicSignature"
+                name="electronicSignature"
+                value={electronicSignature}
+                onChange={(e) => setElectronicSignature(e.target.value)}
+                isTextArea
+                rows={3}
+                placeholder="Nombre Completo&#10;RUT 12.345.678-9&#10;Médico Cirujano"
+                inputClassName="text-xs p-2.5 font-mono text-black leading-relaxed border-slate-300 rounded-lg"
+              />
             </div>
-          )}
-        </form>
-        
-        {/* Footer */}
-        <footer className="p-4 bg-slate-50 border-t border-slate-200 shrink-0 flex justify-between items-center rounded-b-xl">
-          <button
-            type="button"
-            onClick={() => setShowPasswordFields(!showPasswordFields)}
-            className="px-5 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-lg text-sm uppercase tracking-wider transition-colors cursor-pointer outline-none"
-          >
-            {showPasswordFields ? 'Ocultar' : 'Cambiar Contraseña'}
-          </button>
-          <div className="flex gap-3">
+
+            {/* Sección de cambio de contraseña */}
+            {showPasswordFields && (
+              <div className="pt-4 border-t border-slate-100 space-y-4 animate-fadeIn">
+                <FormField
+                  label="Contraseña Actual"
+                  id="currentPassword"
+                  name="currentPassword"
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  inputClassName="text-sm h-9.5 p-2.5 text-black border-slate-300 rounded-lg"
+                />
+                {errors.currentPassword && <p className="text-xs text-red-500 -mt-3 font-bold">{errors.currentPassword}</p>}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <FormField
+                      label="Nueva Contraseña"
+                      id="newPassword"
+                      name="newPassword"
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      inputClassName="text-sm h-9.5 p-2.5 text-black border-slate-300 rounded-lg"
+                    />
+                    {errors.newPassword && <p className="text-xs text-red-500 mt-1 font-bold">{errors.newPassword}</p>}
+                  </div>
+                  <div>
+                    <FormField
+                      label="Confirmar Nueva Contraseña"
+                      id="confirmNewPassword"
+                      name="confirmNewPassword"
+                      type="password"
+                      value={confirmNewPassword}
+                      onChange={(e) => setConfirmNewPassword(e.target.value)}
+                      inputClassName="text-sm h-9.5 p-2.5 text-black border-slate-300 rounded-lg"
+                    />
+                    {errors.confirmNewPassword && <p className="text-xs text-red-500 mt-1 font-bold">{errors.confirmNewPassword}</p>}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+          
+          {/* Footer */}
+          <footer className="p-4 bg-slate-50 border-t border-slate-200 shrink-0 flex justify-between items-center rounded-b-xl">
             <button
               type="button"
-              onClick={onClose}
-              className="px-6 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold rounded-lg text-sm transition-colors cursor-pointer outline-none"
+              onClick={() => setShowPasswordFields(!showPasswordFields)}
+              className="px-5 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-lg text-sm uppercase tracking-wider transition-colors cursor-pointer outline-none"
             >
-              Cancelar
+              {showPasswordFields ? 'Ocultar' : 'Cambiar Contraseña'}
             </button>
-            <button
-              type="submit"
-              onClick={handleSubmit}
-              className="px-6 py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-semibold rounded-lg text-sm transition-colors cursor-pointer outline-none shadow-md"
-            >
-              Guardar Cambios
-            </button>
-          </div>
-        </footer>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-6 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold rounded-lg text-sm transition-colors cursor-pointer outline-none"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                className="px-6 py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-semibold rounded-lg text-sm transition-colors cursor-pointer outline-none shadow-md"
+              >
+                Guardar Cambios
+              </button>
+            </div>
+          </footer>
+        </form>
       </div>
     </div>
   );

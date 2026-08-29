@@ -16,6 +16,7 @@ dist-installer
 build
 *.spec
 *.local
+*.exe
 
 # Editor directories and files
 .vscode/*

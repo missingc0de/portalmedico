@@ -1,4 +1,4 @@
-# PowerShell Script to create the official Windows Setup Installer for PORTAL MÉDICO v1.4.6
+# PowerShell Script to create the official Windows Setup Installer for PORTAL MÉDICO v1.4.13
 
 $WorkspaceDir = "c:\Users\missi\.gemini\antigravity\scratch\PORTALMEDICO_CLIENTEWEB"
 Set-Location $WorkspaceDir
@@ -47,7 +47,7 @@ public class SetupForm : Form
 
     public SetupForm()
     {
-        this.Text = "Instalador de PORTAL MÉDICO v1.4.6";
+        this.Text = "Instalador de PORTAL MÉDICO v1.4.13";
         this.Size = new Size(540, 350);
         this.StartPosition = FormStartPosition.CenterScreen;
         this.FormBorderStyle = FormBorderStyle.FixedDialog;
@@ -60,7 +60,7 @@ public class SetupForm : Form
         installPath = Path.Combine(appData, @"Programs\PortalMedico");
 
         lblTitle = new Label() {
-            Text = "Instalación de PORTAL MÉDICO v1.4.6",
+            Text = "Instalación de PORTAL MÉDICO v1.4.13",
             Font = new Font("Segoe UI", 12f, FontStyle.Bold),
             ForeColor = Color.FromArgb(14, 116, 144),
             Location = new Point(24, 20),
@@ -124,10 +124,28 @@ public class SetupForm : Form
         this.Controls.Add(btnCancel);
     }
 
+    private void KillProcess(string name)
+    {
+        try
+        {
+            foreach (Process p in Process.GetProcessesByName(name))
+            {
+                p.Kill();
+                p.WaitForExit(2000);
+            }
+        }
+        catch { }
+    }
+
     private void BtnInstall_Click(object sender, EventArgs e)
     {
         btnInstall.Enabled = false;
         btnCancel.Enabled = false;
+        lblStatus.Text = "Cerrando versiones anteriores (si existen)...";
+        Application.DoEvents();
+        KillProcess("PortalMedico");
+        KillProcess("run_webview");
+
         lblStatus.Text = "Extrayendo e instalando archivos...";
         progressBar.Value = 20;
         Application.DoEvents();
@@ -213,10 +231,10 @@ public class SetupForm : Form
             using (RegistryKey key = Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Uninstall\PortalMedico"))
             {
                 key.SetValue("DisplayName", "PORTAL MÉDICO");
-                key.SetValue("ApplicationVersion", "1.4.5");
+                key.SetValue("ApplicationVersion", "1.4.13");
                 key.SetValue("Publisher", "PORTAL MÉDICO APS");
                 key.SetValue("DisplayIcon", exe);
-                key.SetValue("DisplayVersion", "1.4.5");
+                key.SetValue("DisplayVersion", "1.4.13");
                 key.SetValue("InstallLocation", dir);
                 key.SetValue("UninstallString", "cmd.exe /c rmdir /s /q \"" + dir + "\"");
             }
@@ -246,7 +264,7 @@ $Utf8EncodingWithBom = New-Object System.Text.UTF8Encoding $true
 [System.IO.File]::WriteAllText($SourceFile, $CSharpCode, $Utf8EncodingWithBom)
 
 $PayloadExe = Join-Path $WorkspaceDir "dist-python\run_webview.exe"
-$OutInstallerExe = Join-Path $InstallerDir "PortalMedico_Setup_v1.4.6.exe"
+$OutInstallerExe = Join-Path $InstallerDir "PortalMedico_Setup_v1.4.13.exe"
 
 $CscPath = "C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
 $CscArgs = @("/target:winexe", "/codepage:65001", "/out:$OutInstallerExe", "/r:System.dll", "/r:System.Windows.Forms.dll", "/r:System.Drawing.dll", "/r:System.Core.dll", "/resource:$PayloadExe,PortalMedico.exe")

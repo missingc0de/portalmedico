@@ -774,3 +774,469 @@ export const PerfilFeed: React.FC<{
     </FeedErrorBoundary>
   );
 };
+
+// ─── ComunidadView Unified Component ──────────────────────────────────────────
+
+interface ComunidadViewProps {
+  loggedInUser: User;
+  onBackToMenu: () => void;
+}
+
+interface InstaNote {
+  id: string;
+  authorUsername: string;
+  authorName: string;
+  authorAvatar: string;
+  text: string;
+  createdAt: any;
+}
+
+export const ComunidadView: React.FC<ComunidadViewProps> = ({ loggedInUser, onBackToMenu }) => {
+  const [posts, setPosts] = useState<SocialPost[]>([]);
+  const [notes, setNotes] = useState<InstaNote[]>([]);
+  const [postText, setPostText] = useState('');
+  const [postTitle, setPostTitle] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeFilter, setActiveFilter] = useState<'all' | 'notes' | 'emails' | 'calls' | 'tasks' | 'meetings'>('all');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loadError, setLoadError] = useState('');
+
+  // Selected profile to show on details (defaults to loggedInUser)
+  const [viewedUser, setViewedUser] = useState<User>(loggedInUser);
+  const [leftTab, setLeftTab] = useState<'about' | 'address'>('about');
+
+  // Rich post elements state
+  const [codeSnippet, setCodeSnippet] = useState('');
+  const [fileName, setFileName] = useState('');
+  const [fileSize, setFileSize] = useState('');
+  const [meetingTitle, setMeetingTitle] = useState('');
+  const [meetingTime, setMeetingTime] = useState('');
+
+  useEffect(() => {
+    // 1. Fetch posts
+    const qPosts = query(collection(db, 'social_posts'), orderBy('createdAt', 'desc'));
+    const unsubPosts = onSnapshot(qPosts,
+      (snap) => {
+        const list: any[] = [];
+        snap.forEach(d => {
+          const data = d.data();
+          list.push({ id: d.id, ...data });
+        });
+        setPosts(list);
+        setLoadError('');
+      },
+      (err) => {
+        console.error('Comunidad posts error:', err);
+        setLoadError(err.message);
+      }
+    );
+
+    // 2. Fetch Instagram-like notes
+    const qNotes = query(collection(db, 'social_notes'), orderBy('createdAt', 'desc'));
+    const unsubNotes = onSnapshot(qNotes,
+      (snap) => {
+        const list: any[] = [];
+        snap.forEach(d => {
+          list.push({ id: d.id, ...d.data() });
+        });
+        setNotes(list);
+      },
+      (err) => console.error('Comunidad notes error:', err)
+    );
+
+    return () => {
+      unsubPosts();
+      unsubNotes();
+    };
+  }, []);
+
+  const handleCreatePost = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!postText.trim() && !postTitle.trim() && !codeSnippet && !fileName && !meetingTitle) return;
+    setIsSubmitting(true);
+    try {
+      await addDoc(collection(db, 'social_posts'), {
+        authorUsername: loggedInUser.username,
+        authorName: loggedInUser.fullName,
+        authorProfession: loggedInUser.profession,
+        authorAvatar: (loggedInUser as any).profilePictureUrl || '',
+        title: postTitle.trim() || 'Publicación',
+        content: postText,
+        imageUrl: '',
+        feedType: 'comunidad',
+        likes: [],
+        reactions: {},
+        commentsCount: 0,
+        createdAt: new Date(),
+        codeSnippet: codeSnippet || '',
+        fileName: fileName || '',
+        fileSize: fileSize || '',
+        meetingTitle: meetingTitle || '',
+        meetingTime: meetingTime || '',
+        isSystemEvent: false,
+      });
+
+      // Clear fields
+      setPostText('');
+      setPostTitle('');
+      setCodeSnippet('');
+      setFileName('');
+      setFileSize('');
+      setMeetingTitle('');
+      setMeetingTime('');
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleCreateNote = async () => {
+    const existingNote = notes.find(n => n.authorUsername === loggedInUser.username);
+    const textPrompt = window.prompt(
+      '¿Qué nota/estado quieres compartir hoy? (Máx 60 caracteres):',
+      existingNote ? existingNote.text : ''
+    );
+    
+    if (textPrompt === null) return;
+    
+    if (textPrompt.trim() === '') {
+      try {
+        await deleteDoc(doc(db, 'social_notes', loggedInUser.username));
+      } catch (e) {
+        console.error(e);
+      }
+    } else {
+      try {
+        await setDoc(doc(db, 'social_notes', loggedInUser.username), {
+          authorUsername: loggedInUser.username,
+          authorName: loggedInUser.fullName,
+          authorAvatar: (loggedInUser as any).profilePictureUrl || '',
+          text: textPrompt.substring(0, 60),
+          createdAt: new Date()
+        });
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  };
+
+  const filteredPosts = posts.filter(p => {
+    if (activeFilter === 'notes' && p.meetingTitle) return false;
+    if (activeFilter === 'meetings' && !p.meetingTitle) return false;
+    if (activeFilter === 'emails' && !p.fileName) return false;
+    
+    if (searchQuery.trim() === '') return true;
+    const queryLower = searchQuery.toLowerCase();
+    return (
+      (p.title && p.title.toLowerCase().includes(queryLower)) ||
+      (p.content && p.content.toLowerCase().includes(queryLower)) ||
+      (p.authorName && p.authorName.toLowerCase().includes(queryLower))
+    );
+  });
+
+  const ownNote = notes.find(n => n.authorUsername === loggedInUser.username);
+  const otherNotes = notes.filter(n => n.authorUsername !== loggedInUser.username);
+
+  return (
+    <div className="w-full bg-[#F3F4F6] h-full overflow-hidden flex flex-col font-sans text-slate-800 select-none">
+      
+      {/* Top Header */}
+      <div className="px-6 py-3.5 bg-white border-b border-slate-200 flex items-center justify-between flex-shrink-0 z-10 shadow-3xs">
+        <div className="flex items-center gap-2.5 text-xs font-bold text-slate-500">
+          <span className="flex items-center gap-1 text-sky-600">💬 Comunidad</span>
+          <span className="text-slate-350">/</span>
+          <span className="text-slate-700">Muro Clínico</span>
+        </div>
+        <button onClick={onBackToMenu} className="px-4 py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold rounded-lg transition-colors cursor-pointer shadow-3xs">
+          Cerrar e Ir al Menú
+        </button>
+      </div>
+
+      {/* Main Workspace: 2 Columns matching the layout of the mockup */}
+      <div className="flex-1 flex overflow-hidden w-full relative p-4 gap-4">
+        
+        {/* === COLUMN 1: Stories row, Composer & Feed (Left - 70% width) === */}
+        <div className="flex-grow w-2/3 flex flex-col overflow-y-auto custom-scrollbar gap-4">
+          
+          {/* Mockup Top: Stories row */}
+          <div className="bg-white rounded-xl border border-slate-250/60 p-4 flex gap-4 overflow-x-auto custom-scrollbar flex-shrink-0 items-center">
+            
+            {/* Logged in User story note bubble */}
+            <div className="flex flex-col items-center relative cursor-pointer flex-shrink-0" onClick={handleCreateNote}>
+              <div className="relative mb-1">
+                <div className="w-14 h-14 rounded-full p-[2.5px] bg-gradient-to-tr from-sky-400 to-indigo-500">
+                  <UserAvatar src={(loggedInUser as any).profilePictureUrl} size="w-full h-full border-2 border-white" />
+                </div>
+                <span className="absolute -bottom-1 -right-0.5 w-5.5 h-5.5 bg-sky-600 border-2 border-white text-white font-bold text-xs rounded-full flex items-center justify-center shadow-xs">+</span>
+              </div>
+              <span className="text-[10px] text-slate-500 font-bold">Tu nota</span>
+
+              {ownNote && (
+                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-white border border-slate-200 px-2 py-0.5 rounded-full shadow-md text-[9px] max-w-[85px] font-semibold text-slate-700 text-center truncate">
+                  💭 {ownNote.text}
+                </div>
+              )}
+            </div>
+
+            {/* Other colleagues notes */}
+            {otherNotes.map(n => {
+              const colleague = allUsers.find(u => u.username === n.authorUsername);
+              return (
+                <div 
+                  key={n.id} 
+                  className="flex flex-col items-center relative cursor-pointer flex-shrink-0"
+                  onClick={() => {
+                    if (colleague) setViewedUser(colleague);
+                  }}
+                >
+                  <div className="relative mb-1">
+                    <div className="w-14 h-14 rounded-full p-[2.5px] bg-gradient-to-tr from-purple-400 to-indigo-500">
+                      <UserAvatar src={n.authorAvatar} size="w-full h-full border-2 border-white" />
+                    </div>
+                    <span className="absolute bottom-0.5 right-0.5 w-3 h-3 bg-green-500 border border-white rounded-full"></span>
+                  </div>
+                  <span className="text-[10px] text-slate-650 font-bold truncate max-w-[70px]">
+                    {n.authorName.split(' ')[0]}
+                  </span>
+
+                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-white border border-slate-200 px-2 py-0.5 rounded-full shadow-md text-[9px] max-w-[85px] font-semibold text-slate-700 text-center truncate">
+                    {n.text}
+                  </div>
+                </div>
+              );
+            })}
+
+            {otherNotes.length === 0 && !ownNote && (
+              <p className="text-[11px] text-slate-400 italic pl-2">Deja una nota para iniciar la conversación...</p>
+            )}
+          </div>
+
+          {/* Mockup Middle: Post Composer Card */}
+          <div className="bg-white rounded-xl border border-slate-250/60 p-4 flex-shrink-0 flex flex-col gap-3.5 shadow-3xs">
+            <div className="flex gap-3 items-center">
+              <UserAvatar src={(loggedInUser as any).profilePictureUrl} size="w-10 h-10" />
+              <input
+                type="text"
+                placeholder="¿Qué estás pensando compartir con tu equipo?"
+                value={postText}
+                onChange={e => setPostText(e.target.value)}
+                className="flex-1 bg-slate-100 rounded-full px-4 py-2 text-xs outline-none text-slate-800 placeholder-slate-400 border border-transparent focus:border-slate-200 focus:bg-white transition-all"
+              />
+              <button 
+                onClick={handleCreatePost}
+                disabled={(!postText.trim() && !codeSnippet && !fileName && !meetingTitle) || isSubmitting}
+                className="px-4 py-2 bg-sky-600 hover:bg-sky-700 disabled:opacity-50 text-white font-bold text-xs rounded-lg transition-colors cursor-pointer"
+              >
+                {isSubmitting ? 'Publicando...' : 'Compartir Post'}
+              </button>
+            </div>
+
+            {/* Composer toolbar */}
+            <div className="flex justify-between items-center border-t border-slate-100 pt-3 text-slate-500 text-xs font-semibold">
+              <div className="flex gap-4">
+                <button type="button" onClick={() => setFileName(prompt('Nombre del archivo:') || '')} className="flex items-center gap-1 hover:text-sky-600 transition-colors">
+                  <span>📎</span> Documento
+                </button>
+                <button type="button" onClick={() => setMeetingTitle(prompt('Título de la reunión:') || '')} className="flex items-center gap-1 hover:text-sky-600 transition-colors">
+                  <span>🎥</span> Reunión
+                </button>
+                <button type="button" onClick={() => setCodeSnippet(prompt('Código / Pauta clínica:') || '')} className="flex items-center gap-1 hover:text-sky-600 transition-colors">
+                  <span>💻</span> Código / Pauta
+                </button>
+              </div>
+              <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                Comunidad CESFAM
+              </div>
+            </div>
+
+            {/* Attachment alerts inside composer */}
+            {(fileName || meetingTitle) && (
+              <div className="flex gap-2 flex-wrap pt-1.5 border-t border-slate-50">
+                {fileName && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-sky-50 border border-sky-100 rounded-lg text-[10.5px] font-bold text-sky-700">
+                    📄 {fileName}
+                    <button type="button" onClick={() => { setFileName(''); setFileSize(''); }} className="ml-1 text-red-500 font-bold hover:text-red-700">✕</button>
+                  </span>
+                )}
+                {meetingTitle && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 border border-emerald-100 rounded-lg text-[10.5px] font-bold text-emerald-700">
+                    🎥 {meetingTitle}
+                    <button type="button" onClick={() => { setMeetingTitle(''); setMeetingTime(''); }} className="ml-1 text-red-500 font-bold hover:text-red-700">✕</button>
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Posts Feed */}
+          <div className="space-y-4">
+            {filteredPosts.length === 0 ? (
+              <div className="bg-white rounded-xl border border-slate-200 p-8 text-center text-slate-400 text-xs italic shadow-3xs">
+                No hay publicaciones registradas.
+              </div>
+            ) : (
+              filteredPosts.map(p => (
+                <div key={p.id} className="bg-white rounded-xl border border-slate-250/60 p-4 shadow-3xs flex flex-col gap-3 relative hover:border-slate-350 transition-all group">
+                  
+                  {/* Post Header */}
+                  <div className="flex justify-between items-center text-xs">
+                    <div className="flex items-center gap-2">
+                      <UserAvatar src={p.authorAvatar} size="w-9 h-9 border border-slate-100 shadow-3xs" />
+                      <div>
+                        <p className="font-bold text-slate-800 hover:underline hover:text-sky-600 cursor-pointer" onClick={() => {
+                          const colleague = allUsers.find(u => u.username === p.authorUsername);
+                          if (colleague) setViewedUser(colleague);
+                        }}>
+                          {getPrefix(p.authorProfession)}{p.authorName}
+                        </p>
+                        <p className="text-[10px] text-slate-400 font-semibold">{getProfessionLabel(p.authorProfession)} · {formatSocialDate(p.createdAt)}</p>
+                      </div>
+                    </div>
+                    {p.authorUsername === loggedInUser.username && (
+                      <button
+                        onClick={async () => {
+                          if (window.confirm("¿Deseas eliminar este post?")) {
+                            try {
+                              await deleteDoc(doc(db, 'social_posts', p.id));
+                            } catch (err) { console.error(err); }
+                          }
+                        }}
+                        className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-0.5"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Post Body Text */}
+                  <div className="text-xs text-slate-700 leading-relaxed font-medium whitespace-pre-wrap pl-1">
+                    {p.content}
+                  </div>
+
+                  {/* Google Meet Card */}
+                  {p.meetingTitle && (
+                    <div className="bg-sky-50/50 border border-sky-100 rounded-xl p-3 flex items-center justify-between gap-3 shadow-3xs">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-base shrink-0">🎥</span>
+                        <div className="text-[11px] truncate">
+                          <p className="font-bold text-slate-800 truncate">{p.meetingTitle}</p>
+                          <p className="text-slate-400 text-[9.5px] truncate">{p.meetingTime || 'Agenda por definir'}</p>
+                        </div>
+                      </div>
+                      <button className="px-3 py-1 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 font-bold text-[10px] rounded-lg transition-colors cursor-pointer shrink-0 shadow-3xs">
+                        Unirse
+                      </button>
+                    </div>
+                  )}
+
+                  {/* File Card */}
+                  {p.fileName && (
+                    <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex items-center gap-3 shadow-3xs max-w-xs">
+                      <span className="text-base shrink-0">📄</span>
+                      <div className="text-[11px] truncate">
+                        <p className="font-bold text-slate-800 truncate">{p.fileName}</p>
+                        <p className="text-slate-400 text-[9.5px] truncate">{p.fileSize || 'Descargar'}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Code snippet block */}
+                  {p.codeSnippet && (
+                    <div className="rounded-lg bg-slate-900 border border-slate-800 p-3 overflow-x-auto text-[10px] font-mono text-emerald-400 shadow-inner">
+                      <pre className="whitespace-pre">{p.codeSnippet}</pre>
+                    </div>
+                  )}
+
+                  {/* Reactions bar */}
+                  <div className="border-t border-slate-100 pt-3 flex gap-8 text-slate-450 text-[11px] font-bold">
+                    <button
+                      onClick={async () => {
+                        const hasLiked = p.likes.includes(loggedInUser.username);
+                        try {
+                          await updateDoc(doc(db, 'social_posts', p.id), {
+                            likes: hasLiked ? arrayRemove(loggedInUser.username) : arrayUnion(loggedInUser.username)
+                          });
+                        } catch (e) { console.error(e); }
+                      }}
+                      className={`flex items-center gap-1.5 transition-colors cursor-pointer ${
+                        p.likes.includes(loggedInUser.username) ? 'text-red-500' : 'hover:text-red-500'
+                      }`}
+                    >
+                      <span>{p.likes.includes(loggedInUser.username) ? '❤️' : '🤍'}</span>
+                      <span>{p.likes.length} Likes</span>
+                    </button>
+                    <button className="flex items-center gap-1.5 hover:text-sky-650 transition-colors cursor-pointer">
+                      <span>💬</span>
+                      <span>{p.commentsCount || 0} Comentarios</span>
+                    </button>
+                  </div>
+
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* === COLUMN 2: Messages & Events Sidebar (Right - 30% width) === */}
+        <div className="w-[320px] flex flex-col gap-4 flex-shrink-0 overflow-y-auto custom-scrollbar">
+          
+          {/* Mockup Card 1: Messages / Active colleagues */}
+          <div className="bg-white rounded-xl border border-slate-250/60 p-4 flex flex-col gap-3 shadow-3xs">
+            <div className="flex justify-between items-center text-xs font-bold text-slate-850 border-b border-slate-100 pb-2.5">
+              <span>Colegas Conectados</span>
+              <button className="text-sky-600 font-bold hover:underline cursor-pointer">Nuevo</button>
+            </div>
+            
+            {/* Colleagues list */}
+            <div className="space-y-3.5 max-h-[220px] overflow-y-auto pr-1 custom-scrollbar">
+              {allUsers.map(u => (
+                <div
+                  key={u.username}
+                  onClick={() => setViewedUser(u)}
+                  className="flex items-center justify-between p-1 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors"
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="relative shrink-0">
+                      <UserAvatar src={u.profilePictureUrl} size="w-8 h-8 border border-slate-200" />
+                      <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border border-white rounded-full"></span>
+                    </div>
+                    <div className="text-[11px] leading-tight min-w-0">
+                      <p className="font-bold text-slate-800 truncate">{getPrefix(u.profession)}{u.fullName}</p>
+                      <p className="text-[9.5px] text-slate-400 truncate">{getProfessionLabel(u.profession)}</p>
+                    </div>
+                  </div>
+                  <span className="text-[9.5px] text-slate-400 font-semibold">Mensaje</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Mockup Card 2: Events / Reuniones */}
+          <div className="bg-white rounded-xl border border-slate-250/60 p-4 flex flex-col gap-3 shadow-3xs">
+            <div className="flex justify-between items-center text-xs font-bold text-slate-850 border-b border-slate-100 pb-2.5">
+              <span>Próximas Reuniones</span>
+              <span className="text-slate-400">🕒</span>
+            </div>
+            <div className="space-y-3 max-h-[220px] overflow-y-auto pr-1 custom-scrollbar">
+              {posts.filter(p => p.meetingTitle).map(p => (
+                <div key={p.id} className="p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs leading-normal flex flex-col gap-1 shadow-3xs">
+                  <p className="font-bold text-slate-800 truncate">📅 {p.meetingTitle}</p>
+                  <div className="text-[9.5px] text-slate-400">
+                    <p>Horario: {p.meetingTime || 'Por agendar'}</p>
+                    <p className="mt-0.5">Organiza: @{p.authorUsername}</p>
+                  </div>
+                </div>
+              ))}
+              {posts.filter(p => p.meetingTitle).length === 0 && (
+                <p className="text-[10px] text-slate-400 italic text-center py-2">No hay reuniones calendarizadas.</p>
+              )}
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  );
+};

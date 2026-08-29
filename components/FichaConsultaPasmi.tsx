@@ -8,6 +8,7 @@ import SmartAntecedentesTextarea from './SmartAntecedentesTextarea';
 import ColegioAutocomplete from './ColegioAutocomplete';
 import { generateClinicalRecordPdf } from '../services/pdfGenerator';
 import { FileText, PlusCircle } from 'lucide-react';
+import { TdahWizardModal } from './TdahWizardModal';
 
 const mentalHealthDiagnoses = [
   "TRASTORNO DEL ESPECTRO AUTISTA (TEA), NO ESPECIFICADO",
@@ -319,6 +320,7 @@ const FichaConsultaPasmi: React.FC<FichaConsultaPasmiProps> = ({ onBackToMenu, l
 
   const [isPredefinedPlanOpen, setIsPredefinedPlanOpen] = useState(false);
   const [planSearchTerm, setPlanSearchTerm] = useState('');
+  const [isTdahWizardOpen, setIsTdahWizardOpen] = useState(false);
 
   const filteredPredefinedPlans = React.useMemo(() => {
     if (!planSearchTerm.trim()) return pasmiPredefinedPlans;
@@ -590,8 +592,27 @@ const FichaConsultaPasmi: React.FC<FichaConsultaPasmiProps> = ({ onBackToMenu, l
                 
                 <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-3">
                   <h3 className="text-lg font-semibold mb-3 text-sky-700 border-b border-sky-200 pb-2">Antecedentes Personales</h3>
-                  <div className="grid grid-cols-1 gap-4 mb-4">
-                    <FormField label="Edad" id="edad" name="edad" value={formData.edad} onChange={handleChange} placeholder="Ej: 14 años" />
+                  
+                  <div className="flex items-end gap-2.5 flex-wrap mb-4">
+                    <div className="flex-grow">
+                      <FormField label="Edad" id="edad" name="edad" value={formData.edad} onChange={handleChange} placeholder="Ej: 14 años" />
+                    </div>
+                    
+                    {/* Botón WIZARD TDAH */}
+                    <button
+                      type="button"
+                      onClick={() => setIsTdahWizardOpen(true)}
+                      className="flex items-center gap-1.5 px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-lg shadow transition-all h-[38px] cursor-pointer whitespace-nowrap"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                        <path d="M19 3l.5 1.5L21 4l-1.5.5L19 6l-.5-1.5L17 4l1.5-.5z" fill="currentColor" stroke="none" />
+                        <path d="M15 1l.3.9.9.3-.9.3-.3.9-.3-.9-.9-.3.9-.3z" fill="currentColor" stroke="none" />
+                        <path d="M22 8l.3.9.9.3-.9.3-.3.9-.3-.9-.9-.3.9-.3z" fill="currentColor" stroke="none" />
+                        <line x1="4" y1="20" x2="16" y2="8" />
+                        <path d="M15 7l2 2" />
+                      </svg>
+                      <span>WIZARD TDAH</span>
+                    </button>
                   </div>
                   
                   <SmartAntecedentesTextarea
@@ -911,6 +932,9 @@ const FichaConsultaPasmi: React.FC<FichaConsultaPasmiProps> = ({ onBackToMenu, l
             </button>
           </div>
         </div>
+
+        {/* Modal de Asistente TDAH */}
+        <TdahWizardModal isOpen={isTdahWizardOpen} onClose={() => setIsTdahWizardOpen(false)} />
 
       </div>
     </div>
