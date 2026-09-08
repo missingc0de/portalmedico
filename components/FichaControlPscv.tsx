@@ -57,6 +57,10 @@ const initialFormData: FichaControlPscvFormData = {
   fechaControl: new Date().toISOString().split('T')[0],
   estratificacion: '',
   tipoControlCronico: '',
+  incluirControlCardiovascular: true,
+  incluirControlHipotiroidismo: false,
+  incluirControlArtrosis: false,
+  incluirControlEpilepsia: false,
   // Hipotiroidismo
   hipotiroidismoConstipacion: false, hipotiroidismoConstipacionAclaracion: '',
   hipotiroidismoIntoleranciaFrio: false, hipotiroidismoIntoleranciaFrioAclaracion: '',
@@ -445,7 +449,17 @@ const FichaControlPscv: React.FC<FichaControlPscvProps> = ({
   useEffect(() => {
     if (tipoControl !== undefined && tipoControl !== formData.tipoControlCronico) {
       ignoreTipoChangeRef.current = true;
-      setFormData(prev => ({ ...prev, tipoControlCronico: tipoControl }));
+      setFormData(prev => {
+        const lower = tipoControl.toLowerCase();
+        return {
+          ...prev,
+          tipoControlCronico: tipoControl,
+          ...(lower.includes('cardiovascular') && { incluirControlCardiovascular: true }),
+          ...(lower.includes('hipotiroidismo') && { incluirControlHipotiroidismo: true }),
+          ...(lower.includes('artrosis') && { incluirControlArtrosis: true }),
+          ...(lower.includes('epilepsia') && { incluirControlEpilepsia: true }),
+        };
+      });
     }
   }, [tipoControl]);
 
@@ -610,8 +624,14 @@ const FichaControlPscv: React.FC<FichaControlPscvProps> = ({
     let exploracion = '';
     let actuacion = '';
 
-    const documentTitle = formData.tipoControlCronico
-      ? `FICHA ${formData.tipoControlCronico.toUpperCase()}`
+    const controlesSeleccionados: string[] = [];
+    if (formData.incluirControlCardiovascular) controlesSeleccionados.push('Cardiovascular');
+    if (formData.incluirControlHipotiroidismo) controlesSeleccionados.push('Hipotiroidismo');
+    if (formData.incluirControlArtrosis) controlesSeleccionados.push('Artrosis');
+    if (formData.incluirControlEpilepsia) controlesSeleccionados.push('Epilepsia');
+
+    const documentTitle = controlesSeleccionados.length > 0
+      ? `FICHA CONTROL CRÓNICO (${controlesSeleccionados.join(', ').toUpperCase()})`
       : 'FICHA CONTROL CRÓNICO';
 
     anamnesis += `${documentTitle}\n`;
@@ -619,7 +639,7 @@ const FichaControlPscv: React.FC<FichaControlPscvProps> = ({
     anamnesis += `FECHA CONTROL: ${formatDateForDisplay(formData.fechaControl)}\n`;
     if (loggedInUser) anamnesis += `PROFESIONAL RESPONSABLE: ${loggedInUser.fullName}\n`;
 
-    anamnesis += `MOTIVO DE CONSULTA: ${formData.tipoControlCronico ? formData.tipoControlCronico.toUpperCase() : 'CONTROL CRÓNICO'}\n`;
+    anamnesis += `MOTIVO DE CONSULTA: CONTROL CRÓNICO (${controlesSeleccionados.join(', ') || 'General'})\n`;
     anamnesis += `---------------------------------------\n\n`;
 
     anamnesis += `ANTECEDENTES GENERALES\n`;
@@ -656,14 +676,18 @@ const FichaControlPscv: React.FC<FichaControlPscvProps> = ({
     anamnesis += `Drogas: ${formData.drogas ? 'Sí' : 'Niega'}\n`;
     anamnesis += `Actividad Física: ${formData.actividadFisica ? 'Sí' : 'Niega'}\n\n`;
 
-    anamnesis += `SÍNTOMAS (${formData.tipoControlCronico || 'No especificado'}):\n`;
-    if (formData.tipoControlCronico === 'Control cardiovascular') {
+    if (formData.incluirControlCardiovascular) {
+      anamnesis += `SÍNTOMAS CARDIOVASCULARES:\n`;
       checkboxClarificationConfig.slice(6, 16).forEach(item => {
         anamnesis += `${item.label}: ${formData[item.key] ? 'Sí' : 'Niega'}`;
         if (formData[item.key] && formData[item.clarificationKey]) anamnesis += ` - Aclaración: ${formData[item.clarificationKey]}`;
         anamnesis += `\n`;
       });
-    } else if (formData.tipoControlCronico === 'Control hipotiroidismo') {
+      anamnesis += `\n`;
+    }
+
+    if (formData.incluirControlHipotiroidismo) {
+      anamnesis += `SÍNTOMAS HIPOTIROIDISMO:\n`;
       [
         { key: 'hipotiroidismoConstipacion', clarificationKey: 'hipotiroidismoConstipacionAclaracion', label: 'Constipación' },
         { key: 'hipotiroidismoIntoleranciaFrio', clarificationKey: 'hipotiroidismoIntoleranciaFrioAclaracion', label: 'Intolerancia al frío' },
@@ -677,12 +701,19 @@ const FichaControlPscv: React.FC<FichaControlPscvProps> = ({
         if (formData[item.key] && formData[item.clarificationKey]) anamnesis += ` - Aclaración: ${formData[item.clarificationKey]}`;
         anamnesis += `\n`;
       });
-    } else if (formData.tipoControlCronico === 'Control epilepsia') {
+      anamnesis += `\n`;
+    }
+
+    if (formData.incluirControlEpilepsia) {
+      anamnesis += `SÍNTOMAS EPILEPSIA:\n`;
       anamnesis += `Última crisis: ${formData.epilepsiaUltimaCrisis || '(No especificado)'}\n`;
       anamnesis += `Desencadenante: ${formData.epilepsiaDesencadenante || '(No especificado)'}\n`;
       anamnesis += `Controles con neurólogo: ${formData.epilepsiaControlesNeurologo || '(No especificado)'}\n`;
-      anamnesis += `Indicaciones atención secundaria: ${formData.epilepsiaIndicacionesSecundaria || '(No especificado)'}\n`;
-    } else if (formData.tipoControlCronico === 'Control artrosis') {
+      anamnesis += `Indicaciones atención secundaria: ${formData.epilepsiaIndicacionesSecundaria || '(No especificado)'}\n\n`;
+    }
+
+    if (formData.incluirControlArtrosis) {
+      anamnesis += `SÍNTOMAS ARTROSIS:\n`;
       [
         { key: 'artrosisDolor', clarificationKey: 'artrosisDolorAclaracion', label: 'Dolor' },
         { key: 'artrosisRigidezArticular', clarificationKey: 'artrosisRigidezArticularAclaracion', label: 'Rigidez articular' },
@@ -694,6 +725,7 @@ const FichaControlPscv: React.FC<FichaControlPscvProps> = ({
         if (formData[item.key] && formData[item.clarificationKey]) anamnesis += ` - Aclaración: ${formData[item.clarificationKey]}`;
         anamnesis += `\n`;
       });
+      anamnesis += `\n`;
     }
     anamnesis += `\n`;
 
@@ -876,6 +908,42 @@ const FichaControlPscv: React.FC<FichaControlPscvProps> = ({
           <div className="bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-sm flex flex-col gap-4 pb-16">
 
 
+            <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-3">
+              <div className="flex justify-between items-center border-b border-sky-200 pb-2">
+                <h3 className="text-lg font-semibold text-sky-700">Tipo de Control Crónico</h3>
+                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Marcar uno o varios</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5">
+                {[
+                  { key: 'incluirControlCardiovascular', label: 'Cardiovascular' },
+                  { key: 'incluirControlHipotiroidismo', label: 'Hipotiroidismo' },
+                  { key: 'incluirControlArtrosis', label: 'Artrosis' },
+                  { key: 'incluirControlEpilepsia', label: 'Epilepsia' },
+                ].map(item => (
+                  <label
+                    key={item.key}
+                    className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg border cursor-pointer transition-all text-sm font-semibold select-none ${
+                      formData[item.key as keyof FichaControlPscvFormData]
+                        ? 'bg-sky-50 border-sky-500 text-sky-900 shadow-sm ring-1 ring-sky-300'
+                        : 'bg-white border-slate-300 text-slate-600 hover:border-sky-300 hover:bg-slate-50'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      name={item.key}
+                      checked={!!formData[item.key as keyof FichaControlPscvFormData]}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setFormData(prev => ({ ...prev, [item.key]: checked }));
+                      }}
+                      className="h-4 w-4 text-sky-600 border-slate-300 rounded focus:ring-sky-500 shrink-0"
+                    />
+                    <span>{item.label}</span>
+                  </label>
+                ))}
+              </div>
+            </section>
+
             <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-2">
               <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-2">Antecedentes Generales</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -965,8 +1033,8 @@ const FichaControlPscv: React.FC<FichaControlPscvProps> = ({
               </div>
             </section>
 
-            {/* SÍNTOMAS DINÁMICOS */}
-            {formData.tipoControlCronico === 'Control cardiovascular' && (
+            {/* SÍNTOMAS DINÁMICOS POR CONTROL */}
+            {formData.incluirControlCardiovascular && (
               <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-2">
                 <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-2">Signos y síntomas cardiovasculares</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -975,7 +1043,7 @@ const FichaControlPscv: React.FC<FichaControlPscvProps> = ({
               </section>
             )}
 
-            {formData.tipoControlCronico === 'Control hipotiroidismo' && (
+            {formData.incluirControlHipotiroidismo && (
               <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-2">
                 <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-2">Signos y síntomas - Hipotiroidismo</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -992,7 +1060,7 @@ const FichaControlPscv: React.FC<FichaControlPscvProps> = ({
               </section>
             )}
 
-            {formData.tipoControlCronico === 'Control epilepsia' && (
+            {formData.incluirControlEpilepsia && (
               <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-2">
                 <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-2">Signos y Síntomas - Epilepsia</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1004,7 +1072,7 @@ const FichaControlPscv: React.FC<FichaControlPscvProps> = ({
               </section>
             )}
 
-            {formData.tipoControlCronico === 'Control artrosis' && (
+            {formData.incluirControlArtrosis && (
               <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-2">
                 <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-2">Signos y síntomas - Artrosis</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

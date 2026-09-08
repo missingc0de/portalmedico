@@ -1,4 +1,4 @@
-# PowerShell Script to create the official Windows Setup Installer for PORTAL MÉDICO v1.4.13
+# PowerShell Script to create the official Windows Setup Installer for PORTAL MÉDICO v1.4.14
 
 $WorkspaceDir = "c:\Users\missi\.gemini\antigravity\scratch\PORTALMEDICO_CLIENTEWEB"
 Set-Location $WorkspaceDir
@@ -47,7 +47,7 @@ public class SetupForm : Form
 
     public SetupForm()
     {
-        this.Text = "Instalador de PORTAL MÉDICO v1.4.13";
+        this.Text = "Instalador de PORTAL MÉDICO v1.4.14";
         this.Size = new Size(540, 350);
         this.StartPosition = FormStartPosition.CenterScreen;
         this.FormBorderStyle = FormBorderStyle.FixedDialog;
@@ -60,7 +60,7 @@ public class SetupForm : Form
         installPath = Path.Combine(appData, @"Programs\PortalMedico");
 
         lblTitle = new Label() {
-            Text = "Instalación de PORTAL MÉDICO v1.4.13",
+            Text = "Instalación de PORTAL MÉDICO v1.4.14",
             Font = new Font("Segoe UI", 12f, FontStyle.Bold),
             ForeColor = Color.FromArgb(14, 116, 144),
             Location = new Point(24, 20),
@@ -231,10 +231,10 @@ public class SetupForm : Form
             using (RegistryKey key = Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Uninstall\PortalMedico"))
             {
                 key.SetValue("DisplayName", "PORTAL MÉDICO");
-                key.SetValue("ApplicationVersion", "1.4.13");
+                key.SetValue("ApplicationVersion", "1.4.14");
                 key.SetValue("Publisher", "PORTAL MÉDICO APS");
                 key.SetValue("DisplayIcon", exe);
-                key.SetValue("DisplayVersion", "1.4.13");
+                key.SetValue("DisplayVersion", "1.4.14");
                 key.SetValue("InstallLocation", dir);
                 key.SetValue("UninstallString", "cmd.exe /c rmdir /s /q \"" + dir + "\"");
             }
@@ -264,7 +264,7 @@ $Utf8EncodingWithBom = New-Object System.Text.UTF8Encoding $true
 [System.IO.File]::WriteAllText($SourceFile, $CSharpCode, $Utf8EncodingWithBom)
 
 $PayloadExe = Join-Path $WorkspaceDir "dist-python\run_webview.exe"
-$OutInstallerExe = Join-Path $InstallerDir "PortalMedico_Setup_v1.4.13.exe"
+$OutInstallerExe = Join-Path $InstallerDir "PortalMedico_Setup_v1.4.14.exe"
 
 $CscPath = "C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
 $CscArgs = @("/target:winexe", "/codepage:65001", "/out:$OutInstallerExe", "/r:System.dll", "/r:System.Windows.Forms.dll", "/r:System.Drawing.dll", "/r:System.Core.dll", "/resource:$PayloadExe,PortalMedico.exe")

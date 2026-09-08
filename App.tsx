@@ -392,7 +392,7 @@ const App: React.FC = () => {
     error?: string;
   } | null>(null);
 
-  const APP_VERSION = '1.4.13';
+  const APP_VERSION = '1.4.14';
   const menuDropdownRef = useRef<HTMLDivElement>(null);
 
   const isNewerVersion = (latest: string, current: string): boolean => {

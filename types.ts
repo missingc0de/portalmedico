@@ -135,6 +135,10 @@ export interface FichaControlPscvFormData extends BaseFichaData {
   fechaControl: string;
   estratificacion: string;
   tipoControlCronico: string;
+  incluirControlCardiovascular?: boolean;
+  incluirControlHipotiroidismo?: boolean;
+  incluirControlArtrosis?: boolean;
+  incluirControlEpilepsia?: boolean;
   // Hipotiroidismo
   hipotiroidismoConstipacion: boolean; hipotiroidismoConstipacionAclaracion: string;
   hipotiroidismoIntoleranciaFrio: boolean; hipotiroidismoIntoleranciaFrioAclaracion: string;
