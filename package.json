@@ -1,7 +1,7 @@
 {
   "name": "portal-medico",
   "private": true,
-  "version": "1.4.17",
+  "version": "1.4.18",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/missingc0de/portalmedico.git"
@@ -37,6 +37,14 @@
       ],
       "verifyUpdateCodeSignature": false,
       "forceCodeSigning": false
+    },
+    "nsis": {
+      "oneClick": true,
+      "allowToChangeInstallationDirectory": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "PORTAL MÉDICO",
+      "uninstallDisplayName": "PORTAL MÉDICO"
     },
     "publish": [
       {
