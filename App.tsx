@@ -57,7 +57,6 @@ import ArsenalFarmacologicoScreen from './components/ArsenalFarmacologicoScreen'
 import BuscadorExamenesLab from './components/BuscadorExamenesLab';
 import TablaComposicionAlimentos from './components/TablaComposicionAlimentos';
 import FichaFirmarGes from './components/FichaFirmarGes';
-import MisPacientes from './components/MisPacientes';
 import { SapuMenu } from './components/SapuMenu';
 import { PatientRecord } from './services/patientStore';
 import { onCallScheduleData, specialEventsData } from './data/onCallScheduleData';
@@ -67,7 +66,7 @@ import { subscribeToCalendarEvents } from './services/eventsService';
 import { View, User, CertificateType, Profession, CESFAM, Sector, SpecialEvent } from './types';
 import Bitacora from './components/Bitacora';
 import AutomaticTranscriber from './components/AutomaticTranscriber';
-import { TabNavBar, ComunidadFeed, PerfilFeed, ComunidadView } from './components/SocialFeed';
+import { TabNavBar, PerfilFeed } from './components/SocialFeed';
 import NotificationBell from './components/NotificationBell';
 import { RemWindow } from './components/RemWindow';
 import EmailGenerator from './components/EmailGenerator';
@@ -392,7 +391,7 @@ const App: React.FC = () => {
     error?: string;
   } | null>(null);
 
-  const APP_VERSION = '1.4.14';
+  const APP_VERSION = '1.4.15';
   const menuDropdownRef = useRef<HTMLDivElement>(null);
 
   const isNewerVersion = (latest: string, current: string): boolean => {
@@ -2039,10 +2038,6 @@ const App: React.FC = () => {
         return <BuscadorExamenesLab onBackToMenu={() => navigateTo('menu')} />;
       case 'bitacora':
         return <Bitacora onBackToMenu={() => navigateTo('menu')} loggedInUser={loggedInUser} />;
-      case 'misPacientes':
-        return <MisPacientes onSelectMenuItem={(view, patientData) => navigateTo(view, patientData)} loggedInUser={loggedInUser} />;
-      case 'comunidad':
-        return <ComunidadView loggedInUser={loggedInUser} onBackToMenu={() => navigateTo('menu')} />;
       case 'sapu':
         return <SapuMenu onBackToMenu={() => navigateTo('menu')} loggedInUser={loggedInUser} />;
 
@@ -2072,7 +2067,7 @@ const App: React.FC = () => {
   }
 
   const renderMainContent = () => {
-    const isLockedView = currentView === 'menu' || currentView.startsWith('ficha') || currentView === 'sapu' || currentView === 'comunidad';
+    const isLockedView = currentView === 'menu' || currentView.startsWith('ficha') || currentView === 'sapu';
     return (
       <main 
         key={currentView}

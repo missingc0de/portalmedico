@@ -104,7 +104,7 @@ export interface ObjetivoAnterior extends PccObjetivo {
   aclaracionNoCumplimiento: string;
 }
 
-export type View = CertificateType | 'login' | 'menu' | 'misPacientes' | 'sapu' | 'comunidad';
+export type View = CertificateType | 'login' | 'menu' | 'sapu';
 
 export type OnCallSchedule = Record<number, Record<number, Record<number, string[]>>>;
 

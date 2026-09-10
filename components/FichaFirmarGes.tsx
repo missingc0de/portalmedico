@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { User, CESFAM } from '../types';
 import FormField from './FormField';
 import RutInput, { formatRutChilean } from './RutInput';
+import UserAutocomplete from './UserAutocomplete';
 import { patologiasGesGenerales, patologiasGesOncologicas } from '../data/gesData';
 import { generateGesPdf } from '../services/pdfGenerator';
 
@@ -19,6 +20,9 @@ const CESFAM_OPTIONS: CESFAM[] = [
 const stripAccents = (str: string) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
 export const FichaFirmarGes: React.FC<FichaFirmarGesProps> = ({ loggedInUser, onClose }) => {
+  const [useOtroEmisor, setUseOtroEmisor] = useState(false);
+  const [isEstablecimientoOpen, setIsEstablecimientoOpen] = useState(false);
+
   const [formData, setFormData] = useState({
     institucion: 'CESFAM San Juan' as CESFAM,
     direccionEstablecimiento: 'Jaime Juan Oliver S/N',
@@ -33,7 +37,7 @@ export const FichaFirmarGes: React.FC<FichaFirmarGesProps> = ({ loggedInUser, on
     nombreSocial: '',
     rut: '',
     direccion: '',
-    comuna: '',
+    comuna: 'Coquimbo',
     telefono: '',
     correo: '',
     
@@ -51,6 +55,7 @@ export const FichaFirmarGes: React.FC<FichaFirmarGesProps> = ({ loggedInUser, on
     
     // GES General
     gesProblema: '',
+    tipoArtrosis: '' as '' | 'COXARTROSIS' | 'GONARTROSIS',
     
     // GES Oncologico
     gesOncologicoProblema: '',
@@ -66,6 +71,24 @@ export const FichaFirmarGes: React.FC<FichaFirmarGesProps> = ({ loggedInUser, on
   const [searchOnco, setSearchOnco] = useState('');
   const [isGeneralOpen, setIsGeneralOpen] = useState(false);
   const [isOncoOpen, setIsOncoOpen] = useState(false);
+
+  // Sync notificador if checkbox is unchecked
+  const handleOtroEmisorToggle = (checked: boolean) => {
+    setUseOtroEmisor(checked);
+    if (!checked) {
+      setFormData(prev => ({
+        ...prev,
+        notificaNombre: loggedInUser?.fullName || '',
+        notificaRut: loggedInUser?.rut || ''
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        notificaNombre: '',
+        notificaRut: ''
+      }));
+    }
+  };
 
   // Sync inputs with state if preset
   useEffect(() => {
@@ -110,9 +133,14 @@ DATOS DEL PACIENTE:
 `;
     }
 
+    let patologiaStr = formData.tipoGes === 'GENERAL' ? (formData.gesProblema || '(No seleccionada)') : (formData.gesOncologicoProblema || '(No seleccionada)');
+    if (formData.tipoGes === 'GENERAL' && formData.tipoArtrosis && (formData.gesProblema.toLowerCase().includes('artrosis de cadera') || formData.gesProblema.toLowerCase().includes('55 años'))) {
+      patologiaStr += ` (${formData.tipoArtrosis.toUpperCase()})`;
+    }
+
     summary += `\nPROBLEMA DE SALUD GES:
 - Tipo: ${formData.tipoGes}
-- Patología: ${formData.tipoGes === 'GENERAL' ? (formData.gesProblema || '(No seleccionada)') : (formData.gesOncologicoProblema || '(No seleccionada)')}
+- Patología: ${patologiaStr}
 `;
 
     if (formData.tipoGes === 'ONCOLOGICO') {
@@ -151,6 +179,9 @@ DATOS DEL PACIENTE:
     await generateGesPdf(formData, loggedInUser);
   };
 
+  const isArtrosisCaderaRodilla = formData.tipoGes === 'GENERAL' && formData.gesProblema && 
+    (formData.gesProblema.toLowerCase().includes('artrosis de cadera') || formData.gesProblema.toLowerCase().includes('55 años'));
+
   return (
     <>
       <div className="w-full relative text-xs">
@@ -158,61 +189,158 @@ DATOS DEL PACIENTE:
     
           {/* BLOQUE INSTITUCION */}
           <section className="bg-white rounded-lg shadow-sm border border-slate-200 p-2">
-            <h3 className="text-[11px] font-bold text-slate-700 mb-1 border-b border-slate-200 pb-0.5">Datos del Establecimiento</h3>
-            <div className="grid grid-cols-3 gap-1.5">
-               <div>
-                  <label className="block text-[10px] font-medium text-slate-500 mb-0.5">Institución (CESFAM)</label>
-                  <select name="institucion" value={formData.institucion} onChange={handleChange} className="w-full px-2.5 py-1 bg-white border border-slate-300 rounded-md focus:ring-1 focus:ring-sky-500 text-[13px]">
-                    {CESFAM_OPTIONS.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
-               </div>
-               <div>
-                  <label className="block text-[10px] font-medium text-slate-500 mb-0.5">Dirección</label>
-                  <input type="text" name="direccionEstablecimiento" value={formData.direccionEstablecimiento} onChange={handleChange} className="w-full px-2.5 py-1 bg-white border border-slate-300 rounded-md focus:ring-1 focus:ring-sky-500 text-[13px]" />
-               </div>
-               <div>
-                  <label className="block text-[10px] font-medium text-slate-500 mb-0.5">Región o Ciudad</label>
-                  <input type="text" name="comunaEstab" value="Coquimbo" readOnly disabled className="w-full px-2.5 py-1 bg-slate-100 border border-slate-300 rounded-md text-slate-500 cursor-not-allowed text-[13px]" />
-               </div>
+            <div className="flex justify-between items-center mb-1 border-b border-slate-200 pb-0.5">
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setIsEstablecimientoOpen(!isEstablecimientoOpen)}
+                  className="text-slate-500 hover:text-slate-800 transition-colors cursor-pointer font-bold text-xs"
+                >
+                  {isEstablecimientoOpen ? '▼' : '►'}
+                </button>
+                <h3 
+                  onClick={() => setIsEstablecimientoOpen(!isEstablecimientoOpen)} 
+                  className="text-[11px] font-bold text-slate-700 cursor-pointer select-none"
+                >
+                  Datos del Establecimiento
+                </h3>
+              </div>
+              <div className="flex items-center gap-1">
+                 <input 
+                    type="checkbox" 
+                    id="otroEmisor" 
+                    checked={useOtroEmisor} 
+                    onChange={(e) => handleOtroEmisorToggle(e.target.checked)} 
+                    className="h-3.5 w-3.5 text-sky-600 rounded border-slate-300 focus:ring-sky-500 cursor-pointer" 
+                 />
+                 <label htmlFor="otroEmisor" className="text-[10px] font-medium text-slate-700 cursor-pointer">
+                    Generar a nombre de otro profesional
+                 </label>
+              </div>
             </div>
-            <div className="grid grid-cols-2 gap-1.5 mt-1.5">
-               <FormField label="Nombre Notificador" id="notificaNombre" name="notificaNombre" value={formData.notificaNombre} onChange={handleChange} inputClassName="!py-1 !px-2.5 !text-[13px] !rounded-md shadow-none" labelClassName="!text-[10px] !font-medium text-slate-500 !mb-0.5" />
-               <RutInput label="RUN Notificador" id="notificaRut" name="notificaRut" value={formData.notificaRut} onChange={(val) => setFormData(p => ({ ...p, notificaRut: val }))} placeholder="12.345.678-9" inputClassName="!py-1 !px-2.5 !text-[13px] !rounded-md shadow-none" labelClassName="!text-[10px] !font-medium text-slate-500 !mb-0.5" />
-            </div>
+
+             {isEstablecimientoOpen ? (
+              <>
+                <div className="grid grid-cols-3 gap-1.5">
+                   <div>
+                      <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-0.5">INSTITUCCIÓN (CESFAM)</label>
+                      <select name="institucion" value={formData.institucion} onChange={handleChange} className="w-full px-2.5 bg-white border border-slate-300 rounded-md focus:ring-1 focus:ring-sky-500 text-[13px] h-[32px]">
+                        {CESFAM_OPTIONS.map(c => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                   </div>
+                   <div>
+                      <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-0.5">DIRECCIÓN</label>
+                      <input type="text" name="direccionEstablecimiento" value={formData.direccionEstablecimiento} onChange={handleChange} className="w-full px-2.5 bg-white border border-slate-300 rounded-md focus:ring-1 focus:ring-sky-500 text-[13px] h-[32px]" />
+                   </div>
+                   <div>
+                      <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-0.5">REGIÓN O CIUDAD</label>
+                      <input type="text" name="comunaEstab" value="Coquimbo" readOnly disabled className="w-full px-2.5 bg-slate-100 border border-slate-300 rounded-md text-slate-500 cursor-not-allowed text-[13px] h-[32px]" />
+                   </div>
+                </div>
+                <div className="grid grid-cols-2 gap-1.5 mt-1.5">
+                   {useOtroEmisor ? (
+                     <div className="col-span-1">
+                       <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-0.5">BUSCAR PROFESIONAL EMISOR</label>
+                       <UserAutocomplete 
+                         value={formData.notificaNombre}
+                         placeholder="🔍 Buscar por nombre de médico..."
+                         inputClassName="w-full !px-2.5 bg-white border border-slate-300 !rounded-md focus:ring-1 focus:ring-sky-500 text-[13px] outline-none shadow-none leading-normal h-[32px]"
+                         onSelect={(user) => {
+                           setFormData(p => ({
+                             ...p,
+                             notificaNombre: user.fullName,
+                             notificaRut: user.rut || ''
+                           }));
+                         }}
+                         onChange={(val) => setFormData(p => ({ ...p, notificaNombre: val }))}
+                         onClear={() => setFormData(p => ({ ...p, notificaNombre: '', notificaRut: '' }))}
+                       />
+                     </div>
+                   ) : (
+                     <FormField label="NOMBRE NOTIFICADOR" id="notificaNombre" name="notificaNombre" value={formData.notificaNombre} onChange={handleChange} inputClassName="!h-[32px] !py-0 !px-2.5 !text-[13px] !rounded-md shadow-none" labelClassName="!text-[10px] !font-semibold text-slate-500 uppercase tracking-wider !mb-0.5" />
+                   )}
+                   <RutInput label="RUN NOTIFICADOR" id="notificaRut" name="notificaRut" value={formData.notificaRut} onChange={(val) => setFormData(p => ({ ...p, notificaRut: val }))} placeholder="12.345.678-9" inputClassName="!h-[32px] !py-0 !px-2.5 !text-[13px] !rounded-md shadow-none" labelClassName="!text-[10px] !font-semibold text-slate-500 uppercase tracking-wider !mb-0.5" />
+                </div>
+              </>
+            ) : (
+              <div className="pt-0.5">
+                {useOtroEmisor ? (
+                  <div className="grid grid-cols-2 gap-1.5 my-0.5">
+                     <div className="col-span-1">
+                       <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-0.5">BUSCAR PROFESIONAL EMISOR</label>
+                       <UserAutocomplete 
+                         value={formData.notificaNombre}
+                         placeholder="🔍 Buscar por nombre de médico..."
+                         inputClassName="w-full !px-2.5 bg-white border border-slate-300 !rounded-md focus:ring-1 focus:ring-sky-500 text-[13px] outline-none shadow-none leading-normal h-[32px]"
+                         onSelect={(user) => {
+                           setFormData(p => ({
+                             ...p,
+                             notificaNombre: user.fullName,
+                             notificaRut: user.rut || ''
+                           }));
+                         }}
+                         onChange={(val) => setFormData(p => ({ ...p, notificaNombre: val }))}
+                         onClear={() => setFormData(p => ({ ...p, notificaNombre: '', notificaRut: '' }))}
+                       />
+                     </div>
+                     <RutInput label="RUN NOTIFICADOR" id="notificaRut" name="notificaRut" value={formData.notificaRut} onChange={(val) => setFormData(p => ({ ...p, notificaRut: val }))} placeholder="12.345.678-9" inputClassName="!h-[32px] !py-0 !px-2.5 !text-[13px] !rounded-md shadow-none" labelClassName="!text-[10px] !font-semibold text-slate-500 uppercase tracking-wider !mb-0.5" />
+                  </div>
+                ) : (
+                  <div className="text-[11px] text-slate-600 font-medium flex items-center gap-2">
+                    <span><strong>EMISOR:</strong> {formData.notificaNombre || '(No especificado)'}</span>
+                    {formData.notificaRut && <span className="text-slate-400">({formData.notificaRut})</span>}
+                  </div>
+                )}
+              </div>
+            )}
           </section>
 
           {/* BLOQUE PACIENTE */}
           <section className="bg-white rounded-lg shadow-sm border border-slate-200 p-2">
             <div className="flex justify-between items-center mb-1 border-b border-slate-200 pb-0.5">
               <h3 className="text-[11px] font-bold text-slate-700">Identificación del Paciente</h3>
-              <div className="flex items-center gap-1">
-                  <input type="checkbox" id="isMenor" name="isMenorEdad" checked={formData.isMenorEdad} onChange={handleChange} className="h-3.5 w-3.5 text-sky-600 rounded border-slate-300 focus:ring-sky-500" />
-                  <label htmlFor="isMenor" className="text-[10px] font-medium text-slate-700 cursor-pointer">¿Menor/Interdicto?</label>
+              <div className="flex items-center gap-3">
+                  <div className="flex gap-1 items-center">
+                     <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mr-0.5">PREVISIÓN:</span>
+                     <label className="inline-flex items-center gap-1 cursor-pointer px-1.5 py-0.5 border border-slate-200 rounded bg-white hover:bg-sky-50 text-[10px]">
+                        <input type="radio" name="prevision" value="FONASA" checked={formData.prevision === 'FONASA'} onChange={handleChange} className="h-3 w-3 text-sky-600 focus:ring-sky-500" />
+                        <span className="font-semibold text-slate-700">FONASA</span>
+                     </label>
+                     <label className="inline-flex items-center gap-1 cursor-pointer px-1.5 py-0.5 border border-slate-200 rounded bg-white hover:bg-sky-50 text-[10px]">
+                        <input type="radio" name="prevision" value="ISAPRE" checked={formData.prevision === 'ISAPRE'} onChange={handleChange} className="h-3 w-3 text-sky-600 focus:ring-sky-500" />
+                        <span className="font-semibold text-slate-700">ISAPRE</span>
+                     </label>
+                  </div>
+                  <div className="h-3.5 w-px bg-slate-200"></div>
+                  <div className="flex items-center gap-1">
+                      <input type="checkbox" id="isMenor" name="isMenorEdad" checked={formData.isMenorEdad} onChange={handleChange} className="h-3.5 w-3.5 text-sky-600 rounded border-slate-300 focus:ring-sky-500" />
+                      <label htmlFor="isMenor" className="text-[10px] font-medium text-slate-700 cursor-pointer">Menor/Interdicto</label>
+                  </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-1.5">
-              <RutInput label="RUN Paciente" id="rut" name="rut" required value={formData.rut} onChange={handleRutChange} placeholder="12.345.678-9" inputClassName="!py-1 !px-2.5 !text-[13px] !rounded-md shadow-none" labelClassName="!text-[10px] !font-medium text-slate-500 !mb-0.5" />
-              <FormField label="Nombre Legal" id="nombreLegal" name="nombreLegal" value={formData.nombreLegal} onChange={handleChange} placeholder="Ej: Pedro Soto" inputClassName="!py-1 !px-2.5 !text-[13px] !rounded-md shadow-none" labelClassName="!text-[10px] !font-medium text-slate-500 !mb-0.5" />
-              <FormField label="Nombre Social" id="nombreSocial" name="nombreSocial" value={formData.nombreSocial} onChange={handleChange} placeholder="Opcional" inputClassName="!py-1 !px-2.5 !text-[13px] !rounded-md shadow-none" labelClassName="!text-[10px] !font-medium text-slate-500 !mb-0.5" />
+            <div className="grid grid-cols-12 gap-1.5">
+              <div className="col-span-4">
+                <RutInput label="RUN PACIENTE" id="rut" name="rut" required value={formData.rut} onChange={handleRutChange} placeholder="12.345.678-9" inputClassName="!h-[32px] !py-0 !px-2.5 !text-[13px] !rounded-md shadow-none" labelClassName="!text-[10px] !font-semibold text-slate-500 uppercase tracking-wider !mb-0.5" />
+              </div>
+              <div className="col-span-4">
+                <FormField label="NOMBRE LEGAL" id="nombreLegal" name="nombreLegal" value={formData.nombreLegal} onChange={handleChange} placeholder="Ej: Pedro Soto" inputClassName="!h-[32px] !py-0 !px-2.5 !text-[13px] !rounded-md shadow-none" labelClassName="!text-[10px] !font-semibold text-slate-500 uppercase tracking-wider !mb-0.5" />
+              </div>
+              <div className="col-span-4">
+                <FormField label="NOMBRE SOCIAL" id="nombreSocial" name="nombreSocial" value={formData.nombreSocial} onChange={handleChange} placeholder="Opcional" inputClassName="!h-[32px] !py-0 !px-2.5 !text-[13px] !rounded-md shadow-none" labelClassName="!text-[10px] !font-semibold text-slate-500 uppercase tracking-wider !mb-0.5" />
+              </div>
               
-              <FormField label="Dirección / Domicilio" id="direccion" name="direccion" value={formData.direccion} onChange={handleChange} inputClassName="!py-1 !px-2.5 !text-[13px] !rounded-md shadow-none" labelClassName="!text-[10px] !font-medium text-slate-500 !mb-0.5" />
-              <FormField label="Comuna" id="comuna" name="comuna" value={formData.comuna} onChange={handleChange} inputClassName="!py-1 !px-2.5 !text-[13px] !rounded-md shadow-none" labelClassName="!text-[10px] !font-medium text-slate-500 !mb-0.5" />
-              <FormField label="Teléfono" id="telefono" name="telefono" value={formData.telefono} onChange={handleChange} placeholder="+56 9..." inputClassName="!py-1 !px-2.5 !text-[13px] !rounded-md shadow-none" labelClassName="!text-[10px] !font-medium text-slate-500 !mb-0.5" />
-              <FormField label="Correo Electrónico" id="correo" name="correo" value={formData.correo} onChange={handleChange} placeholder="correo@ejemplo.com" inputClassName="!py-1 !px-2.5 !text-[13px] !rounded-md shadow-none" labelClassName="!text-[10px] !font-medium text-slate-500 !mb-0.5" />
-              
+              <div className="col-span-4">
+                <FormField label="DIRECCIÓN / DOMICILIO" id="direccion" name="direccion" value={formData.direccion} onChange={handleChange} inputClassName="!h-[32px] !py-0 !px-2.5 !text-[13px] !rounded-md shadow-none" labelClassName="!text-[10px] !font-semibold text-slate-500 uppercase tracking-wider !mb-0.5" />
+              </div>
               <div className="col-span-2">
-                <label className="block text-[10px] font-medium text-slate-500 mb-0.5">Previsión de Salud</label>
-                <div className="flex gap-1.5">
-                   <label className="flex items-center gap-1 cursor-pointer px-2 py-1 border border-slate-200 rounded bg-white hover:bg-sky-50 w-full justify-center text-[11px]">
-                      <input type="radio" name="prevision" value="FONASA" checked={formData.prevision === 'FONASA'} onChange={handleChange} className="h-3 w-3 text-sky-600 focus:ring-sky-500" />
-                      <span className="font-semibold text-slate-700">FONASA</span>
-                   </label>
-                   <label className="flex items-center gap-1 cursor-pointer px-2 py-1 border border-slate-200 rounded bg-white hover:bg-sky-50 w-full justify-center text-[11px]">
-                      <input type="radio" name="prevision" value="ISAPRE" checked={formData.prevision === 'ISAPRE'} onChange={handleChange} className="h-3 w-3 text-sky-600 focus:ring-sky-500" />
-                      <span className="font-semibold text-slate-700">ISAPRE</span>
-                   </label>
-                </div>
+                <FormField label="COMUNA" id="comuna" name="comuna" value={formData.comuna} onChange={handleChange} inputClassName="!h-[32px] !py-0 !px-2.5 !text-[13px] !rounded-md shadow-none" labelClassName="!text-[10px] !font-semibold text-slate-500 uppercase tracking-wider !mb-0.5" />
+              </div>
+              <div className="col-span-3">
+                <FormField label="TELÉFONO" id="telefono" name="telefono" value={formData.telefono} onChange={handleChange} placeholder="+56 9..." inputClassName="!h-[32px] !py-0 !px-2.5 !text-[13px] !rounded-md shadow-none" labelClassName="!text-[10px] !font-semibold text-slate-500 uppercase tracking-wider !mb-0.5" />
+              </div>
+              <div className="col-span-3">
+                <FormField label="CORREO ELECTRÓNICO" id="correo" name="correo" value={formData.correo} onChange={handleChange} placeholder="correo@ejemplo.com" inputClassName="!h-[32px] !py-0 !px-2.5 !text-[13px] !rounded-md shadow-none" labelClassName="!text-[10px] !font-semibold text-slate-500 uppercase tracking-wider !mb-0.5" />
               </div>
             </div>
           </section>
@@ -227,12 +355,42 @@ DATOS DEL PACIENTE:
               </div>
             </div>
 
-            <div className="grid grid-cols-12 gap-2 items-end">
+            {formData.tipoGes === 'GENERAL' && isArtrosisCaderaRodilla && (
+              <div className="mb-2 pb-1.5 border-b border-slate-150 flex items-center gap-2 animate-fadeIn">
+                 <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">ESPECIFICACIÓN DE ARTROSIS:</span>
+                 <div className="flex gap-1 items-center">
+                    <label className="inline-flex items-center gap-1 cursor-pointer px-1.5 py-0.5 border border-slate-200 rounded bg-white hover:bg-sky-50 text-[10px]">
+                       <input 
+                          type="radio" 
+                          name="tipoArtrosis" 
+                          value="COXARTROSIS" 
+                          checked={formData.tipoArtrosis === 'COXARTROSIS'} 
+                          onChange={handleChange} 
+                          className="h-3 w-3 text-sky-600 focus:ring-sky-500" 
+                       />
+                       <span className="font-semibold text-slate-700">Coxartrosis</span>
+                    </label>
+                    <label className="inline-flex items-center gap-1 cursor-pointer px-1.5 py-0.5 border border-slate-200 rounded bg-white hover:bg-sky-50 text-[10px]">
+                       <input 
+                          type="radio" 
+                          name="tipoArtrosis" 
+                          value="GONARTROSIS" 
+                          checked={formData.tipoArtrosis === 'GONARTROSIS'} 
+                          onChange={handleChange} 
+                          className="h-3 w-3 text-sky-600 focus:ring-sky-500" 
+                       />
+                       <span className="font-semibold text-slate-700">Gonartrosis</span>
+                    </label>
+                 </div>
+              </div>
+            )}
+
+            <div className="flex gap-2.5 items-end w-full">
               {formData.tipoGes === 'GENERAL' ? (
                 <>
-                  <div className="col-span-8 animate-fadeIn">
-                     <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-0.5">Patología General</label>
-                     <div className="relative">
+                  <div className="flex-1 animate-fadeIn min-w-0">
+                     <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-0.5">PATOLOGÍA GENERAL</label>
+                     <div className="relative w-full">
                         <input 
                             type="text" 
                             value={searchGeneral} 
@@ -243,7 +401,7 @@ DATOS DEL PACIENTE:
                             }}
                             onFocus={() => setIsGeneralOpen(true)}
                             onBlur={() => setTimeout(() => setIsGeneralOpen(false), 200)}
-                            className="w-full px-2.5 py-1 bg-white border border-slate-300 rounded-md focus:ring-1 focus:ring-sky-500 shadow-none text-[13px] animate-none"
+                            className="w-full px-2.5 py-1 bg-white border border-slate-300 rounded-md focus:ring-1 focus:ring-sky-500 shadow-none text-[13px] animate-none h-[32px]"
                             placeholder="🔍 Buscar patología general..."
                         />
                         {isGeneralOpen && searchGeneral && (
@@ -269,13 +427,13 @@ DATOS DEL PACIENTE:
                         )}
                      </div>
                   </div>
-                  <div className="col-span-4 flex justify-end">
+                  <div className="shrink-0">
                     <button 
                         onClick={handleSubmit}
                         type="button" 
-                        className="w-full py-1 bg-red-600 hover:bg-red-700 text-white font-bold rounded shadow active:scale-95 uppercase text-[10px] flex items-center justify-center gap-1 h-[30px]"
+                        className="px-3.5 py-1 bg-red-600 hover:bg-red-700 text-white font-black rounded shadow active:scale-95 uppercase text-xs flex items-center justify-center gap-1.5 h-[32px] cursor-pointer whitespace-nowrap shrink-0"
                     >
-                         <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
                          GENERAR Y FIRMAR
                     </button>
                   </div>
@@ -283,7 +441,7 @@ DATOS DEL PACIENTE:
               ) : (
                 <>
                   <div className="col-span-5 animate-fadeIn">
-                     <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-0.5">Patología Oncológica</label>
+                     <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-0.5">PATOLOGÍA ONCOLÓGICA</label>
                      <div className="relative">
                         <input 
                             type="text" 
@@ -295,7 +453,7 @@ DATOS DEL PACIENTE:
                             }}
                             onFocus={() => setIsOncoOpen(true)}
                             onBlur={() => setTimeout(() => setIsOncoOpen(false), 200)}
-                            className="w-full px-2.5 py-1 bg-white border border-slate-300 rounded-md focus:ring-1 focus:ring-rose-500 shadow-none text-[13px]"
+                            className="w-full px-2.5 py-1 bg-white border border-slate-300 rounded-md focus:ring-1 focus:ring-rose-500 shadow-none text-[13px] h-[32px]"
                             placeholder="🔍 Buscar cáncer..."
                         />
                         {isOncoOpen && searchOnco && (
@@ -323,7 +481,7 @@ DATOS DEL PACIENTE:
                   </div>
                   
                   <div className="col-span-4 animate-fadeIn">
-                     <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-0.5">Etapa Oncológica</label>
+                     <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-0.5">ETAPA ONCOLÓGICA</label>
                      <div className="grid grid-cols-2 gap-0.5 bg-slate-50 p-1 rounded border border-slate-200">
                         {[
                           { name: 'oncoSospecha', label: 'Sospecha' },
@@ -345,9 +503,9 @@ DATOS DEL PACIENTE:
                     <button 
                         onClick={handleSubmit}
                         type="button" 
-                        className="w-full py-1 bg-red-600 hover:bg-red-700 text-white font-bold rounded shadow active:scale-95 uppercase text-[10px] flex items-center justify-center gap-1 h-[30px]"
+                        className="px-3.5 py-1 bg-red-600 hover:bg-red-700 text-white font-black rounded shadow active:scale-95 uppercase text-xs flex items-center justify-center gap-1.5 h-[32px] cursor-pointer whitespace-nowrap shrink-0"
                     >
-                         <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
                          GENERAR Y FIRMAR
                     </button>
                   </div>
@@ -359,12 +517,12 @@ DATOS DEL PACIENTE:
           {/* BLOQUE REPRESENTANTE (CONDICIONAL) */}
           {formData.isMenorEdad && (
               <section className="bg-white rounded-lg shadow-sm border border-slate-200 p-2 animate-fadeIn">
-                <h3 className="text-[11px] font-bold text-sky-800 mb-1 border-b border-sky-200 pb-0.5">Datos del Representante (Toma Conocimiento)</h3>
+                <h3 className="text-[11px] font-bold text-sky-800 mb-1 border-b border-sky-200 pb-0.5 uppercase">DATOS DEL REPRESENTANTE (TOMA CONOCIMIENTO)</h3>
                 <div className="grid grid-cols-4 gap-1.5">
-                   <FormField label="Nombre" id="repNombre" name="repNombre" value={formData.repNombre} onChange={handleChange} inputClassName="!py-1 !px-2.5 !text-[13px] !rounded-md shadow-none" labelClassName="!text-[10px] !font-medium text-slate-500 !mb-0.5" />
-                   <RutInput label="RUN" id="repRut" name="repRut" value={formData.repRut} onChange={handleRepRutChange} placeholder="12.345.678-9" inputClassName="!py-1 !px-2.5 !text-[13px] !rounded-md shadow-none" labelClassName="!text-[10px] !font-medium text-slate-500 !mb-0.5" />
-                   <FormField label="Teléfono" id="repTelefono" name="repTelefono" value={formData.repTelefono} onChange={handleChange} inputClassName="!py-1 !px-2.5 !text-[13px] !rounded-md shadow-none" labelClassName="!text-[10px] !font-medium text-slate-500 !mb-0.5" />
-                   <FormField label="Correo" id="repCorreo" name="repCorreo" value={formData.repCorreo} onChange={handleChange} inputClassName="!py-1 !px-2.5 !text-[13px] !rounded-md shadow-none" labelClassName="!text-[10px] !font-medium text-slate-500 !mb-0.5" />
+                   <FormField label="NOMBRE" id="repNombre" name="repNombre" value={formData.repNombre} onChange={handleChange} inputClassName="!h-[32px] !py-0 !px-2.5 !text-[13px] !rounded-md shadow-none" labelClassName="!text-[10px] !font-semibold text-slate-500 uppercase tracking-wider !mb-0.5" />
+                   <RutInput label="RUN" id="repRut" name="repRut" value={formData.repRut} onChange={handleRepRutChange} placeholder="12.345.678-9" inputClassName="!h-[32px] !py-0 !px-2.5 !text-[13px] !rounded-md shadow-none" labelClassName="!text-[10px] !font-semibold text-slate-500 uppercase tracking-wider !mb-0.5" />
+                   <FormField label="TELÉFONO" id="repTelefono" name="repTelefono" value={formData.repTelefono} onChange={handleChange} inputClassName="!h-[32px] !py-0 !px-2.5 !text-[13px] !rounded-md shadow-none" labelClassName="!text-[10px] !font-semibold text-slate-500 uppercase tracking-wider !mb-0.5" />
+                   <FormField label="CORREO" id="repCorreo" name="repCorreo" value={formData.repCorreo} onChange={handleChange} inputClassName="!h-[32px] !py-0 !px-2.5 !text-[13px] !rounded-md shadow-none" labelClassName="!text-[10px] !font-semibold text-slate-500 uppercase tracking-wider !mb-0.5" />
                 </div>
               </section>
           )}

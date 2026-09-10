@@ -382,7 +382,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       {/* Main Content List matching the requested screenshot layout */}
       <div className="flex-1 min-h-0 overflow-y-auto px-3 py-3 space-y-4 custom-scrollbar">
 
-        {/* Top Direct Items: Home, Mis Pacientes & SAPU */}
+        {/* Top Direct Items: Home & SAPU */}
         <div className="space-y-1">
           <button
             onClick={() => onSelectMenuItem('menu')}
@@ -394,34 +394,6 @@ const Sidebar: React.FC<SidebarProps> = ({
             <div className="flex items-center gap-2 min-w-0">
               <Home className={`w-4 h-4 shrink-0 ${currentView === 'menu' ? 'text-white' : 'text-slate-500 group-hover:text-sky-600'}`} />
               {!isCollapsed && <span className="truncate">Inicio</span>}
-            </div>
-          </button>
-
-          <button
-            onClick={() => onSelectMenuItem('misPacientes')}
-            className={`w-full flex items-center justify-between px-2.5 py-2 text-left font-bold text-xs tracking-tight transition-all duration-150 cursor-pointer group rounded-xl ${currentView === 'misPacientes'
-              ? 'bg-gradient-to-r from-sky-600 to-sky-700 text-white shadow-sm'
-              : 'text-slate-600 hover:bg-slate-200/60 hover:text-slate-900'
-              }`}
-            title="Mis pacientes"
-          >
-            <div className="flex items-center gap-2 min-w-0">
-              <Users className={`w-4 h-4 shrink-0 ${currentView === 'misPacientes' ? 'text-white' : 'text-slate-500 group-hover:text-sky-600'}`} />
-              {!isCollapsed && <span className="truncate">Mis pacientes</span>}
-            </div>
-          </button>
-
-          <button
-            onClick={() => onSelectMenuItem('comunidad')}
-            className={`w-full flex items-center justify-between px-2.5 py-2 text-left font-bold text-xs tracking-tight transition-all duration-150 cursor-pointer group rounded-xl ${currentView === 'comunidad'
-              ? 'bg-gradient-to-r from-sky-600 to-sky-700 text-white shadow-sm'
-              : 'text-slate-600 hover:bg-slate-200/60 hover:text-slate-900'
-              }`}
-            title="Comunidad"
-          >
-            <div className="flex items-center gap-2 min-w-0">
-              <Globe className={`w-4 h-4 shrink-0 ${currentView === 'comunidad' ? 'text-white' : 'text-slate-500 group-hover:text-sky-600'}`} />
-              {!isCollapsed && <span className="truncate">Comunidad</span>}
             </div>
           </button>
 

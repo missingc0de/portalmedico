@@ -10,6 +10,7 @@ interface UserAutocompleteProps {
   onClear: () => void;
   placeholder?: string;
   disabled?: boolean;
+  inputClassName?: string;
 }
 
 const normalizeText = (text: string): string => {
@@ -27,6 +28,7 @@ const UserAutocomplete: React.FC<UserAutocompleteProps> = ({
   onClear,
   placeholder,
   disabled = false,
+  inputClassName,
 }) => {
   const [suggestions, setSuggestions] = useState<User[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -115,7 +117,7 @@ const UserAutocomplete: React.FC<UserAutocompleteProps> = ({
           placeholder={placeholder}
           disabled={disabled}
           autoComplete="off"
-          className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg shadow-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition-colors duration-150 ease-in-out text-slate-800 placeholder-slate-400 placeholder:opacity-50 leading-normal font-sans text-sm disabled:bg-slate-100 disabled:cursor-not-allowed"
+          className={inputClassName || "w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg shadow-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition-colors duration-150 ease-in-out text-slate-800 placeholder-slate-400 placeholder:opacity-50 leading-normal font-sans text-sm disabled:bg-slate-100 disabled:cursor-not-allowed"}
         />
         <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
