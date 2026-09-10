@@ -19,7 +19,7 @@
   },
   "build": {
     "appId": "com.portalmedico.app",
-    "productName": "PORTAL MÉDICO",
+    "productName": "PortalMedico",
     "directories": {
       "output": "dist-electron-release-v1030"
     },
@@ -40,11 +40,8 @@
     },
     "nsis": {
       "oneClick": true,
-      "allowToChangeInstallationDirectory": false,
-      "createDesktopShortcut": true,
-      "createStartMenuShortcut": true,
-      "shortcutName": "PORTAL MÉDICO",
-      "uninstallDisplayName": "PORTAL MÉDICO"
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": false
     },
     "publish": [
       {
