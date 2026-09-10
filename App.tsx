@@ -391,7 +391,7 @@ const App: React.FC = () => {
     error?: string;
   } | null>(null);
 
-  const APP_VERSION = '1.4.15';
+  const APP_VERSION = '1.4.16';
   const menuDropdownRef = useRef<HTMLDivElement>(null);
 
   const isNewerVersion = (latest: string, current: string): boolean => {
@@ -822,6 +822,7 @@ const App: React.FC = () => {
       localStorage.setItem('computerSector', sector);
     }
     setLowResources(localStorage.getItem('lowResources') === 'true');
+    setAnimationState('idle');
     setCurrentView('menu');
 
     // Set session storage
