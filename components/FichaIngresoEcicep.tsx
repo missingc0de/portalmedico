@@ -97,13 +97,13 @@ const professionLabels: Record<Profession, string> = {
   medicina: 'Médico',
   enfermeria: 'Enfermera/o',
   nutricion: 'Nutricionista',
-  psicologia: 'Psicóloga',
-  kinesiologo: 'Kinesiólogo',
-  matroneria: 'Matrona',
+  psicologia: 'Psicóloga/o',
+  kinesiologo: 'Kinesiólogo/a',
+  matroneria: 'Matrona/ón',
   tens: 'TENS',
-  quimico_farmaceutico: 'Químico farmacéutico',
+  quimico_farmaceutico: 'Químico farmacéutico/a',
   asistente_social: 'Asistente social',
-  odontologia: 'Odontólogo',
+  odontologia: 'Odontólogo/a',
 };
 
 const calculateIMC = (pesoStr: string, tallaStr: string): string => {
@@ -646,13 +646,13 @@ const tiempoControlOptions = [
 
 const duplaProfesionalOptions = [
   { value: '', label: 'Seleccione...' },
-  { value: 'Enfermera', label: 'Enfermera/o' },
+  { value: 'Enfermera/o', label: 'Enfermera/o' },
   { value: 'Nutricionista', label: 'Nutricionista' },
-  { value: 'Psicóloga', label: 'Psicóloga' },
-  { value: 'Kinesiólogo', label: 'Kinesiólogo' },
-  { value: 'Matrona', label: 'Matrona' },
+  { value: 'Psicóloga/o', label: 'Psicóloga/o' },
+  { value: 'Kinesiólogo/a', label: 'Kinesiólogo/a' },
+  { value: 'Matrona/ón', label: 'Matrona/ón' },
   { value: 'TENS', label: 'TENS' },
-  { value: 'Químico farmacéutico', label: 'Químico farmacéutico' },
+  { value: 'Químico farmacéutico/a', label: 'Químico farmacéutico/a' },
   { value: 'Asistente social', label: 'Asistente social' },
 ];
 
@@ -910,6 +910,7 @@ export const FichaIngresoEcicep: React.FC<FichaIngresoEcicepProps> = ({ onBackTo
   const [anamnesisText, setAnamnesisText] = useState<string>('');
   const [exploracionText, setExploracionText] = useState<string>('');
   const [actuacionText, setActuacionText] = useState<string>('');
+  const [isUppercase, setIsUppercase] = useState<boolean>(false);
   const [isPhq9ModalOpen, setIsPhq9ModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isAiImporting, setIsAiImporting] = useState(false);
@@ -2175,11 +2176,7 @@ export const FichaIngresoEcicep: React.FC<FichaIngresoEcicepProps> = ({ onBackTo
   };
 
   const handleSelectDuplaUser = (user: User) => {
-    let professionLabel = professionLabels[user.profession] || user.profession;
-    // Ensure select dropdown value matches 'Enfermera' option value for 'Enfermera/o'
-    if (user.profession === 'enfermeria') {
-      professionLabel = 'Enfermera';
-    }
+    const professionLabel = professionLabels[user.profession] || user.profession;
     setFormData(prev => ({
       ...prev,
       duplaProfesionalOtro: professionLabel,
@@ -2214,9 +2211,9 @@ export const FichaIngresoEcicep: React.FC<FichaIngresoEcicepProps> = ({ onBackTo
                 <section id="sec-identificacion" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-2">
                   <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-2">Identificación</h3>
 
-                  <div className="mt-0">
-                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Dupla profesional:</label>
-                    <div className="flex flex-col gap-1.5">
+                  <div className="mt-1">
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Dupla Profesional:</label>
+                    <div className="flex flex-col gap-3">
                       <div className="flex items-center flex-grow">
                         <span className="mr-2 text-slate-700 whitespace-nowrap text-sm font-bold">Médico +</span>
                         <div className="flex-grow">
@@ -2231,19 +2228,19 @@ export const FichaIngresoEcicep: React.FC<FichaIngresoEcicepProps> = ({ onBackTo
                         </div>
                       </div>
 
-                      <div className="flex flex-col sm:flex-row sm:items-end gap-3 mt-1 animate-fadeIn">
+                      <div className="flex flex-col sm:flex-row sm:items-end gap-4 mt-2 animate-fadeIn">
                         <div className={`flex-grow transition-opacity duration-300 ${formData.sinDupla ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
-                          <label htmlFor="duplaProfesionalOtro" className="block text-sm font-medium text-slate-700 mb-1">Profesión de la dupla</label>
+                          <label htmlFor="duplaProfesionalOtro" className="block text-[10px] font-black text-sky-800 uppercase mb-1.5 tracking-widest leading-none">Profesión de la Dupla:</label>
                           <select
                             id="duplaProfesionalOtro"
                             name="duplaProfesionalOtro"
                             value={formData.duplaProfesionalOtro || ''}
                             onChange={handleChange}
-                            className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg shadow-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none text-slate-800 font-sans text-sm font-normal h-[42px]"
+                            className="w-full px-4 py-2 bg-white border border-slate-300 rounded-lg text-sm font-bold text-sky-700 focus:ring-2 focus:ring-sky-500 outline-none h-[42px]"
                           >
                             <option value="">Seleccione profesión...</option>
                             {duplaProfesionalOptions.map(opt => (
-                              <option key={opt.value} value={opt.label}>{opt.label}</option>
+                              <option key={opt.value} value={opt.value}>{opt.label}</option>
                             ))}
                           </select>
                         </div>
@@ -3052,7 +3049,7 @@ export const FichaIngresoEcicep: React.FC<FichaIngresoEcicepProps> = ({ onBackTo
                   </div>
                   <FormField label="Examen Físico General/Segmentario" id="efGeneralSegmentario" name="efGeneralSegmentario" value={formData.efGeneralSegmentario || ''} onChange={handleChange} isTextArea rows={10} />
 
-                  {formData.duplaProfesionalOtro === 'Kinesiólogo' && (
+                  {(formData.duplaProfesionalOtro === 'Kinesiólogo' || formData.duplaProfesionalOtro === 'Kinesiólogo/a') && (
                     <div className="mt-4 p-4 bg-white border border-emerald-100 rounded-xl shadow-sm animate-fadeIn">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div>
@@ -3380,30 +3377,41 @@ export const FichaIngresoEcicep: React.FC<FichaIngresoEcicepProps> = ({ onBackTo
               <div className="border-b border-sky-200/80 pb-1 mb-2 w-full flex-shrink-0">
                 <h3 className="text-xs font-bold text-sky-800 uppercase tracking-wider">Resumen Ficha Clínica (Editable)</h3>
               </div>
+              <div className="mb-2 flex items-center gap-1.5 flex-shrink-0">
+                <label className="flex items-center gap-1.5 cursor-pointer text-[11px] font-semibold text-slate-700 select-none">
+                  <input
+                    type="checkbox"
+                    checked={isUppercase}
+                    onChange={e => setIsUppercase(e.target.checked)}
+                    className="h-3.5 w-3.5 text-sky-600 border-slate-300 rounded focus:ring-sky-500 cursor-pointer"
+                  />
+                  <span>MAYÚSCULAS</span>
+                </label>
+              </div>
               <div className="flex-1 flex flex-col gap-1.5 min-h-0 overflow-hidden">
                 {/* Bloque Anamnesis */}
                 <div className="flex-1 flex flex-col min-h-0">
                   <div className="flex justify-between items-center mb-0.5 flex-shrink-0">
                     <label className="block text-[11px] font-semibold text-slate-800">Anamnesis</label>
-                    <CopyButton textToCopy={anamnesisText} />
+                    <CopyButton textToCopy={isUppercase ? anamnesisText.toUpperCase() : anamnesisText} />
                   </div>
-                  <textarea value={anamnesisText} onChange={e => setAnamnesisText(e.target.value)} className="flex-1 w-full p-1.5 py-1 bg-white border border-slate-300 rounded-md shadow-sm custom-scrollbar text-[10.5px] text-slate-800 font-mono outline-none focus:ring-1 focus:ring-sky-500 focus:border-sky-500 resize-none" />
+                  <textarea value={isUppercase ? anamnesisText.toUpperCase() : anamnesisText} onChange={e => setAnamnesisText(e.target.value)} className="flex-1 w-full p-1.5 py-1 bg-white border border-slate-300 rounded-md shadow-sm custom-scrollbar text-[10.5px] text-slate-800 font-mono outline-none focus:ring-1 focus:ring-sky-500 focus:border-sky-500 resize-none" />
                 </div>
                 {/* Bloque Exploración */}
                 <div className="flex-1 flex flex-col min-h-0">
                   <div className="flex justify-between items-center mb-0.5 flex-shrink-0">
                     <label className="block text-[11px] font-semibold text-slate-800">Exploración</label>
-                    <CopyButton textToCopy={exploracionText} />
+                    <CopyButton textToCopy={isUppercase ? exploracionText.toUpperCase() : exploracionText} />
                   </div>
-                  <textarea value={exploracionText} onChange={e => setExploracionText(e.target.value)} className="flex-1 w-full p-1.5 py-1 bg-white border border-slate-300 rounded-md shadow-sm custom-scrollbar text-[10.5px] text-slate-800 font-mono outline-none focus:ring-1 focus:ring-sky-500 focus:border-sky-500 resize-none" />
+                  <textarea value={isUppercase ? exploracionText.toUpperCase() : exploracionText} onChange={e => setExploracionText(e.target.value)} className="flex-1 w-full p-1.5 py-1 bg-white border border-slate-300 rounded-md shadow-sm custom-scrollbar text-[10.5px] text-slate-800 font-mono outline-none focus:ring-1 focus:ring-sky-500 focus:border-sky-500 resize-none" />
                 </div>
                 {/* Bloque Actuación */}
                 <div className="flex-1 flex flex-col min-h-0">
                   <div className="flex justify-between items-center mb-0.5 flex-shrink-0">
                     <label className="block text-[11px] font-semibold text-slate-800">Actuación</label>
-                    <CopyButton textToCopy={actuacionText} />
+                    <CopyButton textToCopy={isUppercase ? actuacionText.toUpperCase() : actuacionText} />
                   </div>
-                  <textarea value={actuacionText} onChange={e => setActuacionText(e.target.value)} className="flex-1 w-full p-1.5 py-1 bg-white border border-slate-300 rounded-md shadow-sm custom-scrollbar text-[10.5px] text-slate-800 font-mono outline-none focus:ring-1 focus:ring-sky-500 focus:border-sky-500 resize-none" />
+                  <textarea value={isUppercase ? actuacionText.toUpperCase() : actuacionText} onChange={e => setActuacionText(e.target.value)} className="flex-1 w-full p-1.5 py-1 bg-white border border-slate-300 rounded-md shadow-sm custom-scrollbar text-[10.5px] text-slate-800 font-mono outline-none focus:ring-1 focus:ring-sky-500 focus:border-sky-500 resize-none" />
                 </div>
               </div>
             </div>

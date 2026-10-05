@@ -57,6 +57,7 @@ import ArsenalFarmacologicoScreen from './components/ArsenalFarmacologicoScreen'
 import BuscadorExamenesLab from './components/BuscadorExamenesLab';
 import TablaComposicionAlimentos from './components/TablaComposicionAlimentos';
 import FichaFirmarGes from './components/FichaFirmarGes';
+import MisPacientes from './components/MisPacientes';
 import { SapuMenu } from './components/SapuMenu';
 import { PatientRecord } from './services/patientStore';
 import { onCallScheduleData, specialEventsData } from './data/onCallScheduleData';
@@ -66,7 +67,7 @@ import { subscribeToCalendarEvents } from './services/eventsService';
 import { View, User, CertificateType, Profession, CESFAM, Sector, SpecialEvent } from './types';
 import Bitacora from './components/Bitacora';
 import AutomaticTranscriber from './components/AutomaticTranscriber';
-import { TabNavBar, PerfilFeed } from './components/SocialFeed';
+import { TabNavBar, ComunidadFeed, PerfilFeed, ComunidadView } from './components/SocialFeed';
 import NotificationBell from './components/NotificationBell';
 import { RemWindow } from './components/RemWindow';
 import EmailGenerator from './components/EmailGenerator';
@@ -340,8 +341,8 @@ const App: React.FC = () => {
   const [profilePictureUrl, setProfilePictureUrl] = useState<string>('');
   const [profileName, setProfileName] = useState<string>('');
   const [profileStatus, setProfileStatus] = useState<string>('');
-  const [calendarDate, setCalendarDate] = useState<Date>(new Date(2026, 5, 1));
-  const [activeTab, setActiveTab] = useState<'inicio' | 'comunidad' | 'perfil'>('inicio');
+  const [calendarDate, setCalendarDate] = useState<Date>(new Date(2026, 9, 1));
+  const [activeTab, setActiveTab] = useState<'inicio' | 'perfil'>('inicio');
   const [selectedProfileUsername, setSelectedProfileUsername] = useState<string>('');
   const [openExternalLinks, setOpenExternalLinks] = useState<Record<string, boolean>>({});
   const [userPosts, setUserPosts] = useState<any[]>([]);
@@ -391,7 +392,7 @@ const App: React.FC = () => {
     error?: string;
   } | null>(null);
 
-  const APP_VERSION = '1.4.18';
+  const APP_VERSION = '1.4.15';
   const menuDropdownRef = useRef<HTMLDivElement>(null);
 
   const isNewerVersion = (latest: string, current: string): boolean => {
@@ -822,7 +823,6 @@ const App: React.FC = () => {
       localStorage.setItem('computerSector', sector);
     }
     setLowResources(localStorage.getItem('lowResources') === 'true');
-    setAnimationState('idle');
     setCurrentView('menu');
 
     // Set session storage
@@ -2039,6 +2039,10 @@ const App: React.FC = () => {
         return <BuscadorExamenesLab onBackToMenu={() => navigateTo('menu')} />;
       case 'bitacora':
         return <Bitacora onBackToMenu={() => navigateTo('menu')} loggedInUser={loggedInUser} />;
+      case 'misPacientes':
+        return <MisPacientes onSelectMenuItem={(view, patientData) => navigateTo(view, patientData)} loggedInUser={loggedInUser} />;
+      case 'comunidad':
+        return <ComunidadView loggedInUser={loggedInUser} onBackToMenu={() => navigateTo('menu')} />;
       case 'sapu':
         return <SapuMenu onBackToMenu={() => navigateTo('menu')} loggedInUser={loggedInUser} />;
 
@@ -2068,7 +2072,7 @@ const App: React.FC = () => {
   }
 
   const renderMainContent = () => {
-    const isLockedView = currentView === 'menu' || currentView.startsWith('ficha') || currentView === 'sapu';
+    const isLockedView = currentView === 'menu' || currentView.startsWith('ficha') || currentView === 'sapu' || currentView === 'comunidad';
     return (
       <main 
         key={currentView}
@@ -2118,7 +2122,9 @@ const App: React.FC = () => {
                                 ? 'PORTAL MÉDICO: CONTROL NIÑO SANO 1° MES'
                                 : currentView === 'fichaControlNinoSano3Mes'
                                   ? 'PORTAL MÉDICO: CONTROL NIÑO SANO 3° MES'
-                                  : currentView === 'arsenalFarmacologico'
+                                  : currentView === 'fichaControlNinoSano6Anos'
+                                    ? 'PORTAL MÉDICO: CONTROL DE SALUD INFANTIL – 6 AÑOS'
+                                    : currentView === 'arsenalFarmacologico'
                                     ? 'PORTAL MÉDICO: ARSENAL FARMACOLÓGICO APS'
                                     : currentView === 'ordenLaboratorio'
                                       ? 'PORTAL MÉDICO: SOLICITUD DE EXÁMENES'

@@ -247,6 +247,7 @@ const manualUsers: User[] = [
   { username: 'mjolivares', password: 'csanjuan', fullName: 'MARÍA JOSÉ OLIVARES', profession: 'nutricion', cesfam: 'CESFAM San Juan', electronicSignature: 'MARÍA JOSÉ OLIVARES\nNutricionista' },
   { username: 'fapablaza', password: 'csanjuan', fullName: 'FERNANDA APABLAZA', profession: 'nutricion', cesfam: 'CESFAM San Juan', electronicSignature: 'FERNANDA APABLAZA\nNutricionista' },
   // --- PSICÓLOGAS ---
+  { username: 'mjsuazo', password: 'csanjuan', fullName: 'MARÍA JOSÉ SUAZO', profession: 'psicologia', cesfam: 'CESFAM San Juan', electronicSignature: 'MARÍA JOSÉ SUAZO\nPsicóloga' },
   { username: 'psbarrios', password: 'csanjuan', fullName: 'JOCELINE BARRIOS', profession: 'psicologia', cesfam: 'CESFAM San Juan', electronicSignature: 'JOCELINE BARRIOS\nPsicóloga' },
   { username: 'piafredes', password: 'csanjuan', fullName: 'PIA FREDES', profession: 'psicologia', cesfam: 'CESFAM San Juan', electronicSignature: 'PIA FREDES\nPsicóloga' },
   { username: 'lauraflores', password: 'csanjuan', fullName: 'LAURA FLORES', profession: 'psicologia', cesfam: 'CESFAM San Juan', electronicSignature: 'LAURA FLORES\nPsicóloga' },

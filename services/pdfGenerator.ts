@@ -2048,13 +2048,12 @@ export const generateGesPdf = async (data: any, user: User): Promise<void> => {
         const firstPage = pages[0];
         
         // Función ayudante para calcular fácilmente posiciones ajustables
-        const drawField = (text: string, x: number, y: number, isXs = false, customSize?: number) => {
+        const drawField = (text: string, x: number, y: number, isXs = false) => {
             if (!text) return;
-            const size = customSize !== undefined ? customSize : (isXs ? 14 : 9);
             firstPage.drawText(text, {
                 x, 
                 y, 
-                size, 
+                size: isXs ? 14 : 9, 
                 font: isXs ? helveticaBold : helveticaFont, 
                 color: rgb(0,0,0)
             });
@@ -2092,16 +2091,10 @@ export const generateGesPdf = async (data: any, user: User): Promise<void> => {
 
         // 3. Información Médica
         if (data.tipoGes === 'GENERAL' && data.gesProblema) {
-            let problemaText = data.gesProblema.replace(/^\d+\.\s*/, '');
-            if (data.tipoArtrosis && (data.gesProblema.toLowerCase().includes('artrosis de cadera') || data.gesProblema.toLowerCase().includes('55 años'))) {
-                problemaText = `${problemaText} (${data.tipoArtrosis.toUpperCase()})`;
-            }
-            const customFontSize = problemaText.length > 90 ? 7.5 : 9;
-            drawField(problemaText, 160, 432, false, customFontSize); // Sube un poquitito
+            drawField(data.gesProblema, 160, 432); // Sube un poquitito
             drawField('X', 160, 401, true); // Confirmación General Sube
         } else if (data.tipoGes === 'ONCOLOGICO' && data.gesOncologicoProblema) {
-            const oncoText = data.gesOncologicoProblema.replace(/^\d+\.\s*/, '');
-            drawField(oncoText, 210, 350);
+            drawField(data.gesOncologicoProblema, 210, 350);
             if (data.oncoSospecha) drawField('X', 110, 325, true);
             if (data.oncoConfirmacion) drawField('X', 210, 325, true);
             if (data.oncoEtapificacion) drawField('X', 310, 325, true);

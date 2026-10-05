@@ -104,7 +104,7 @@ export interface ObjetivoAnterior extends PccObjetivo {
   aclaracionNoCumplimiento: string;
 }
 
-export type View = CertificateType | 'login' | 'menu' | 'sapu';
+export type View = CertificateType | 'login' | 'menu' | 'misPacientes' | 'sapu' | 'comunidad';
 
 export type OnCallSchedule = Record<number, Record<number, Record<number, string[]>>>;
 
@@ -663,45 +663,184 @@ export interface FichaControlNinoSano3MesFormData extends FichaControlNinoSano1M
 }
 
 export interface FichaControlNinoSano6AnosFormData {
-  antecedentesFarmacos: string;
-  antecedentesCirugias: string;
-  antecedentesAlergias: string;
-  antecedentesHospitalizacion: string;
-  antecedentesVacunas: string;
-  nutricionAlimentacion: string;
-  nutricionAmbiente: string;
-  nutricionChatarra: string;
-  nutricionHidratacion: string;
-  higieneBano: string;
-  higieneVestimenta: string;
-  higieneManos: string;
-  higieneDental: string;
-  actividadFisica: string;
-  eliminacionPatrones: string;
-  suenoHigiene: string;
-  suenoDificultades: string;
-  suenoParasomnias: string;
-  hogarFamilia: string;
-  hogarEstresores: string;
-  conductaRelaciones: string;
-  conductaRendimiento: string;
-  conductaAutoridad: string;
-  conductaRecreativas: string;
-  conductaAccidentes: string;
-  conductaPantallas: string;
+  // Encabezado
+  edad: string;
+  acompanante: string;
+  parentesco: string;
+  establecimientoEducacionalCurso: string;
+
+  // Anamnesis - Antecedentes Generales
+  antecedentesMorbidos: string;
+  cirugias: string;
+  hospitalizaciones: string;
+  medicamentos: string;
+  alergias: string;
+  controlesEspecialistas: string;
+  enfermedadesConsultasRecientes: string;
+  antecedentesFamiliaresRelevantes: string;
+  vacunas: string;
+
+  // Escolaridad y Desarrollo
+  escolaridadEstablecimiento: string;
+  escolaridadCurso: string;
+  escolaridadRendimiento: string;
+  escolaridadAsistencia: string;
+  escolaridadRelacionCompaneros: string;
+  escolaridadRelacionProfesores: string;
+  escolaridadDificultadesAprendizaje: string;
+  escolaridadConducta: string;
+  escolaridadBullying: string;
+  escolaridadPreocupaciones: string;
+
+  // Área Socioemocional
+  socioemocionalAnimoHabitual: string;
+  socioemocionalAnsiedadMiedos: string;
+  socioemocionalIrritabilidadAgresividad: string;
+  socioemocionalRelacionFamiliar: string;
+  socioemocionalRedApoyo: string;
+  socioemocionalEventosEstresores: string;
+  socioemocionalSospechaMaltrato: string;
+
+  // Alimentación
+  alimentacionComidasDiarias: string;
+  alimentacionDesayuno: string;
+  alimentacionFrutasVerduras: string;
+  alimentacionLacteos: string;
+  alimentacionAgua: string;
+  alimentacionBebidasJugos: string;
+  alimentacionGolosinasSnacks: string;
+  alimentacionComidaRapida: string;
+  alimentacionConductasPreocupantes: string;
+
+  // Actividad Física y Sedentarismo
+  actividadFisicaMinutosDia: string;
+  actividadFisicaDeporte: string;
+  actividadFisicaHorasPantalla: string;
+  actividadFisicaPantallasComidas: string;
+
+  // Sueño
+  suenoHoras: string;
+  suenoHorarioHabitual: string;
+  suenoReparador: string;
+  suenoRonquidoApneas: string;
+
+  // Eliminación
+  eliminacionDiuresis: string;
+  eliminacionDeposiciones: string;
+  eliminacionEnuresis: string;
+  eliminacionEncopresis: string;
+
+  // Salud Bucal
+  saludBucalCepillado: string;
+  saludBucalPastaFluorada: string;
+  saludBucalControlVigente: string;
+  saludBucalPautaCero: string;
+  saludBucalDolorCaries: string;
+
+  // Visión / Audición
+  visionDificultadVisual: string;
+  visionUsoLentes: string;
+  audicionDificultadAuditiva: string;
+  audicionOtitisRecurrente: string;
+
+  // Seguridad
+  seguridadCinturonRetencion: string;
+  seguridadCasco: string;
+  seguridadHumoTabaco: string;
+  seguridadOtrosRiesgos: string;
+
+  // Exploración - Antropometría
   efPeso: string;
   efTalla: string;
   efImc: string;
-  efPercentilImc: string;
+  efImcE: string;
+  efTE: string;
+  efDiagnosticoNutricional: string;
+  efDiagnosticoTalla: string;
+  efEvolucionCurva: string;
+
+  // Signos Vitales
+  efPa: string;
+  efPercentilPa: string;
+  efFc: string;
+  efFr: string;
+
+  // Examen General
   efGeneral: string;
+  efAnimoEnergia: string;
+  efInteraccionContactoVisual: string;
+
+  // Piel y Fanéreos
+  efPielMucosas: string;
+  efLesionesDermatologicas: string;
+  efAcantosisNigricans: string;
+  efAlopeciaPediculosis: string;
+  efUnas: string;
+  efOlorAxilarAdrenarquia: string;
+
+  // Cabeza y Cuello
+  efCabezaCuello: string;
+  efAdenopatias: string;
   efTiroides: string;
-  efTorax: string;
+
+  // Oftalmológico
+  efAgudezaVisualOd: string;
+  efAgudezaVisualOi: string;
+  efReflejoRojo: string;
+  efEstrabismo: string;
+  efMotilidadOcular: string;
+
+  // Auditivo
+  efEvaluacionAuditiva: string;
+  efOtoscopia: string;
+
+  // Cavidad Oral
+  efDenticion: string;
+  efRecambioDentario: string;
+  efCariesVisibles: string;
+  efEncias: string;
+  efMaloclusion: string;
+  efHigieneOral: string;
+  efPautaCeroRevisada: string;
+
+  // Cardiopulmonar
+  efCardiovascular: string;
+  efPulmonar: string;
+  efSintomasAsmaEjercicio: string;
+
+  // Abdomen
   efAbdomen: string;
-  efEeii: string;
+
+  // Genitourinario / Desarrollo Puberal
+  efConsentimientoGenitales: string;
+  efGenitalesExternos: string;
+  efTanner: string;
+  efSignosPubertadPrecoz: string;
+  efTesticulosDescendidos: string;
+
+  // Musculoesquelético
   efMarcha: string;
+  efSimetriaEeii: string;
+  efActitudPostural: string;
   efTestAdams: string;
-  efPiePlano: string;
+  efEscoliosisSospechada: string;
+  efPies: string;
+  efDesgasteCalzado: string;
+
+  // Neurológico
+  efNeurologico: string;
+  efFuerzaMovilidad: string;
+  efReflejosSimetria: string;
+
+  // Cuestionario de Salud Infantil y Pauta CERO
+  cuestionarioSaludInfantil: string;
+  cuestionarioHallazgos: string;
+  pautaCeroResultado: string;
+
+  // Diagnósticos
   diagnosticos: string;
+
+  // Actuación / Indicaciones
   indicaciones: string;
 }
 

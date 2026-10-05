@@ -227,6 +227,7 @@ const FichaSeguimientoEcicep: React.FC<FichaSeguimientoEcicepProps> = ({
   const [anamnesisText, setAnamnesisText] = useState<string>('');
   const [exploracionText, setExploracionText] = useState<string>('');
   const [actuacionText, setActuacionText] = useState<string>('');
+  const [isUppercase, setIsUppercase] = useState<boolean>(false);
   const [isRiskCalculatorOpen, setIsRiskCalculatorOpen] = useState(false);
   const [showRemActive, setShowRemActive] = useState(false);
   const [isAdditionalControlsOpen, setIsAdditionalControlsOpen] = useState(false);
@@ -877,15 +878,26 @@ const FichaSeguimientoEcicep: React.FC<FichaSeguimientoEcicepProps> = ({
               <div className="border-b border-sky-200/80 pb-1 mb-2 w-full flex-shrink-0">
                 <h3 className="text-xs font-bold text-sky-800 uppercase tracking-wider">Resumen Ficha Clínica (Editable)</h3>
               </div>
+              <div className="mb-2 flex items-center gap-1.5 flex-shrink-0">
+                <label className="flex items-center gap-1.5 cursor-pointer text-[11px] font-semibold text-slate-700 select-none">
+                  <input
+                    type="checkbox"
+                    checked={isUppercase}
+                    onChange={e => setIsUppercase(e.target.checked)}
+                    className="h-3.5 w-3.5 text-sky-600 border-slate-300 rounded focus:ring-sky-500 cursor-pointer"
+                  />
+                  <span>MAYÚSCULAS</span>
+                </label>
+              </div>
               <div className="flex-1 flex flex-col gap-1.5 min-h-0 overflow-hidden">
                 {/* Bloque Anamnesis */}
                 <div className="flex-1 flex flex-col min-h-0">
                   <div className="flex justify-between items-center mb-0.5 flex-shrink-0">
                     <label className="block text-[11px] font-semibold text-slate-800">Anamnesis</label>
-                    <CopyButton textToCopy={anamnesisText} />
+                    <CopyButton textToCopy={isUppercase ? anamnesisText.toUpperCase() : anamnesisText} />
                   </div>
                   <textarea
-                    value={anamnesisText}
+                    value={isUppercase ? anamnesisText.toUpperCase() : anamnesisText}
                     onChange={(e) => setAnamnesisText(e.target.value)}
                     className="flex-1 w-full p-1.5 py-1 bg-white border border-slate-300 rounded-md shadow-sm custom-scrollbar text-[10.5px] text-slate-800 font-mono outline-none focus:ring-1 focus:ring-sky-500 focus:border-sky-500 resize-none"
                     aria-label="Anamnesis - editable"
@@ -895,10 +907,10 @@ const FichaSeguimientoEcicep: React.FC<FichaSeguimientoEcicepProps> = ({
                 <div className="flex-1 flex flex-col min-h-0">
                   <div className="flex justify-between items-center mb-0.5 flex-shrink-0">
                     <label className="block text-[11px] font-semibold text-slate-800">Exploración</label>
-                    <CopyButton textToCopy={exploracionText} />
+                    <CopyButton textToCopy={isUppercase ? exploracionText.toUpperCase() : exploracionText} />
                   </div>
                   <textarea
-                    value={exploracionText}
+                    value={isUppercase ? exploracionText.toUpperCase() : exploracionText}
                     onChange={(e) => setExploracionText(e.target.value)}
                     className="flex-1 w-full p-1.5 py-1 bg-white border border-slate-300 rounded-md shadow-sm custom-scrollbar text-[10.5px] text-slate-800 font-mono outline-none focus:ring-1 focus:ring-sky-500 focus:border-sky-500 resize-none"
                     aria-label="Exploración - editable"
@@ -908,10 +920,10 @@ const FichaSeguimientoEcicep: React.FC<FichaSeguimientoEcicepProps> = ({
                 <div className="flex-1 flex flex-col min-h-0">
                   <div className="flex justify-between items-center mb-0.5 flex-shrink-0">
                     <label className="block text-[11px] font-semibold text-slate-800">Actuación</label>
-                    <CopyButton textToCopy={actuacionText} />
+                    <CopyButton textToCopy={isUppercase ? actuacionText.toUpperCase() : actuacionText} />
                   </div>
                   <textarea
-                    value={actuacionText}
+                    value={isUppercase ? actuacionText.toUpperCase() : actuacionText}
                     onChange={(e) => setActuacionText(e.target.value)}
                     className="flex-1 w-full p-1.5 py-1 bg-white border border-slate-300 rounded-md shadow-sm custom-scrollbar text-[10.5px] text-slate-800 font-mono outline-none focus:ring-1 focus:ring-sky-500 focus:border-sky-500 resize-none"
                     aria-label="Actuación - editable"

@@ -450,13 +450,13 @@ const PostCard: React.FC<{ post: SocialPost; loggedInUser: User; onViewUser: (u:
 // ─── Tab Nav Bar ─────────────────────────────────────────────────────────────
 
 interface TabNavBarProps {
-  activeTab: 'inicio' | 'comunidad' | 'perfil';
-  setActiveTab: (t: 'inicio' | 'comunidad' | 'perfil') => void;
+  activeTab: 'inicio' | 'perfil';
+  setActiveTab: (t: 'inicio' | 'perfil') => void;
 }
 
 export const TabNavBar: React.FC<TabNavBarProps> = ({ activeTab, setActiveTab }) => (
   <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-1 flex justify-between gap-1 w-full select-none shrink-0">
-    {([['inicio', 'INICIO', <IconHome />], ['comunidad', 'COMUNIDAD', <IconUsers />], ['perfil', 'PERFIL', <IconUser />]] as const).map(([tab, label, icon]) => (
+    {([['inicio', 'INICIO', <IconHome />], ['perfil', 'PERFIL', <IconUser />]] as const).map(([tab, label, icon]) => (
       <button
         key={tab}
         onClick={() => setActiveTab(tab)}

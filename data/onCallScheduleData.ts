@@ -454,8 +454,91 @@ export const onCallScheduleData: OnCallSchedule = {
       30: ["DAVID CORTES", "HENRY PATIÑO"]
     },
     9: { // October (0-indexed)
+      // Semana 1 (Sep 28 - Oct 2)
       1: ["CECILIA YEPEZ", "LUCIANO RAMOS"],
-      2: ["VICTOR VEGA", "CAMILA ROJAS"]
+      2: ["BENJAMÍN ROJAS", "VICTOR VEGA"],
+      // Semana 2 (Oct 5 - 9)
+      5: ["SOFIA ROJAS", "ROMINA LOPEZ"],
+      6: ["GABRIELA CUELLO", "CAMILA ROJAS"],
+      7: ["HENRY PATIÑO", "DAVID CORTES"],
+      8: ["LUCIANO RAMOS", "CECILIA YEPEZ"],
+      9: ["CAMILA ROJAS", "ABBY ROJAS"],
+      // Semana 3 (Oct 12 - 16)
+      12: [], // FERIADO
+      13: ["CAMILA ROJAS", "GABRIELA CUELLO"],
+      14: ["DAVID CORTES", "HENRY PATIÑO"],
+      15: ["CECILIA YEPEZ", "LUCIANO RAMOS"],
+      16: ["HENRY PATIÑO", "GABRIELA CUELLO"],
+      // Semana 4 (Oct 19 - 23)
+      19: ["ROMINA LOPEZ", "SOFIA ROJAS"],
+      20: ["GABRIELA CUELLO", "CAMILA ROJAS"],
+      21: ["HENRY PATIÑO", "DAVID CORTES"],
+      22: ["LUCIANO RAMOS", "CECILIA YEPEZ"],
+      23: ["BASTIAN CORDOVA", "BENJAMIN ROJAS"],
+      // Semana 5 (Oct 26 - 31)
+      26: ["SOFIA ROJAS", "ROMINA LOPEZ"],
+      27: ["CAMILA ROJAS", "GABRIELA CUELLO"],
+      28: ["DAVID CORTES", "HENRY PATIÑO"],
+      30: ["CECILIA YEPEZ", "LUCIANO RAMOS"],
+      31: ["BENJAMÍN ROJAS", "SOFIA ROJAS"]
+    },
+    10: { // November (0-indexed)
+      // Semana 1 (Nov 2 - 6)
+      2: ["ROMINA LOPEZ", "SOFIA ROJAS"],
+      3: ["GABRIELA CUELLO", "CAMILA ROJAS"],
+      4: ["HENRY PATIÑO", "DAVID CORTES"],
+      5: ["LUCIANO RAMOS", "CECILIA YEPEZ"],
+      6: ["FRANCO MILOS", "CECILIA YEPEZ"],
+      // Semana 2 (Nov 9 - 13)
+      9: ["SOFIA ROJAS", "ROMINA LOPEZ"],
+      10: ["CAMILA ROJAS", "GABRIELA CUELLO"],
+      11: ["DAVID CORTES", "HENRY PATIÑO"],
+      12: [], // REUNION COMUNAL ESTAMENTO DRA. C. ROJAS
+      13: ["LUCIANO RAMOS", "GABRIELA CUELLO"],
+      // Semana 3 (Nov 16 - 20)
+      16: ["ROMINA LOPEZ", "SOFIA ROJAS"],
+      17: ["GABRIELA CUELLO", "CAMILA ROJAS"],
+      18: ["HENRY PATIÑO", "DAVID CORTES"],
+      19: ["LUCIANO RAMOS", "CECILIA YEPEZ"],
+      20: ["DAVID CORTES", "VICTOR VEGA"],
+      // Semana 4 (Nov 23 - 27)
+      23: ["SOFIA ROJAS", "ROMINA LOPEZ"],
+      24: ["CAMILA ROJAS", "GABRIELA CUELLO"],
+      25: ["DAVID CORTES", "HENRY PATIÑO"],
+      26: ["CECILIA YEPEZ", "LUCIANO RAMOS"],
+      27: ["ABBY ROJAS", "ROMINA LOPEZ"],
+      // Semana 5 (Nov 30)
+      30: ["ROMINA LOPEZ", "SOFIA ROJAS"]
+    },
+    11: { // December (0-indexed)
+      // Semana 1 (Dec 1 - 4)
+      1: ["GABRIELA CUELLO", "CAMILA ROJAS"],
+      2: ["HENRY PATIÑO", "DAVID CORTES"],
+      3: ["LUCIANO RAMOS", "CECILIA YEPEZ"],
+      4: ["SOFIA ROJAS", "CAMILA ROJAS"], // CELEBRACIÓN DÍA DEL MÉDICO
+      // Semana 2 (Dec 7 - 11)
+      7: ["ROMINA LOPEZ", "SOFIA ROJAS"],
+      8: [], // FERIADO / VACÍO EN CALENDARIO
+      9: ["HENRY PATIÑO", "DAVID CORTES"],
+      10: ["LUCIANO RAMOS", "CECILIA YEPEZ"],
+      11: ["BENJAMÍN ROJAS", "VICTOR VEGA"],
+      // Semana 3 (Dec 14 - 18)
+      14: ["SOFIA ROJAS", "ROMINA LOPEZ"],
+      15: ["GABRIELA CUELLO", "CAMILA ROJAS"],
+      16: ["DAVID CORTES", "HENRY PATIÑO"],
+      17: ["CECILIA YEPEZ", "LUCIANO RAMOS"],
+      18: ["CAMILA ROJAS", "FRANCO MILOS"],
+      // Semana 4 (Dec 21 - 25)
+      21: ["ROMINA LOPEZ", "SOFIA ROJAS"],
+      22: ["GABRIELA CUELLO"],
+      23: ["HENRY PATIÑO", "DAVID CORTES"],
+      24: ["LUCIANO RAMOS", "BENJAMIN ROJAS"],
+      25: [], // FERIADO NAVIDAD
+      // Semana 5 (Dec 28 - 31)
+      28: ["SOFIA ROJAS", "ROMINA LOPEZ"],
+      29: ["GABRIELA CUELLO"],
+      30: ["DAVID CORTES", "HENRY PATIÑO"],
+      31: ["BENJAMIN ROJAS", "LUCIANO RAMOS"]
     }
   }
 };
@@ -564,7 +647,14 @@ export const specialEventsData: SpecialEventData = {
       25: generateLegacyEvent('62', 2026, 8, 25, "CONTINUIDAD: DRA. OCHOA", true),
     },
     9: { // October
-      2:  generateLegacyEvent('63', 2026, 9, 2, "CONTINUIDAD: DRA. GARCIA", true),
+      12: generateLegacyEvent('63', 2026, 9, 12, "FERIADO"),
+    },
+    10: { // November
+      12: generateLegacyEvent('64', 2026, 10, 12, "REUNION COMUNAL ESTAMENTO DRA. C. ROJAS"),
+    },
+    11: { // December
+      4:  generateLegacyEvent('65', 2026, 11, 4, "CELEBRACIÓN DÍA DEL MÉDICO"),
+      25: generateLegacyEvent('66', 2026, 11, 25, "¡FELIZ NAVIDAD!"),
     }
   }
 };
