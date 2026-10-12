@@ -1,5 +1,6 @@
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { getChileDate, getChileYMD, getChileDDMMYYYY } from './services/dateService';
 import ErrorBoundary from './components/ErrorBoundary';
 import { doc, onSnapshot, setDoc, collection, query, orderBy, serverTimestamp } from 'firebase/firestore';
 import { db } from './services/firebase';
@@ -14,6 +15,8 @@ import RecetaMedicaForm from './components/RecetaMedicaForm';
 import CertificadoMedicoForm from './components/CertificadoMedicoForm';
 import { CertificadoMedicoWindow } from './components/CertificadoMedicoWindow';
 import { RecetaMedicaWindow } from './components/RecetaMedicaWindow';
+import { OrdenLaboratorioWindow } from './components/OrdenLaboratorioWindow';
+import { OrdenImagenologiaWindow } from './components/OrdenImagenologiaWindow';
 import { FichaFirmarGesWindow } from './components/FichaFirmarGesWindow';
 import OnCallCalendar from './components/OnCallCalendar';
 import MainMenuDashboard from './components/MainMenuDashboard';
@@ -33,6 +36,22 @@ import FichaControlAdultoMayor from './components/FichaControlAdultoMayor';
 import FichaControlNinoSano1Mes from './components/FichaControlNinoSano1Mes';
 import FichaControlNinoSano3Mes from './components/FichaControlNinoSano3Mes';
 import FichaControlNinoSano6Anos from './components/FichaControlNinoSano6Anos';
+import FichaControlNinoSanoRN from './components/fichaControlNinoSanoRN';
+import FichaControlNinoSano2Meses from './components/fichaControlNinoSano2Meses';
+import FichaControlNinoSano4Meses from './components/fichaControlNinoSano4Meses';
+import ConsultaNutricional5Meses from './components/consultaNutricional5Meses';
+import FichaControlNinoSano6Meses from './components/fichaControlNinoSano6Meses';
+import FichaControlNinoSano8Meses from './components/fichaControlNinoSano8Meses';
+import FichaControlNinoSano12Meses from './components/fichaControlNinoSano12Meses';
+import FichaControlNinoSano18Meses from './components/fichaControlNinoSano18Meses';
+import FichaControlNinoSano2Anos from './components/fichaControlNinoSano2Anos';
+import FichaControlNinoSano3Anos from './components/fichaControlNinoSano3Anos';
+import ConsultaNutricional3Anos6Meses from './components/consultaNutricional3Anos6Meses';
+import FichaControlNinoSano4Anos from './components/fichaControlNinoSano4Anos';
+import FichaControlNinoSano5Anos from './components/fichaControlNinoSano5Anos';
+import FichaControlNinoSano7Anos from './components/fichaControlNinoSano7Anos';
+import FichaControlNinoSano8Anos from './components/fichaControlNinoSano8Anos';
+import FichaControlNinoSano9Anos from './components/fichaControlNinoSano9Anos';
 import FichaMorbilidad from './components/FichaMorbilidad';
 import FichaControlPscv from './components/FichaControlPscv';
 import FichaIngresoSm from './components/FichaIngresoSm';
@@ -68,7 +87,6 @@ import { View, User, CertificateType, Profession, CESFAM, Sector, SpecialEvent }
 import Bitacora from './components/Bitacora';
 import AutomaticTranscriber from './components/AutomaticTranscriber';
 import { TabNavBar, ComunidadFeed, PerfilFeed, ComunidadView } from './components/SocialFeed';
-import NotificationBell from './components/NotificationBell';
 import { RemWindow } from './components/RemWindow';
 import EmailGenerator from './components/EmailGenerator';
 import { ChatLocal, LinkedInDefaultAvatar } from './components/ChatLocal';
@@ -346,13 +364,14 @@ const App: React.FC = () => {
   const [selectedProfileUsername, setSelectedProfileUsername] = useState<string>('');
   const [openExternalLinks, setOpenExternalLinks] = useState<Record<string, boolean>>({});
   const [userPosts, setUserPosts] = useState<any[]>([]);
+
   const [activePatient, setActivePatient] = useState<PatientRecord | null>(null);
   const [pscvTipo, setPscvTipo] = useState('');
-  const [pscvFecha, setPscvFecha] = useState(new Date().toISOString().split('T')[0]);
+  const [pscvFecha, setPscvFecha] = useState(() => getChileYMD());
   const pscvActionsRef = useRef<{ exportPdf: () => void; newForm: () => void } | null>(null);
-  const [preingresoFecha, setPreingresoFecha] = useState(new Date().toISOString().split('T')[0]);
+  const [preingresoFecha, setPreingresoFecha] = useState(() => getChileYMD());
   const preingresoActionsRef = useRef<{ exportPdf: () => void; newForm: () => void; imprimirResumen?: () => void; editarDrive?: () => void } | null>(null);
-  const todayDDMMYYYY = (() => { const d = new Date(); return `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${d.getFullYear()}`; })();
+  const todayDDMMYYYY = (() => getChileDDMMYYYY(undefined, '-'))();
   const [ingresoFecha, setIngresoFecha] = useState(() => todayDDMMYYYY);
   const ingresoActionsRef = useRef<{ exportPdf: () => void; newForm: () => void; imprimirResumen?: () => void; editarDrive?: () => void } | null>(null);
   const pasmiActionsRef = useRef<{ exportPdf: () => void; newForm: () => void; } | null>(null);
@@ -381,6 +400,7 @@ const App: React.FC = () => {
   const [activeMenu, setActiveMenu] = useState<'archivo' | 'vista' | 'ayuda' | null>(null);
   const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const [isUpdateModalMinimized, setIsUpdateModalMinimized] = useState(false);
   const [isDownloadingUpdate, setIsDownloadingUpdate] = useState(false);
   const [updateInfo, setUpdateInfo] = useState<{
     hasUpdate: boolean;
@@ -392,7 +412,7 @@ const App: React.FC = () => {
     error?: string;
   } | null>(null);
 
-  const APP_VERSION = '1.4.15';
+  const APP_VERSION = '1.4.23';
   const menuDropdownRef = useRef<HTMLDivElement>(null);
 
   const isNewerVersion = (latest: string, current: string): boolean => {
@@ -447,12 +467,16 @@ const App: React.FC = () => {
         setUpdateInfo(finalResult);
         if (hasUpdate || manual) {
           setIsUpdateModalOpen(true);
+          setIsUpdateModalMinimized(false);
         }
       }
     } catch (err: any) {
       console.error("Error checking updates:", err);
       setUpdateInfo({ hasUpdate: false, checking: false, currentVersion: APP_VERSION, error: err?.message || 'Error al conectar' });
-      if (manual) setIsUpdateModalOpen(true);
+      if (manual) {
+        setIsUpdateModalOpen(true);
+        setIsUpdateModalMinimized(false);
+      }
     }
   }, []);
 
@@ -617,6 +641,8 @@ const App: React.FC = () => {
   const [isUrgenciasModalOpen, setIsUrgenciasModalOpen] = useState<boolean>(false);
   const [isCertificadoWindowOpen, setIsCertificadoWindowOpen] = useState<boolean>(false);
   const [isRecetaWindowOpen, setIsRecetaWindowOpen] = useState<boolean>(false);
+  const [isLabWindowOpen, setIsLabWindowOpen] = useState<boolean>(false);
+  const [isImagenologiaWindowOpen, setIsImagenologiaWindowOpen] = useState<boolean>(false);
   const [isGesWindowOpen, setIsGesWindowOpen] = useState<boolean>(false);
   const [showUpdateNotification, setShowUpdateNotification] = useState(false);
   const [installPromptEvent, setInstallPromptEvent] = useState<any | null>(null);
@@ -629,6 +655,8 @@ const App: React.FC = () => {
       setIsDriveOpen(!isDriveOpen);
       setIsCertificadoWindowOpen(false);
       setIsRecetaWindowOpen(false);
+      setIsLabWindowOpen(false);
+      setIsImagenologiaWindowOpen(false);
       setIsGesWindowOpen(false);
       setIsCalcOpen(false);
       setIsNotesOpen(false);
@@ -636,6 +664,8 @@ const App: React.FC = () => {
       setIsCertificadoWindowOpen(!isCertificadoWindowOpen);
       setIsDriveOpen(false);
       setIsRecetaWindowOpen(false);
+      setIsLabWindowOpen(false);
+      setIsImagenologiaWindowOpen(false);
       setIsGesWindowOpen(false);
       setIsCalcOpen(false);
       setIsNotesOpen(false);
@@ -643,6 +673,26 @@ const App: React.FC = () => {
       setIsRecetaWindowOpen(!isRecetaWindowOpen);
       setIsDriveOpen(false);
       setIsCertificadoWindowOpen(false);
+      setIsLabWindowOpen(false);
+      setIsImagenologiaWindowOpen(false);
+      setIsGesWindowOpen(false);
+      setIsCalcOpen(false);
+      setIsNotesOpen(false);
+    } else if (windowName === 'lab') {
+      setIsLabWindowOpen(!isLabWindowOpen);
+      setIsDriveOpen(false);
+      setIsCertificadoWindowOpen(false);
+      setIsRecetaWindowOpen(false);
+      setIsImagenologiaWindowOpen(false);
+      setIsGesWindowOpen(false);
+      setIsCalcOpen(false);
+      setIsNotesOpen(false);
+    } else if (windowName === 'imagenologia') {
+      setIsImagenologiaWindowOpen(!isImagenologiaWindowOpen);
+      setIsDriveOpen(false);
+      setIsCertificadoWindowOpen(false);
+      setIsRecetaWindowOpen(false);
+      setIsLabWindowOpen(false);
       setIsGesWindowOpen(false);
       setIsCalcOpen(false);
       setIsNotesOpen(false);
@@ -651,6 +701,8 @@ const App: React.FC = () => {
       setIsDriveOpen(false);
       setIsCertificadoWindowOpen(false);
       setIsRecetaWindowOpen(false);
+      setIsLabWindowOpen(false);
+      setIsImagenologiaWindowOpen(false);
       setIsCalcOpen(false);
       setIsNotesOpen(false);
     } else if (windowName === 'calc') {
@@ -658,6 +710,8 @@ const App: React.FC = () => {
       setIsDriveOpen(false);
       setIsCertificadoWindowOpen(false);
       setIsRecetaWindowOpen(false);
+      setIsLabWindowOpen(false);
+      setIsImagenologiaWindowOpen(false);
       setIsGesWindowOpen(false);
       setIsNotesOpen(false);
     } else if (windowName === 'notes') {
@@ -665,6 +719,7 @@ const App: React.FC = () => {
       setIsDriveOpen(false);
       setIsCertificadoWindowOpen(false);
       setIsRecetaWindowOpen(false);
+      setIsLabWindowOpen(false);
       setIsGesWindowOpen(false);
       setIsCalcOpen(false);
     }
@@ -1190,7 +1245,7 @@ const App: React.FC = () => {
                 </h2>
               ) : (currentView === 'fichaControlNinoSano1Mes' || currentView === 'fichaControlNinoSano3Mes' || currentView === 'fichaControlNinoSano6Anos') ? (
                 <h2 className="text-base font-bold text-slate-900 leading-tight">
-                  {currentView === 'fichaControlNinoSano1Mes' ? 'NIÑO SANO 1 MES (MÉDICO)' : currentView === 'fichaControlNinoSano3Mes' ? 'NIÑO SANO 3 MES (MÉDICO)' : 'NIÑO SANO 6 AÑOS (MÉDICO)'}
+                  {currentView === 'fichaControlNinoSano1Mes' ? 'NIÑO SANO 1 MES' : currentView === 'fichaControlNinoSano3Mes' ? 'NIÑO SANO 3 MES' : 'NIÑO SANO 6 AÑOS'}
                 </h2>
               ) : currentView === 'fichaVisitaDomiciliaria' ? (
                 <h2 className="text-base font-bold text-slate-900 leading-tight">
@@ -1947,24 +2002,44 @@ const App: React.FC = () => {
         return <FichaControlCardiovascular onBackToMenu={() => navigateTo('menu')} loggedInUser={loggedInUser} />;
       case 'fichaControlAdultoMayor':
         return <FichaControlAdultoMayor onBackToMenu={() => navigateTo('menu')} loggedInUser={loggedInUser} />;
+      case 'fichaControlNinoSanoRN':
+        return <div className="w-full"><FichaControlNinoSanoRN onBackToMenu={() => navigateTo('menu')} loggedInUser={loggedInUser} /></div>;
       case 'fichaControlNinoSano1Mes':
-        return (
-          <div className="w-full">
-            <FichaControlNinoSano1Mes onBackToMenu={() => navigateTo('menu')} loggedInUser={loggedInUser} />
-          </div>
-        );
+        return <div className="w-full"><FichaControlNinoSano1Mes onBackToMenu={() => navigateTo('menu')} loggedInUser={loggedInUser} /></div>;
+      case 'fichaControlNinoSano2Meses':
+        return <div className="w-full"><FichaControlNinoSano2Meses onBackToMenu={() => navigateTo('menu')} loggedInUser={loggedInUser} /></div>;
       case 'fichaControlNinoSano3Mes':
-        return (
-          <div className="w-full">
-            <FichaControlNinoSano3Mes onBackToMenu={() => navigateTo('menu')} loggedInUser={loggedInUser} />
-          </div>
-        );
+        return <div className="w-full"><FichaControlNinoSano3Mes onBackToMenu={() => navigateTo('menu')} loggedInUser={loggedInUser} /></div>;
+      case 'fichaControlNinoSano4Meses':
+        return <div className="w-full"><FichaControlNinoSano4Meses onBackToMenu={() => navigateTo('menu')} loggedInUser={loggedInUser} /></div>;
+      case 'consultaNutricional5Meses':
+        return <div className="w-full"><ConsultaNutricional5Meses onBackToMenu={() => navigateTo('menu')} loggedInUser={loggedInUser} /></div>;
+      case 'fichaControlNinoSano6Meses':
+        return <div className="w-full"><FichaControlNinoSano6Meses onBackToMenu={() => navigateTo('menu')} loggedInUser={loggedInUser} /></div>;
+      case 'fichaControlNinoSano8Meses':
+        return <div className="w-full"><FichaControlNinoSano8Meses onBackToMenu={() => navigateTo('menu')} loggedInUser={loggedInUser} /></div>;
+      case 'fichaControlNinoSano12Meses':
+        return <div className="w-full"><FichaControlNinoSano12Meses onBackToMenu={() => navigateTo('menu')} loggedInUser={loggedInUser} /></div>;
+      case 'fichaControlNinoSano18Meses':
+        return <div className="w-full"><FichaControlNinoSano18Meses onBackToMenu={() => navigateTo('menu')} loggedInUser={loggedInUser} /></div>;
+      case 'fichaControlNinoSano2Anos':
+        return <div className="w-full"><FichaControlNinoSano2Anos onBackToMenu={() => navigateTo('menu')} loggedInUser={loggedInUser} /></div>;
+      case 'fichaControlNinoSano3Anos':
+        return <div className="w-full"><FichaControlNinoSano3Anos onBackToMenu={() => navigateTo('menu')} loggedInUser={loggedInUser} /></div>;
+      case 'consultaNutricional3Anos6Meses':
+        return <div className="w-full"><ConsultaNutricional3Anos6Meses onBackToMenu={() => navigateTo('menu')} loggedInUser={loggedInUser} /></div>;
+      case 'fichaControlNinoSano4Anos':
+        return <div className="w-full"><FichaControlNinoSano4Anos onBackToMenu={() => navigateTo('menu')} loggedInUser={loggedInUser} /></div>;
+      case 'fichaControlNinoSano5Anos':
+        return <div className="w-full"><FichaControlNinoSano5Anos onBackToMenu={() => navigateTo('menu')} loggedInUser={loggedInUser} /></div>;
       case 'fichaControlNinoSano6Anos':
-        return (
-          <div className="w-full">
-            <FichaControlNinoSano6Anos onBackToMenu={() => navigateTo('menu')} loggedInUser={loggedInUser} />
-          </div>
-        );
+        return <div className="w-full"><FichaControlNinoSano6Anos onBackToMenu={() => navigateTo('menu')} loggedInUser={loggedInUser} /></div>;
+      case 'fichaControlNinoSano7Anos':
+        return <div className="w-full"><FichaControlNinoSano7Anos onBackToMenu={() => navigateTo('menu')} loggedInUser={loggedInUser} /></div>;
+      case 'fichaControlNinoSano8Anos':
+        return <div className="w-full"><FichaControlNinoSano8Anos onBackToMenu={() => navigateTo('menu')} loggedInUser={loggedInUser} /></div>;
+      case 'fichaControlNinoSano9Anos':
+        return <div className="w-full"><FichaControlNinoSano9Anos onBackToMenu={() => navigateTo('menu')} loggedInUser={loggedInUser} /></div>;
       case 'fichaMorbilidad':
         return <FichaMorbilidad onBackToMenu={() => navigateTo('menu')} loggedInUser={loggedInUser} />;
       case 'fichaControlPscv':
@@ -2322,6 +2397,30 @@ const App: React.FC = () => {
                 </svg>
               </button>
 
+              {/* Orden de Laboratorio */}
+              <button
+                onClick={() => toggleWindow('lab')}
+                title="Solicitud de Exámenes de Laboratorio"
+                className="relative w-10 h-10 rounded-full text-white hover:text-white/85 hover:bg-white/10 transition-colors duration-150 cursor-pointer flex items-center justify-center shrink-0"
+              >
+                <svg className="w-[22px] h-[22px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55A1 1 0 0 0 5.611 22h12.778a1 1 0 0 0 .891-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2" />
+                  <line x1="8.5" y1="2" x2="15.5" y2="2" />
+                  <path d="M8.5 14h7" />
+                </svg>
+              </button>
+
+              {/* Exámenes de Imágenes */}
+              <button
+                onClick={() => toggleWindow('imagenologia')}
+                title="Solicitud de Exámenes de Imágenes"
+                className="relative w-10 h-10 rounded-full text-white hover:text-white/85 hover:bg-white/10 transition-colors duration-150 cursor-pointer flex items-center justify-center shrink-0"
+              >
+                <span className="text-[17px] font-black tracking-tighter leading-none select-none flex items-center justify-center h-[22px] font-sans">
+                  RX
+                </span>
+              </button>
+
               {/* Receta Médica */}
               <button
                 onClick={() => toggleWindow('receta')}
@@ -2342,7 +2441,7 @@ const App: React.FC = () => {
                 title="Firmar GES"
                 className="relative w-10 h-10 rounded-full text-white hover:text-white/85 hover:bg-white/10 transition-colors duration-150 cursor-pointer flex items-center justify-center shrink-0"
               >
-                <span className="text-[14px] font-black tracking-tighter leading-none select-none flex items-center justify-center h-[22px] font-sans">
+                <span className="text-[17px] font-black tracking-tighter leading-none select-none flex items-center justify-center h-[22px] font-sans">
                   GES
                 </span>
               </button>
@@ -2361,7 +2460,6 @@ const App: React.FC = () => {
                 </svg>
               </button>
 
-              <NotificationBell loggedInUser={loggedInUser} />
             </>
           )}
           </div>
@@ -2453,10 +2551,88 @@ const App: React.FC = () => {
       {/* Floating Auxiliary Windows */}
       <CertificadoMedicoWindow isOpen={isCertificadoWindowOpen} onClose={() => setIsCertificadoWindowOpen(false)} loggedInUser={loggedInUser} />
       <RecetaMedicaWindow isOpen={isRecetaWindowOpen} onClose={() => setIsRecetaWindowOpen(false)} loggedInUser={loggedInUser} />
+      <OrdenLaboratorioWindow isOpen={isLabWindowOpen} onClose={() => setIsLabWindowOpen(false)} loggedInUser={loggedInUser} />
+      <OrdenImagenologiaWindow isOpen={isImagenologiaWindowOpen} onClose={() => setIsImagenologiaWindowOpen(false)} loggedInUser={loggedInUser} />
       <FichaFirmarGesWindow isOpen={isGesWindowOpen} onClose={() => setIsGesWindowOpen(false)} loggedInUser={loggedInUser} />
       
-      {/* MSN Login Toast Stacked on Y Axis */}
+      {/* MSN Login Toast Stacked on Y Axis & Minimized Update Floating Tab */}
       <div className="fixed bottom-[64px] right-6 z-[99999] flex flex-col gap-3 items-end" style={{ pointerEvents: 'none' }}>
+        {isUpdateModalOpen && isUpdateModalMinimized && (
+          <div style={{ pointerEvents: 'auto' }} className="animate-fadeIn shadow-2xl rounded-xl overflow-hidden bg-slate-900/95 backdrop-blur-md border border-slate-700 p-3.5 text-slate-100 min-w-[320px] max-w-xs flex flex-col gap-2.5 font-sans">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-sky-400 animate-pulse"></span>
+                <span className="text-xs font-bold tracking-wide text-slate-200">Buscar Actualizaciones</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setIsUpdateModalMinimized(false)}
+                  className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white transition-colors cursor-pointer"
+                  title="Expandir ventana"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+                </button>
+                <button
+                  onClick={() => setIsUpdateModalOpen(false)}
+                  className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white transition-colors cursor-pointer text-xs font-bold leading-none"
+                  title="Cerrar"
+                >
+                  &times;
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 cursor-pointer" onClick={() => setIsUpdateModalMinimized(false)}>
+              {updateInfo?.checking ? (
+                <div className="flex items-center gap-3 py-1">
+                  <div className="w-4 h-4 border-2 border-sky-400 border-t-transparent rounded-full animate-spin shrink-0"></div>
+                  <span className="text-xs text-slate-300">Comprobando actualizaciones...</span>
+                </div>
+              ) : isDownloadingUpdate ? (
+                <div className="flex-1 space-y-1.5 py-0.5">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-sky-300 font-semibold">Descargando actualización...</span>
+                    <span className="text-[10px] text-slate-400 font-mono">v{updateInfo?.latestVersion}</span>
+                  </div>
+                  <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden border border-slate-700">
+                    <div className="bg-gradient-to-r from-sky-400 to-emerald-400 h-full w-3/4 animate-pulse"></div>
+                  </div>
+                </div>
+              ) : updateInfo?.hasUpdate ? (
+                <div className="flex items-center gap-2.5 text-xs text-emerald-300 py-1">
+                  <div className="w-7 h-7 rounded-lg bg-emerald-500/20 flex items-center justify-center shrink-0 border border-emerald-500/30">
+                    <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                  </div>
+                  <div>
+                    <p className="font-bold text-emerald-300">Versión v{updateInfo.latestVersion} disponible</p>
+                    <p className="text-[11px] text-slate-400">Haz clic para ver detalles o instalar</p>
+                  </div>
+                </div>
+              ) : updateInfo?.error ? (
+                <div className="flex items-center gap-2.5 text-xs text-rose-300 py-1">
+                  <div className="w-7 h-7 rounded-lg bg-rose-500/20 flex items-center justify-center shrink-0 border border-rose-500/30">
+                    <svg className="w-4 h-4 text-rose-400" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                  </div>
+                  <div>
+                    <p className="font-bold text-rose-300">Error al buscar actualización</p>
+                    <p className="text-[11px] text-slate-400 truncate max-w-[200px]">{updateInfo.error}</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2.5 text-xs text-slate-200 py-1">
+                  <div className="w-7 h-7 rounded-lg bg-sky-500/20 flex items-center justify-center shrink-0 border border-sky-500/30">
+                    <svg className="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
+                  </div>
+                  <div>
+                    <p className="font-bold text-slate-100">Sistema al día (v{APP_VERSION})</p>
+                    <p className="text-[11px] text-slate-400">Sin actualizaciones pendientes</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {loginToastUsers.map(toast => (
           <div key={toast.id} style={{ pointerEvents: 'auto' }}>
             <LoginToast 
@@ -2470,7 +2646,7 @@ const App: React.FC = () => {
 
       {/* Modal de Actualización de la App */}
       {/* Modal / Ventana de Sistema de Actualizaciones */}
-      {isUpdateModalOpen && (
+      {isUpdateModalOpen && !isUpdateModalMinimized && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-fadeIn">
           {/* Main System Window Frame */}
           <div className="bg-slate-900 text-slate-100 rounded-xl shadow-2xl border border-slate-700 w-full max-w-lg overflow-hidden flex flex-col font-sans">
@@ -2478,7 +2654,7 @@ const App: React.FC = () => {
             <div className="bg-slate-800 px-4 py-2.5 flex items-center justify-between border-b border-slate-700 select-none">
               <div className="flex items-center gap-2.5">
                 <div className="w-3 h-3 rounded-full bg-rose-500 hover:bg-rose-600 transition-colors cursor-pointer" onClick={() => setIsUpdateModalOpen(false)} title="Cerrar" />
-                <div className="w-3 h-3 rounded-full bg-amber-500 hover:bg-amber-600 transition-colors cursor-pointer" title="Minimizar" />
+                <div className="w-3 h-3 rounded-full bg-amber-500 hover:bg-amber-600 transition-colors cursor-pointer" onClick={() => setIsUpdateModalMinimized(true)} title="Minimizar" />
                 <div className="w-3 h-3 rounded-full bg-emerald-500 hover:bg-emerald-600 transition-colors cursor-pointer" title="Maximizar" />
                 <span className="ml-2 text-xs font-semibold tracking-wide text-slate-300">Actualizador de Sistema - Portal Médico</span>
               </div>
@@ -2622,7 +2798,7 @@ const App: React.FC = () => {
               <p className="text-slate-500">Gestión integrada de fichas clínicas, ECICEP, recetas, certificados y bitácora.</p>
               <div className="pt-2 border-t border-slate-150 text-[11px] text-slate-400">
                 <p>Soporte: <a href="mailto:portalmedico.aps@gmail.com" className="text-sky-600 hover:underline">portalmedico.aps@gmail.com</a></p>
-                <p className="mt-0.5">© 2026 Portal Médico APS. Todos los derechos reservados.</p>
+                <p className="mt-0.5">© 2026 Víctor Vega Ávalos. Todos los derechos reservados.</p>
               </div>
             </div>
 

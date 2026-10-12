@@ -1,7 +1,7 @@
 {
   "name": "portal-medico",
   "private": true,
-  "version": "1.4.16",
+  "version": "1.4.23",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/missingc0de/portalmedico.git"
@@ -61,9 +61,11 @@
     "lucide-react": "^0.576.0",
     "pdf-lib": "^1.17.1",
     "pdf-parse": "^2.4.5",
+    "pdfjs-dist": "^6.4.299",
     "pizzip": "^3.2.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "tesseract.js": "^7.0.0",
     "xlsx": "0.18.5"
   },
   "devDependencies": {

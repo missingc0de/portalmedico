@@ -10,7 +10,7 @@ from http.server import SimpleHTTPRequestHandler
 from socketserver import TCPServer
 import webview
 
-APP_VERSION = "1.4.14"
+APP_VERSION = "1.4.23"
 UPDATE_URL = "https://raw.githubusercontent.com/missingc0de/portalmedico/main/latest.yml"
 
 def check_webview2_runtime():
