@@ -773,6 +773,19 @@ const FichaControlNinoSano6Anos: React.FC<FichaControlNinoSano6AnosProps> = ({ o
                   onChange={(e) => setActuacionText(e.target.value)}
                   className="flex-1 w-full p-1.5 py-1 bg-white border border-slate-300 rounded-md shadow-sm custom-scrollbar text-[10.5px] text-slate-800 font-mono outline-none focus:ring-1 focus:ring-sky-500 focus:border-sky-500 resize-none"
                 />
+          <div className="pt-2 mt-1 border-t border-slate-200/80 flex-shrink-0">
+            <button
+              type="button"
+              onClick={handleNewDocument}
+              className="w-full py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg shadow-sm transition-all active:scale-95 text-xs uppercase tracking-wider cursor-pointer flex items-center justify-center gap-1.5"
+              id="btn-borrar-todo-right"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              BORRAR TODO
+            </button>
+          </div>
               </div>
             </div>
           </div>

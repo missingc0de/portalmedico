@@ -7,6 +7,7 @@ import { generateCertificadoMedicoPdf } from '../services/pdfGenerator';
 import { formatRutChilean } from './RutInput';
 import { useFormLocalStorage } from '../hooks/useFormLocalStorage';
 import { patientStore } from '../services/patientStore';
+import { getSharedGeneratorPatient, setSharedGeneratorPatient, subscribeSharedGeneratorPatient, clearSharedGeneratorPatient } from '../services/sharedGeneratorPatient';
 
 const initialFormData: RecetaMedicaFormData = {
   nombrePaciente: '',
@@ -26,7 +27,6 @@ interface CertificadoMedicoFormProps {
 const CertificadoMedicoForm: React.FC<CertificadoMedicoFormProps> = ({ onBackToMenu, loggedInUser }) => {
   const [formData, setFormData] = useFormLocalStorage<RecetaMedicaFormData>('local_CertificadoMedicoForm', initialFormData);
   const [status, setStatus] = useState<FormStatus>(FormStatus.Idle);
-  const [isFormValid, setIsFormValid] = useState<boolean>(false);
 
   // Smart Autocomplete State
   const [showSmartMenu, setShowSmartMenu] = useState(false);
@@ -43,20 +43,30 @@ const CertificadoMedicoForm: React.FC<CertificadoMedicoFormProps> = ({ onBackToM
     return options.filter(opt => opt.trigger.startsWith(smartMenuQuery.toLowerCase()));
   }, [smartMenuQuery]);
 
+  // Sync from shared patient store
   useEffect(() => {
-    const nombrePaciente = formData?.nombrePaciente || '';
-    const rutPaciente = formData?.rutPaciente || '';
-    const direccionPaciente = formData?.direccionPaciente || '';
-    const diagnostico = formData?.diagnostico || '';
-    const rp = formData?.rp || '';
-    setIsFormValid(
-      nombrePaciente.trim() !== '' &&
-      rutPaciente.trim() !== '' &&
-      direccionPaciente.trim() !== '' &&
-      diagnostico.trim() !== '' &&
-      rp.trim() !== ''
-    );
-  }, [formData]);
+    const shared = getSharedGeneratorPatient();
+    setFormData(prev => ({
+      ...prev,
+      nombrePaciente: prev.nombrePaciente || shared.nombrePaciente || '',
+      rutPaciente: prev.rutPaciente || shared.rutPaciente || '',
+      direccionPaciente: prev.direccionPaciente || shared.direccion || '',
+      edadPaciente: prev.edadPaciente || shared.edad || '',
+      diagnostico: prev.diagnostico || shared.diagnostico || '',
+    }));
+
+    const unsubscribe = subscribeSharedGeneratorPatient((updated) => {
+      setFormData(prev => ({
+        ...prev,
+        nombrePaciente: updated.nombrePaciente !== undefined ? updated.nombrePaciente : prev.nombrePaciente,
+        rutPaciente: updated.rutPaciente !== undefined ? updated.rutPaciente : prev.rutPaciente,
+        direccionPaciente: updated.direccion !== undefined ? updated.direccion : prev.direccionPaciente,
+        edadPaciente: updated.edad !== undefined ? updated.edad : prev.edadPaciente,
+        diagnostico: updated.diagnostico !== undefined ? updated.diagnostico : prev.diagnostico,
+      }));
+    });
+    return unsubscribe;
+  }, []);
 
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -65,12 +75,17 @@ const CertificadoMedicoForm: React.FC<CertificadoMedicoFormProps> = ({ onBackToM
         setFormData(prev => ({ ...prev, [name]: checked }));
     } else {
         setFormData(prev => ({ ...prev, [name]: value }));
+        if (name === 'nombrePaciente') setSharedGeneratorPatient({ nombrePaciente: value });
+        if (name === 'direccionPaciente') setSharedGeneratorPatient({ direccion: value });
+        if (name === 'edadPaciente') setSharedGeneratorPatient({ edad: value });
+        if (name === 'diagnostico') setSharedGeneratorPatient({ diagnostico: value });
     }
-  }, []);
+  }, [setFormData]);
 
   const handleRutChange = useCallback((value: string) => {
     setFormData(prev => ({ ...prev, rutPaciente: value }));
-  }, []);
+    setSharedGeneratorPatient({ rutPaciente: value });
+  }, [setFormData]);
 
   const handleRpChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const text = e.target.value;
@@ -148,10 +163,6 @@ const CertificadoMedicoForm: React.FC<CertificadoMedicoFormProps> = ({ onBackToM
   };
 
   const handleSubmit = async () => {
-    if (!isFormValid) {
-      alert("Por favor, complete todos los campos requeridos: Nombre, RUT, Dirección, Diagnóstico y Contenido del certificado.");
-      return;
-    }
     if (!loggedInUser) {
       alert("Error: No se ha podido identificar al médico. Por favor, inicie sesión nuevamente.");
       return;
@@ -168,7 +179,8 @@ const CertificadoMedicoForm: React.FC<CertificadoMedicoFormProps> = ({ onBackToM
   };
 
   const handleNewDocument = () => {
-    setFormData({...initialFormData, hideLogos: false });
+    setFormData({ ...initialFormData, hideLogos: false });
+    clearSharedGeneratorPatient();
     setStatus(FormStatus.Idle);
   };
 
@@ -270,10 +282,10 @@ const CertificadoMedicoForm: React.FC<CertificadoMedicoFormProps> = ({ onBackToM
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={status === FormStatus.Generating || !isFormValid}
-            className={`px-3 py-1.5 font-medium text-[11px] uppercase tracking-tight rounded-lg shadow-sm transition-all active:scale-95 cursor-pointer flex items-center gap-1.5 ${
-              isFormValid ? "bg-sky-600 hover:bg-sky-700 text-white" : "bg-slate-300 text-slate-500 cursor-not-allowed"
-            } ${status === FormStatus.Generating ? "opacity-70 cursor-wait" : ""}`}
+            disabled={status === FormStatus.Generating}
+            className={`px-3 py-1.5 font-medium text-[11px] uppercase tracking-tight rounded-lg shadow-sm transition-all active:scale-95 cursor-pointer flex items-center gap-1.5 bg-sky-600 hover:bg-sky-700 text-white ${
+              status === FormStatus.Generating ? "opacity-70 cursor-wait" : ""
+            }`}
           >
             <FileText className="w-3.5 h-3.5 shrink-0" />
             {status === FormStatus.Generating ? "GENERANDO..." : "EMITIR CERTIFICADO"}

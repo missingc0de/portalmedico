@@ -36,6 +36,22 @@ const UserAutocomplete: React.FC<UserAutocompleteProps> = ({
 
   
 
+  const handleFocus = useCallback(() => {
+    const normalizedQuery = normalizeText(value);
+    const filtered = users.filter(user => {
+      if (!normalizedQuery) {
+        return user.profession !== 'medicina';
+      }
+      return (
+        normalizeText(user.fullName).includes(normalizedQuery) ||
+        normalizeText(user.username).includes(normalizedQuery)
+      );
+    });
+    setSuggestions(filtered.slice(0, 15));
+    setShowSuggestions(true);
+    setActiveIndex(-1);
+  }, [value]);
+
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     onChange(query); // Notificar al padre del cambio de texto libre
@@ -46,12 +62,14 @@ const UserAutocomplete: React.FC<UserAutocompleteProps> = ({
         normalizeText(user.fullName).includes(normalizedQuery) ||
         normalizeText(user.username).includes(normalizedQuery)
       );
-      setSuggestions(filtered.slice(0, 10));
+      setSuggestions(filtered.slice(0, 15));
       setShowSuggestions(true);
       setActiveIndex(-1);
     } else {
-      setSuggestions([]);
-      setShowSuggestions(false);
+      // Si borra el texto, mostrar opciones recomendadas (no médicos)
+      const nonDoctors = users.filter(user => user.profession !== 'medicina');
+      setSuggestions(nonDoctors.slice(0, 15));
+      setShowSuggestions(true);
       onClear();
     }
   }, [onChange, onClear]);
@@ -111,6 +129,7 @@ const UserAutocomplete: React.FC<UserAutocompleteProps> = ({
           type="text"
           value={value}
           onChange={handleInputChange}
+          onFocus={handleFocus}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           disabled={disabled}
@@ -134,7 +153,7 @@ const UserAutocomplete: React.FC<UserAutocompleteProps> = ({
             >
               <span className="font-bold text-sm uppercase">{user.fullName}</span>
               <span className={`text-[10px] uppercase font-black tracking-widest ${activeIndex === index ? 'text-sky-100' : 'text-slate-400'}`}>
-                {user.profession.replace('_', ' ')}
+                {user.electronicSignature?.split('\n')[1] || user.profession.replace('_', ' ')}
               </span>
             </li>
           ))}

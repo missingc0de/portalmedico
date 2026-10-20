@@ -11,6 +11,8 @@ interface DateFieldProps {
   min?: string; // YYYY-MM-DD
   max?: string; // YYYY-MM-DD
   containerClassName?: string;
+  inputClassName?: string;
+  labelClassName?: string;
 }
 
 const DateField: React.FC<DateFieldProps> = ({
@@ -24,10 +26,12 @@ const DateField: React.FC<DateFieldProps> = ({
   min,
   max,
   containerClassName,
+  inputClassName,
+  labelClassName,
 }) => {
   return (
     <div className={`w-full ${containerClassName || ''}`}>
-      <label htmlFor={id} className="block text-sm font-medium text-slate-700 mb-1.5">
+      <label htmlFor={id} className={labelClassName || "block text-sm font-medium text-slate-700 mb-1.5"}>
         {label} {required && <span className="text-red-500">*</span>}
       </label>
       <input
@@ -40,7 +44,7 @@ const DateField: React.FC<DateFieldProps> = ({
         disabled={disabled}
         min={min}
         max={max}
-        className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg shadow-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition-colors duration-150 ease-in-out text-slate-800 placeholder-slate-400 placeholder:opacity-50 leading-normal font-sans text-sm disabled:bg-slate-200 disabled:cursor-not-allowed"
+        className={`w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg shadow-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition-colors duration-150 ease-in-out text-slate-800 placeholder-slate-400 placeholder:opacity-50 leading-normal font-sans text-sm disabled:bg-slate-200 disabled:cursor-not-allowed ${inputClassName || ''}`}
         aria-required={required}
         aria-label={label}
       />

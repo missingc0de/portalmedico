@@ -7,21 +7,25 @@ import { ChevronLeft, ChevronRight, Plus, Calendar as CalendarIcon } from 'lucid
 
 interface OnCallCalendarProps {
   initialDate?: Date;
-  onCallData: OnCallSchedule;
-  specialEventsData: Record<number, Record<number, Record<number, SpecialEvent[]>>>;
-  dynamicEvents: SpecialEvent[];
-  loggedInUser: User;
+  onCallData?: OnCallSchedule;
+  onCallScheduleData?: OnCallSchedule;
+  specialEventsData?: Record<number, Record<number, Record<number, SpecialEvent[]>>>;
+  dynamicEvents?: SpecialEvent[];
+  loggedInUser?: User;
   compact?: boolean;
+  onSelectMenuItem?: (view: any) => void;
 }
 
 const OnCallCalendar: React.FC<OnCallCalendarProps> = ({ 
   initialDate, 
-  onCallData, 
-  specialEventsData, 
-  dynamicEvents, 
+  onCallData: propOnCallData,
+  onCallScheduleData, 
+  specialEventsData = {}, 
+  dynamicEvents = [], 
   loggedInUser,
   compact = false
 }) => {
+  const onCallData = propOnCallData || onCallScheduleData || {};
   // Always default to October 2026 as requested
   const october2026Default = useMemo(() => new Date(2026, 9, 1), []);
   const [currentDisplayDate, setCurrentDisplayDate] = useState<Date>(initialDate || october2026Default);
@@ -121,13 +125,13 @@ const OnCallCalendar: React.FC<OnCallCalendarProps> = ({
       const tgtMonth = targetDate.getMonth();
       const tgtDay = targetDate.getDate();
 
-      const legacyEventsMap = (specialEventsData[tgtYear] && specialEventsData[tgtYear][tgtMonth]) || {};
-      const currentYearData = onCallData[tgtYear] || {};
-      const currentMonthData = currentYearData[tgtMonth] || {};
+      const legacyEventsMap = (specialEventsData?.[tgtYear]?.[tgtMonth]) || {};
+      const currentYearData = onCallData?.[tgtYear] || {};
+      const currentMonthData = currentYearData?.[tgtMonth] || {};
       
-      const doctors = currentMonthData[tgtDay] || [];
-      const legacyEvents = legacyEventsMap[tgtDay] || [];
-      const dynamicDayEvents = dynamicEvents.filter(e => e.year === tgtYear && e.month === tgtMonth && e.day === tgtDay && canSeeEvent(e));
+      const doctors = currentMonthData?.[tgtDay] || [];
+      const legacyEvents = legacyEventsMap?.[tgtDay] || [];
+      const dynamicDayEvents = (dynamicEvents || []).filter(e => e && e.year === tgtYear && e.month === tgtMonth && e.day === tgtDay && canSeeEvent(e));
 
       const filteredDoctors = searchQuery
         ? doctors.filter(d => typeof d === 'string' && d.toLowerCase().includes(searchQuery.toLowerCase()))

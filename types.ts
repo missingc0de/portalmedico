@@ -58,6 +58,22 @@ export type CertificateType =
   | 'fichaControlNinoSano1Mes'
   | 'fichaControlNinoSano3Mes'
   | 'fichaControlNinoSano6Anos'
+  | 'fichaControlNinoSanoRN'
+  | 'fichaControlNinoSano2Meses'
+  | 'fichaControlNinoSano4Meses'
+  | 'consultaNutricional5Meses'
+  | 'fichaControlNinoSano6Meses'
+  | 'fichaControlNinoSano8Meses'
+  | 'fichaControlNinoSano12Meses'
+  | 'fichaControlNinoSano18Meses'
+  | 'fichaControlNinoSano2Anos'
+  | 'fichaControlNinoSano3Anos'
+  | 'consultaNutricional3Anos6Meses'
+  | 'fichaControlNinoSano4Anos'
+  | 'fichaControlNinoSano5Anos'
+  | 'fichaControlNinoSano7Anos'
+  | 'fichaControlNinoSano8Anos'
+  | 'fichaControlNinoSano9Anos'
   | 'fichaMorbilidad'
   | 'fichaControlPscv'
   | 'fichaIngresoSm'
@@ -660,6 +676,111 @@ export interface FichaControlNinoSano3MesFormData extends FichaControlNinoSano1M
   reflejoMarchaAutomaticaDetalle: string;
   reflejoApoyoPositivo: 'Presente' | 'Alterado' | 'Ausente';
   reflejoApoyoPositivoDetalle: string;
+}
+
+export interface FichaControlNinoSanoRNFormData {
+  edad: string;
+  acompanante: string;
+  parentesco: string;
+  profesional: string;
+  rnDiasVida: string;
+  rnSexo: string;
+  rnAcompanadoPor: string;
+  egSemanas: string;
+  embarazo: string;
+  parto: string;
+  pnG: string;
+  tnCm: string;
+  ccCm: string;
+  apgar: string;
+  hospitalizacionNeonatal: 'Sí' | 'No' | '';
+  hospitalizacionMotivo: string;
+  antecedentesMorbilidadNeonatal: string;
+  altaHospitalariaDias: string;
+  contactoPielPiel: 'Sí' | 'No' | '';
+  inicioLactanciaPrimeraHora: 'Sí' | 'No' | '';
+  tamizajesNeonatales: string;
+  inmunizaciones: string;
+  alimentacionActual: string;
+  alimentacionFrecuencia: string;
+  acopleSuccion: string;
+  dolorAmamantar: 'Sí' | 'No' | '';
+  grietas: 'Sí' | 'No' | '';
+  percepcionProduccionLactea: string;
+  diuresisPanalesDia: string;
+  deposicionesDia: string;
+  deposicionesCaracteristicas: string;
+  regurgitacionVomitos: string;
+  sueno: string;
+  lugarSueno: string;
+  posicionHabitualSueno: string;
+  madreEstadoGeneral: string;
+  madreAnimo: string;
+  madreMolestias: string;
+  redApoyo: string;
+  participacionPadre: string;
+  factoresRiesgoBiopsicosocial: string;
+  dudasPreocupaciones: string;
+  pesoActual: string;
+  variacionPesoNacimiento: string;
+  talla: string;
+  perimetroCefalico: string;
+  estadoGeneral: string;
+  pielIctericia: 'Sí' | 'No' | '';
+  pielCianosis: 'Sí' | 'No' | '';
+  pielLesiones: string;
+  cabezaFontanela: string;
+  cabezaSuturas: string;
+  ojosReflejoRojo: string;
+  bocaMucosas: string;
+  cuelloClaviculas: string;
+  cardiovascularFc: string;
+  cardiovascularRcr: string;
+  cardiovascularSoplos: 'Sí' | 'No' | '';
+  cardiovascularPulsosFemorales: string;
+  respiratorioFr: string;
+  respiratorioMp: string;
+  respiratorioRuidosAgregados: string;
+  abdomen: string;
+  ombligo: string;
+  genitales: string;
+  anoPermeable: 'Sí' | 'No' | '';
+  caderasAbduccion: string;
+  caderasOrtolaniBarlow: string;
+  extremidades: string;
+  neurologicoAlerta: string;
+  neurologicoTono: string;
+  neurologicoMovimientos: string;
+  neurologicoReflejos: string;
+  scoreRiesgoNeumonia: string;
+  pautaRiesgoBiopsicosocial: string;
+  diagnosticos: string;
+  actuacion: string;
+  derivacionLactancia: string;
+  otrasDerivaciones: string;
+  proximoControl: string;
+}
+
+export interface FichaControlNinoSanoGenericFormData {
+  edad: string;
+  acompanante: string;
+  parentesco: string;
+  profesional: string;
+  anamnesis: string;
+  exploracion: string;
+  peso: string;
+  talla: string;
+  perimetroCefalico: string;
+  imc: string;
+  pa: string;
+  fc: string;
+  fr: string;
+  diagnosticoNutricional: string;
+  diagnosticoTalla: string;
+  diagnosticos: string;
+  actuacion: string;
+  proximoControl: string;
+  [key: string]: any;
 }
 
 export interface FichaControlNinoSano6AnosFormData {
@@ -1606,6 +1727,7 @@ export interface FichaIngresoEcicepFormData {
   sm_em_intelectual: string;
   sm_em_juicio: string;
   sm_em_insight: string;
+  [key: string]: any;
 }
 
 export interface FichaSeguimientoEcicepFormData {
@@ -1861,7 +1983,8 @@ export interface OrdenLaboratorioFormData {
   laboratorioTelefono?: string;
   prioridadGlobal?: 'Normal' | 'Urgente';
   observacionesGlobales?: string;
-  [key: string]: string | boolean | undefined;
+  customExams?: string[];
+  [key: string]: string | boolean | string[] | undefined;
 }
 
 export interface RecetaMedicaFormData {
@@ -1899,4 +2022,21 @@ export interface FichaConsultoriaFormData {
   motivoConsultoria: string;
   equipoResponsable: string;
   equipoConsultoria: string;
+}
+
+export interface OrdenImagenologiaFormData {
+  nombrePaciente: string;
+  rutPaciente: string;
+  numeroFicha?: string;
+  procedencia?: string;
+  edad?: string;
+  fechaNacimiento?: string;
+  sexo?: string;
+  direccion?: string;
+  telefono?: string;
+  nhcPaciente?: string;
+  diagnostico?: string;
+  observacionesGlobales?: string;
+  customExams: string[];
+  [key: string]: string | boolean | string[] | undefined;
 }

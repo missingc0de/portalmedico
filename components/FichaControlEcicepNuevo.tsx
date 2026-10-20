@@ -1082,9 +1082,15 @@ export const FichaControlEcicepNuevo: React.FC<FichaControlEcicepNuevoProps> = (
   }, [setFormData]);
 
   const handleSelectDuplaUser = useCallback((user: User) => {
+    let profLabel = professionLabels[user.profession] || user.profession;
+    if (user.profession === 'psicologia') {
+      profLabel = (user.electronicSignature?.includes('Psicólogo') || user.fullName.toUpperCase().includes('LUIS')) ? 'Psicólogo' : 'Psicóloga';
+    } else if (user.profession === 'enfermeria') {
+      profLabel = user.electronicSignature?.includes('Enfermero') ? 'Enfermero' : 'Enfermera';
+    }
     setFormData(prev => ({
       ...prev,
-      duplaProfesional: professionLabels[user.profession] || user.profession,
+      duplaProfesional: profLabel,
       duplaProfesionalOtroNombre: user.fullName,
     }));
   }, [setFormData]);
@@ -1307,8 +1313,10 @@ export const FichaControlEcicepNuevo: React.FC<FichaControlEcicepNuevoProps> = (
   const duplaProfesionalOptions = [
     { value: '', label: 'Seleccione...' },
     { value: 'Enfermera', label: 'Enfermera' },
+    { value: 'Enfermero', label: 'Enfermero' },
     { value: 'Nutricionista', label: 'Nutricionista' },
     { value: 'Psicóloga', label: 'Psicóloga' },
+    { value: 'Psicólogo', label: 'Psicólogo' },
     { value: 'Kinesiólogo', label: 'Kinesiólogo' },
     { value: 'Matrona', label: 'Matrona' },
     { value: 'TENS', label: 'TENS' },

@@ -37,9 +37,46 @@ import {
   FileCheck,
   CheckSquare,
   Users,
-  Hospital
+  Hospital,
+  Star,
+  Phone,
+  Smile
 } from 'lucide-react';
 import { View, Profession, User as UserType } from '../types';
+
+// Custom SVG component for Lungs - highly defined and readable at small 16x16 / 24x24 sizes
+const LungsIcon = (props: any) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    {/* Trachea & main bronchial split */}
+    <path d="M12 3v7" />
+    <path d="M12 8l-3 3" />
+    <path d="M12 8l3 3" />
+    {/* Left Lung outline */}
+    <path d="M9 11c-2.5 0-5 1.5-5 4.5 0 3.5 2 5.5 4.5 5.5 1.5 0 2.5-.5 3.5-1.5V11z" />
+    {/* Right Lung outline */}
+    <path d="M15 11c2.5 0 5 1.5 5 4.5 0 3.5-2 5.5-4.5 5.5-1.5 0-2.5-.5-3.5-1.5V11z" />
+  </svg>
+);
+
+// Custom SVG icon component for Symmetrical Baby with Glasses (Large, prominent child head)
+const BabyWithGlasses = (props: any) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    {/* Head Outline: Large centered circle filling the icon */}
+    <circle cx="12" cy="12.5" r="9" />
+    <path d="M12 3.5 C10 1 14 1 12 3.5" />
+    {/* Symmetrical Ears */}
+    <path d="M3 12.5 C2 12.5 2 10.5 3 10.5" />
+    <path d="M21 12.5 C22 12.5 22 10.5 21 10.5" />
+    {/* Symmetrical Smile */}
+    <path d="M9.5 17 C11 18.5 13 18.5 14.5 17" />
+    {/* Symmetrical Glasses */}
+    <circle cx="8" cy="12" r="2.8" />
+    <circle cx="16" cy="12" r="2.8" />
+    <line x1="10.8" y1="12" x2="13.2" y2="12" />
+    <line x1="3" y1="11.5" x2="5.2" y2="12" />
+    <line x1="21" y1="11.5" x2="18.8" y2="12" />
+  </svg>
+);
 
 interface SidebarProps {
   loggedInUser: UserType;
@@ -223,7 +260,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               { id: 'preingreso', label: 'Preingreso ECICEP', view: 'fichaPreingresoEcicep', icon: FileCheck },
               { id: 'ingreso', label: 'Ingreso ECICEP', view: 'fichaIngresoEcicep', icon: ClipboardList },
               { id: 'control_ecicep', label: 'Control ECICEP', view: 'fichaControlEcicepNuevo', icon: CheckSquare },
-              { id: 'seguimiento', label: 'Seguimiento ECICEP', view: 'fichaSeguimientoEcicep', icon: Activity },
+              { id: 'seguimiento', label: 'Seguimiento ECICEP', view: 'fichaSeguimientoEcicep', icon: Phone },
             ],
           },
           {
@@ -238,7 +275,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             label: 'Salud Mental',
             items: [
               { id: 'sm_control', label: 'Control Salud Mental', view: 'fichaControlSm', icon: Brain },
-              { id: 'pasmi', label: 'Consulta PASMI', view: 'fichaConsultaPasmi', icon: HeartPulse },
+              { id: 'pasmi', label: 'Consulta PASMI', view: 'fichaConsultaPasmi', icon: BabyWithGlasses },
             ],
           },
           {
@@ -250,11 +287,27 @@ const Sidebar: React.FC<SidebarProps> = ({
           },
           {
             id: 'nino_sano',
-            label: 'Niño Sano (Médico)',
+            label: 'Niño Sano',
             items: [
+              { id: 'nino_sano_rn', label: 'Control Díada / Recién Nacido', view: 'fichaControlNinoSanoRN', icon: Baby },
               { id: 'nino_sano_1m', label: 'Control Niño Sano 1° Mes', view: 'fichaControlNinoSano1Mes', icon: Baby },
+              { id: 'nino_sano_2m', label: 'Control Niño Sano 2 Meses', view: 'fichaControlNinoSano2Meses', icon: Baby },
               { id: 'nino_sano_3m', label: 'Control Niño Sano 3° Mes', view: 'fichaControlNinoSano3Mes', icon: Baby },
+              { id: 'nino_sano_4m', label: 'Control Niño Sano 4 Meses', view: 'fichaControlNinoSano4Meses', icon: Baby },
+              { id: 'nutri_5m', label: 'Consulta Nutricional 5 Meses', view: 'consultaNutricional5Meses', icon: Baby },
+              { id: 'nino_sano_6m', label: 'Control Niño Sano 6 Meses', view: 'fichaControlNinoSano6Meses', icon: Baby },
+              { id: 'nino_sano_8m', label: 'Control Niño Sano 8 Meses', view: 'fichaControlNinoSano8Meses', icon: Baby },
+              { id: 'nino_sano_12m', label: 'Control Niño Sano 12 Meses', view: 'fichaControlNinoSano12Meses', icon: Baby },
+              { id: 'nino_sano_18m', label: 'Control Niño Sano 18 Meses', view: 'fichaControlNinoSano18Meses', icon: Baby },
+              { id: 'nino_sano_2a', label: 'Control Niño Sano 2 Años', view: 'fichaControlNinoSano2Anos', icon: Baby },
+              { id: 'nino_sano_3a', label: 'Control Niño Sano 3 Años', view: 'fichaControlNinoSano3Anos', icon: Baby },
+              { id: 'nutri_3a6m', label: 'Consulta Nutricional 3 Años 6 M.', view: 'consultaNutricional3Anos6Meses', icon: Baby },
+              { id: 'nino_sano_4a', label: 'Control Niño Sano 4 Años', view: 'fichaControlNinoSano4Anos', icon: Baby },
+              { id: 'nino_sano_5a', label: 'Control Niño Sano 5 Años', view: 'fichaControlNinoSano5Anos', icon: Baby },
               { id: 'nino_sano_6a', label: 'Control Niño Sano 6 Años', view: 'fichaControlNinoSano6Anos', icon: Baby },
+              { id: 'nino_sano_7a', label: 'Control Niño Sano 7 Años', view: 'fichaControlNinoSano7Anos', icon: Baby },
+              { id: 'nino_sano_8a', label: 'Control Niño Sano 8 Años', view: 'fichaControlNinoSano8Anos', icon: Baby },
+              { id: 'nino_sano_9a', label: 'Control Niño Sano 9 Años', view: 'fichaControlNinoSano9Anos', icon: Baby },
             ],
           },
           {
@@ -268,7 +321,6 @@ const Sidebar: React.FC<SidebarProps> = ({
             id: 'enfermeria',
             label: 'Enfermería',
             items: [
-              { id: 'nino_sano_gen', label: 'Control Niño Sano (General)', view: 'fichaControlNinoSano', icon: Baby },
               { id: 'cv_enf', label: 'Control Cardiovascular (Enf)', view: 'fichaControlCardiovascular', icon: HeartPulse },
               { id: 'am_enf', label: 'Control Adulto Mayor (Enf)', view: 'fichaControlAdultoMayor', icon: Stethoscope },
             ],
@@ -299,11 +351,9 @@ const Sidebar: React.FC<SidebarProps> = ({
         label: 'Documentos',
         icon: FileText,
         items: [
-          { id: 'lab_order', label: 'Orden de Laboratorio', view: 'ordenLaboratorio', icon: FileText },
-          { id: 'receta', label: 'Receta Médica', view: 'recetaMedica', icon: Printer },
-          { id: 'cert_med', label: 'Certificado Médico', view: 'certificadoMedico', icon: Award },
+          { id: 'orden_lab', label: 'Orden de Laboratorio', view: 'ordenLaboratorio', icon: ClipboardList },
+          { id: 'orden_img', label: 'Orden de Exámenes de Imágenes', view: 'ordenExamenRadiologico', icon: FileCheck },
           { id: 'consultoria', label: 'Ficha de Consultoría', view: 'fichaConsultoria', icon: FileText },
-          { id: 'ges_firm', label: 'Firmar GES', view: 'fichaFirmarGes', icon: FileCheck },
         ],
       },
       {
@@ -455,35 +505,57 @@ const Sidebar: React.FC<SidebarProps> = ({
                   <div className="space-y-2 pt-0.5 pl-2">
 
                     {/* Render SubGroups if present (e.g. inside FICHAS CLÍNICAS) */}
-                    {cat.subGroups && cat.subGroups.map(sub => (
-                      <div key={sub.id} className="space-y-1">
-                        <div className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider px-2 pt-1">
-                          {sub.label}
-                        </div>
-                        <div className="space-y-0.5">
-                          {sub.items.map(item => {
-                            const isSelectedItem = currentView === item.view;
-                            const ItemIcon = item.icon;
+                    {cat.subGroups && cat.subGroups.map(sub => {
+                      const isNinoSano = sub.id === 'nino_sano';
+                      const showAll = openCategories['nino_sano_all'];
+                      const medicalTypes = ['fichaControlNinoSano1Mes', 'fichaControlNinoSano3Mes', 'fichaControlNinoSano6Anos'];
 
-                            return (
+                      const itemsToDisplay = isNinoSano && !showAll
+                        ? sub.items.filter(item => medicalTypes.includes(item.view || ''))
+                        : sub.items;
+
+                      return (
+                        <div key={sub.id} className="space-y-1">
+                          <div className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider px-2 pt-1">
+                            {sub.label}
+                          </div>
+                          <div className="space-y-0.5">
+                            {itemsToDisplay.map(item => {
+                              const isSelectedItem = currentView === item.view;
+                              const ItemIcon = item.icon;
+                              const isStar = medicalTypes.includes(item.view || '');
+
+                              return (
+                                <button
+                                  key={item.id}
+                                  onClick={() => {
+                                    if (item.view) onSelectMenuItem(item.view);
+                                  }}
+                                  className={`w-full flex items-center justify-between px-3 py-1.5 rounded-xl text-xs font-medium transition-all duration-150 cursor-pointer ${isSelectedItem
+                                    ? 'bg-gradient-to-r from-sky-600 to-sky-700 text-white font-bold shadow-sm'
+                                    : 'text-slate-600 hover:bg-slate-200/60 hover:text-slate-900'
+                                    }`}
+                                >
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${isSelectedItem ? 'text-white' : 'text-slate-500'}`} />
+                                    {isStar && <Star className="w-3 h-3 text-sky-500 fill-sky-500 shrink-0" />}
+                                    <span className="truncate">{item.label}</span>
+                                  </div>
+                                </button>
+                              );
+                            })}
+                            {isNinoSano && (
                               <button
-                                key={item.id}
-                                onClick={() => {
-                                  if (item.view) onSelectMenuItem(item.view);
-                                }}
-                                className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all duration-150 cursor-pointer ${isSelectedItem
-                                  ? 'bg-gradient-to-r from-sky-600 to-sky-700 text-white font-bold shadow-sm'
-                                  : 'text-slate-600 hover:bg-slate-200/60 hover:text-slate-900'
-                                  }`}
+                                onClick={() => setOpenCategories(prev => ({ ...prev, nino_sano_all: !prev['nino_sano_all'] }))}
+                                className="w-full text-center py-1 text-[10.5px] font-bold text-sky-600 hover:text-sky-800 transition-colors cursor-pointer"
                               >
-                                <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${isSelectedItem ? 'text-white' : 'text-slate-500'}`} />
-                                <span className="truncate">{item.label}</span>
+                                {showAll ? 'Ver menos (solo médico)' : 'Ver más controles...'}
                               </button>
-                            );
-                          })}
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
 
                     {/* Render Direct Items if no subGroups */}
                     {cat.items && cat.items.map(item => {

@@ -10,8 +10,7 @@ interface MainMenuProps {
 
 const certificateOptions: { label: string; type: CertificateType, description: string }[] = [
   { label: 'ORDEN DE LABORATORIO', type: 'ordenLaboratorio', description: 'Generar una orden para exámenes de laboratorio.' },
-  { label: 'RECETA MÉDICA', type: 'recetaMedica', description: 'Generar una receta médica estándar.' },
-  { label: 'CERTIFICADO MÉDICO', type: 'certificadoMedico', description: 'Generar un certificado médico estándar.' },
+  { label: 'ORDEN DE IMÁGENES', type: 'ordenExamenRadiologico', description: 'Generar una orden para exámenes de imágenes/radiológicos.' },
   { label: 'FICHA DE CONSULTORÍA', type: 'fichaConsultoria', description: 'Generar una ficha de consultoría de especialidad.' },
 ];
 
@@ -79,7 +78,6 @@ const MainMenu: React.FC<MainMenuProps> = ({ onSelectMenuItem, profession, onOpe
       id: 'enfermeria',
       label: 'CONTROLES ENFERMERÍA',
       items: [
-        { label: 'CONTROL NIÑO SANO (GENERAL)', type: 'fichaControlNinoSano' },
         { label: 'CONTROL CARDIOVASCULAR (ENF)', type: 'fichaControlCardiovascular' },
         { label: 'CONTROL ADULTO MAYOR (ENF)', type: 'fichaControlAdultoMayor' },
       ]
@@ -100,11 +98,27 @@ const MainMenu: React.FC<MainMenuProps> = ({ onSelectMenuItem, profession, onOpe
     },
     {
       id: 'ninoSano',
-      label: 'NIÑO SANO (MÉDICO)',
+      label: 'NIÑO SANO',
       items: [
+        { label: 'CONTROL DÍADA / RECIÉN NACIDO', type: 'fichaControlNinoSanoRN' },
         { label: 'CONTROL NIÑO SANO 1° MES', type: 'fichaControlNinoSano1Mes' },
+        { label: 'CONTROL NIÑO SANO 2 MESES', type: 'fichaControlNinoSano2Meses' },
         { label: 'CONTROL NIÑO SANO 3° MES', type: 'fichaControlNinoSano3Mes' },
+        { label: 'CONTROL NIÑO SANO 4 MESES', type: 'fichaControlNinoSano4Meses' },
+        { label: 'CONSULTA NUTRICIONAL 5 MESES', type: 'consultaNutricional5Meses' },
+        { label: 'CONTROL NIÑO SANO 6 MESES', type: 'fichaControlNinoSano6Meses' },
+        { label: 'CONTROL NIÑO SANO 8 MESES', type: 'fichaControlNinoSano8Meses' },
+        { label: 'CONTROL NIÑO SANO 12 MESES', type: 'fichaControlNinoSano12Meses' },
+        { label: 'CONTROL NIÑO SANO 18 MESES', type: 'fichaControlNinoSano18Meses' },
+        { label: 'CONTROL NIÑO SANO 2 AÑOS', type: 'fichaControlNinoSano2Anos' },
+        { label: 'CONTROL NIÑO SANO 3 AÑOS', type: 'fichaControlNinoSano3Anos' },
+        { label: 'CONSULTA NUTRICIONAL 3 AÑOS 6 MESES', type: 'consultaNutricional3Anos6Meses' },
+        { label: 'CONTROL NIÑO SANO 4 AÑOS', type: 'fichaControlNinoSano4Anos' },
+        { label: 'CONTROL NIÑO SANO 5 AÑOS', type: 'fichaControlNinoSano5Anos' },
         { label: 'CONTROL NIÑO SANO 6 AÑOS', type: 'fichaControlNinoSano6Anos' },
+        { label: 'CONTROL NIÑO SANO 7 AÑOS', type: 'fichaControlNinoSano7Anos' },
+        { label: 'CONTROL NIÑO SANO 8 AÑOS', type: 'fichaControlNinoSano8Anos' },
+        { label: 'CONTROL NIÑO SANO 9 AÑOS', type: 'fichaControlNinoSano9Anos' },
       ]
     },
     {
@@ -158,11 +172,43 @@ const MainMenu: React.FC<MainMenuProps> = ({ onSelectMenuItem, profession, onOpe
                       </button>
                       {openSubMenus[category.id] && category.items && (
                         <div className="pl-3 mt-1.5 space-y-1.5 border-l-2 border-sky-300 ml-1.5">
-                          {category.items.map(item => (
-                            <button key={item.type} onClick={() => onSelectMenuItem(item.type)} className="w-full text-left p-2 bg-sky-50 hover:bg-sky-100 text-sky-700 text-xs font-semibold rounded border border-sky-100 shadow-sm transition-all cursor-pointer">
-                              {item.label}
-                            </button>
-                          ))}
+                          {(() => {
+                            const isNinoSano = category.id === 'ninoSano';
+                            const showAll = openSubMenus['ninoSano_all'];
+                            const medicalTypes = ['fichaControlNinoSano1Mes', 'fichaControlNinoSano3Mes', 'fichaControlNinoSano6Anos'];
+                            
+                            const itemsToDisplay = isNinoSano && !showAll
+                              ? category.items.filter(item => medicalTypes.includes(item.type))
+                              : category.items;
+
+                            return (
+                              <>
+                                {itemsToDisplay.map(item => {
+                                  const isStar = medicalTypes.includes(item.type);
+                                  return (
+                                    <button
+                                      key={item.type}
+                                      onClick={() => onSelectMenuItem(item.type)}
+                                      className="w-full text-left p-2 bg-sky-50 hover:bg-sky-100 text-sky-700 text-xs font-semibold rounded border border-sky-100 shadow-sm transition-all cursor-pointer flex items-center justify-between"
+                                    >
+                                      <span className="flex items-center gap-1.5">
+                                        {isStar && <span className="text-sky-500 font-bold text-sm">★</span>}
+                                        {item.label}
+                                      </span>
+                                    </button>
+                                  );
+                                })}
+                                {isNinoSano && (
+                                  <button
+                                    onClick={() => toggleSubMenu('ninoSano_all')}
+                                    className="w-full text-center p-1.5 bg-sky-100/70 hover:bg-sky-200/70 text-sky-800 text-[11px] font-bold rounded transition-all cursor-pointer mt-1"
+                                  >
+                                    {showAll ? 'Mostrar menos (solo médico)' : 'Ver más controles...'}
+                                  </button>
+                                )}
+                              </>
+                            );
+                          })()}
                         </div>
                       )}
                     </>
@@ -275,17 +321,6 @@ const MainMenu: React.FC<MainMenuProps> = ({ onSelectMenuItem, profession, onOpe
              <span className="block text-sm uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">PORTAL CLÍNICO SAPU</span>
              <span className="block text-[10px] font-normal text-red-100 mt-0.5 w-full whitespace-nowrap overflow-hidden text-ellipsis">Directorio telefónico y plantillas de anamnesis / examen físico.</span>
            </button>
-        </div>
-
-        {/* FIRMAR GES */}
-        <div className="w-full flex">
-          <button
-            onClick={() => onSelectMenuItem('fichaFirmarGes')}
-            className="w-full py-2 px-4 bg-slate-500 hover:bg-slate-600 bg-gradient-to-r from-transparent to-black/10 text-white font-semibold rounded-lg shadow-sm hover:shadow transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-slate-500 flex flex-col items-center justify-center text-center border border-slate-600/50 cursor-pointer"
-          >
-            <span className="block text-sm uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">FIRMAR GES</span>
-            <span className="block text-[10px] font-normal text-slate-100 mt-0.5 w-full whitespace-nowrap overflow-hidden text-ellipsis">Autocompletado de documento digital.</span>
-          </button>
         </div>
 
         {/* CALCULAR REM */}

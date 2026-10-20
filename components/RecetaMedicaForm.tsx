@@ -6,6 +6,7 @@ import RutInput from './RutInput';
 import { generateRecetaMedicaPdf } from '../services/pdfGenerator';
 import { formatRutChilean } from './RutInput';
 import { useFormLocalStorage } from '../hooks/useFormLocalStorage';
+import { getSharedGeneratorPatient, setSharedGeneratorPatient, subscribeSharedGeneratorPatient, clearSharedGeneratorPatient } from '../services/sharedGeneratorPatient';
 
 const initialFormData: RecetaMedicaFormData = {
   nombrePaciente: '',
@@ -14,8 +15,7 @@ const initialFormData: RecetaMedicaFormData = {
   edadPaciente: '',
   diagnostico: '',
   rp: '',
-  hideLogos: false, // Default to show logos
-  // fechaDocumento: new Date().toISOString().split('T')[0], // PDF uses current date directly
+  hideLogos: false,
 };
 
 interface RecetaMedicaFormProps {
@@ -26,19 +26,31 @@ interface RecetaMedicaFormProps {
 const RecetaMedicaForm: React.FC<RecetaMedicaFormProps> = ({ onBackToMenu, loggedInUser }) => {
   const [formData, setFormData] = useFormLocalStorage<RecetaMedicaFormData>('local_RecetaMedicaForm', initialFormData);
   const [status, setStatus] = useState<FormStatus>(FormStatus.Idle);
-  const [isFormValid, setIsFormValid] = useState<boolean>(false);
 
+  // Sync from shared patient store
   useEffect(() => {
-    const { nombrePaciente, rutPaciente, direccionPaciente, edadPaciente, diagnostico, rp } = formData;
-    setIsFormValid(
-      nombrePaciente.trim() !== '' &&
-      rutPaciente.trim() !== '' &&
-      direccionPaciente.trim() !== '' &&
-      // edadPaciente.trim() !== '' && // Edad can be optional for some prescriptions
-      diagnostico.trim() !== '' &&
-      rp.trim() !== ''
-    );
-  }, [formData]);
+    const shared = getSharedGeneratorPatient();
+    setFormData(prev => ({
+      ...prev,
+      nombrePaciente: prev.nombrePaciente || shared.nombrePaciente || '',
+      rutPaciente: prev.rutPaciente || shared.rutPaciente || '',
+      direccionPaciente: prev.direccionPaciente || shared.direccion || '',
+      edadPaciente: prev.edadPaciente || shared.edad || '',
+      diagnostico: prev.diagnostico || shared.diagnostico || '',
+    }));
+
+    const unsubscribe = subscribeSharedGeneratorPatient((updated) => {
+      setFormData(prev => ({
+        ...prev,
+        nombrePaciente: updated.nombrePaciente !== undefined ? updated.nombrePaciente : prev.nombrePaciente,
+        rutPaciente: updated.rutPaciente !== undefined ? updated.rutPaciente : prev.rutPaciente,
+        direccionPaciente: updated.direccion !== undefined ? updated.direccion : prev.direccionPaciente,
+        edadPaciente: updated.edad !== undefined ? updated.edad : prev.edadPaciente,
+        diagnostico: updated.diagnostico !== undefined ? updated.diagnostico : prev.diagnostico,
+      }));
+    });
+    return unsubscribe;
+  }, []);
 
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -47,18 +59,19 @@ const RecetaMedicaForm: React.FC<RecetaMedicaFormProps> = ({ onBackToMenu, logge
         setFormData(prev => ({ ...prev, [name]: checked }));
     } else {
         setFormData(prev => ({ ...prev, [name]: value }));
+        if (name === 'nombrePaciente') setSharedGeneratorPatient({ nombrePaciente: value });
+        if (name === 'direccionPaciente') setSharedGeneratorPatient({ direccion: value });
+        if (name === 'edadPaciente') setSharedGeneratorPatient({ edad: value });
+        if (name === 'diagnostico') setSharedGeneratorPatient({ diagnostico: value });
     }
-  }, []);
+  }, [setFormData]);
 
   const handleRutChange = useCallback((value: string) => {
     setFormData(prev => ({ ...prev, rutPaciente: value }));
-  }, []);
+    setSharedGeneratorPatient({ rutPaciente: value });
+  }, [setFormData]);
 
   const handleSubmit = async () => {
-    if (!isFormValid) {
-      alert("Por favor, complete todos los campos requeridos: Nombre, RUT, Dirección, Diagnóstico y RP.");
-      return;
-    }
     if (!loggedInUser) {
       alert("Error: No se ha podido identificar al médico. Por favor, inicie sesión nuevamente.");
       return;
@@ -75,7 +88,8 @@ const RecetaMedicaForm: React.FC<RecetaMedicaFormProps> = ({ onBackToMenu, logge
   };
 
   const handleNewDocument = () => {
-    setFormData({...initialFormData, hideLogos: false }); // Ensure hideLogos is reset
+    setFormData({ ...initialFormData, hideLogos: false });
+    clearSharedGeneratorPatient();
     setStatus(FormStatus.Idle);
   };
 
@@ -131,30 +145,29 @@ const RecetaMedicaForm: React.FC<RecetaMedicaFormProps> = ({ onBackToMenu, logge
           </div>
         </div>
 
-        {/* 
-          {/* Botones de acción */}
-          <div className="flex items-center justify-end gap-2 pt-0.5 shrink-0 mb-2">
-            <button
-              type="button"
-              onClick={handleNewDocument}
-              className="px-3 py-1.5 bg-white border border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 font-medium text-[11px] uppercase tracking-tight rounded-lg shadow-sm transition-all active:scale-95 cursor-pointer flex items-center gap-1.5"
-            >
-              <Trash2 className="w-3.5 h-3.5 shrink-0" />
-              LIMPIAR FORMULARIO
-            </button>
-            <button
-              type="button"
-              onClick={handleSubmit}
-              disabled={status === FormStatus.Generating || !isFormValid}
-              className={`px-3 py-1.5 font-medium text-[11px] uppercase tracking-tight rounded-lg shadow-sm transition-all active:scale-95 cursor-pointer flex items-center gap-1.5 ${
-                isFormValid ? "bg-sky-600 hover:bg-sky-700 text-white" : "bg-slate-300 text-slate-500 cursor-not-allowed"
-              } ${status === FormStatus.Generating ? "opacity-70 cursor-wait" : ""}`}
-            >
-              <FileText className="w-3.5 h-3.5 shrink-0" />
-              {status === FormStatus.Generating ? "GENERANDO..." : "EMITIR RECETA"}
-            </button>
-          </div>
-          {status === FormStatus.Error && (
+        {/* Botones de acción */}
+        <div className="flex items-center justify-end gap-2 pt-0.5 shrink-0 mb-2">
+          <button
+            type="button"
+            onClick={handleNewDocument}
+            className="px-3 py-1.5 bg-white border border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 font-medium text-[11px] uppercase tracking-tight rounded-lg shadow-sm transition-all active:scale-95 cursor-pointer flex items-center gap-1.5"
+          >
+            <Trash2 className="w-3.5 h-3.5 shrink-0" />
+            LIMPIAR FORMULARIO
+          </button>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={status === FormStatus.Generating}
+            className={`px-3 py-1.5 font-medium text-[11px] uppercase tracking-tight rounded-lg shadow-sm transition-all active:scale-95 cursor-pointer flex items-center gap-1.5 bg-sky-600 hover:bg-sky-700 text-white ${
+              status === FormStatus.Generating ? "opacity-70 cursor-wait" : ""
+            }`}
+          >
+            <FileText className="w-3.5 h-3.5 shrink-0" />
+            {status === FormStatus.Generating ? "GENERANDO..." : "EMITIR RECETA"}
+          </button>
+        </div>
+        {status === FormStatus.Error && (
           <p role="alert" className="text-red-500 text-center text-xs shrink-0">Hubo un error al generar el PDF. Por favor, intente de nuevo.</p>
         )}
       </form>

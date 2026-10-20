@@ -1,3 +1,5 @@
+import { getChileDDMMYYYY } from './dateService';
+
 export interface SavedFichaEntry {
   id: string;
   tipoFicha: string;
@@ -203,7 +205,7 @@ export const patientStore = {
     let updatedFichas: SavedFichaEntry[];
     let targetFichaEntry: SavedFichaEntry;
 
-    const todayStr = fecha || (() => { const d = new Date(); return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`; })();
+    const todayStr = fecha || getChileDDMMYYYY();
 
     if (isSingleInstance) {
       // Find if this single-instance ficha already exists

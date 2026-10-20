@@ -219,6 +219,7 @@ const manualUsers: User[] = [
     sector: 'Naranjo',
   },
   // --- ENFERMERAS ---
+  { username: 'erikanieto', password: 'csanjuan', fullName: 'ERIKA NIETO', profession: 'enfermeria', cesfam: 'CESFAM San Juan', electronicSignature: 'ERIKA NIETO\nEnfermera', sector: 'No especificado' },
   { username: 'camiaguilar', password: 'csanjuan', fullName: 'CAMILA AGUILAR', profession: 'enfermeria', cesfam: 'CESFAM San Juan', electronicSignature: 'CAMILA AGUILAR\nEnfermera', sector: 'Verde' },
   { username: 'patriciacortes', password: 'csanjuan', fullName: 'PATRICIA CORTÉS AYALA', profession: 'enfermeria', cesfam: 'CESFAM San Juan', electronicSignature: 'PATRICIA CORTÉS AYALA\nEnfermera', sector: 'No especificado' },
   { username: 'valetapia', password: 'csanjuan', fullName: 'VALENTINA TAPIA', profession: 'enfermeria', cesfam: 'CESFAM San Juan', electronicSignature: 'VALENTINA TAPIA\nEnfermera', sector: 'No especificado' },
@@ -240,13 +241,15 @@ const manualUsers: User[] = [
   { username: 'cortes', password: 'csanjuan', fullName: 'DAVID CORTÉS CORONADO', profession: 'medicina', cesfam: 'CESFAM San Juan', electronicSignature: 'DAVID CORTÉS CORONADO\nMédico Cirujano', sector: 'No especificado' },
   { username: 'pizarro', password: 'csanjuan', fullName: 'RODRIGO PIZARRO BLANCO', profession: 'medicina', cesfam: 'CESFAM San Juan', electronicSignature: 'RODRIGO PIZARRO BLANCO\nMédico Cirujano', sector: 'Amarillo' },
   // --- NUTRICIONISTAS ---
+  { username: 'yesenniarancibia', password: 'csanjuan', fullName: 'YESENNIA ARANCIBIA', profession: 'nutricion', cesfam: 'CESFAM San Juan', electronicSignature: 'YESENNIA ARANCIBIA\nNutricionista', sector: 'No especificado' },
   { username: 'campano', password: 'csanjuan', fullName: 'CONSTANZA CAMPANO', profession: 'nutricion', cesfam: 'CESFAM San Juan', electronicSignature: 'CONSTANZA CAMPANO\nNutricionista', sector: 'No especificado' },
   { username: 'nataliajimenez', password: 'csanjuan', fullName: 'NATALIA JIMENEZ', profession: 'nutricion', cesfam: 'CESFAM San Juan', electronicSignature: 'NATALIA JIMENEZ\nNutricionista', sector: 'No especificado' },
   { username: 'sandraulloa', password: 'csanjuan', fullName: 'SANDRA ULLOA', profession: 'nutricion', cesfam: 'CESFAM San Juan', electronicSignature: 'SANDRA ULOLA\nNutricionista', sector: 'No especificado' },
   { username: 'cristobalnutri', password: 'csanjuan', fullName: 'CRISTOBAL JORQUERA', profession: 'nutricion', cesfam: 'CESFAM San Juan', electronicSignature: 'CRISTOBAL JORQUERA\nNutricionista' },
   { username: 'mjolivares', password: 'csanjuan', fullName: 'MARÍA JOSÉ OLIVARES', profession: 'nutricion', cesfam: 'CESFAM San Juan', electronicSignature: 'MARÍA JOSÉ OLIVARES\nNutricionista' },
   { username: 'fapablaza', password: 'csanjuan', fullName: 'FERNANDA APABLAZA', profession: 'nutricion', cesfam: 'CESFAM San Juan', electronicSignature: 'FERNANDA APABLAZA\nNutricionista' },
-  // --- PSICÓLOGAS ---
+  // --- PSICÓLOGOS / PSICÓLOGAS ---
+  { username: 'luiscid', password: 'csanjuan', fullName: 'LUIS CID', profession: 'psicologia', cesfam: 'CESFAM San Juan', electronicSignature: 'LUIS CID\nPsicólogo', sector: 'No especificado' },
   { username: 'mjsuazo', password: 'csanjuan', fullName: 'MARÍA JOSÉ SUAZO', profession: 'psicologia', cesfam: 'CESFAM San Juan', electronicSignature: 'MARÍA JOSÉ SUAZO\nPsicóloga' },
   { username: 'psbarrios', password: 'csanjuan', fullName: 'JOCELINE BARRIOS', profession: 'psicologia', cesfam: 'CESFAM San Juan', electronicSignature: 'JOCELINE BARRIOS\nPsicóloga' },
   { username: 'piafredes', password: 'csanjuan', fullName: 'PIA FREDES', profession: 'psicologia', cesfam: 'CESFAM San Juan', electronicSignature: 'PIA FREDES\nPsicóloga' },

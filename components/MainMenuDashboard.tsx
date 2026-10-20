@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { User, OnCallSchedule, SpecialEvent, View } from '../types';
 import OnCallCalendar from './OnCallCalendar';
 import AutomaticTranscriber from './AutomaticTranscriber';
@@ -18,7 +18,9 @@ import {
   Megaphone,
   Pencil,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Bold,
+  Italic
 } from 'lucide-react';
 import { db } from '../services/firebase';
 import { collection, query, orderBy, onSnapshot, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
@@ -95,6 +97,55 @@ const MainMenuDashboard: React.FC<MainMenuDashboardProps> = ({
   const [isAddAvisoOpen, setIsAddAvisoOpen] = useState(false);
   const [newAvisoContent, setNewAvisoContent] = useState('');
   const [editingAviso, setEditingAviso] = useState<Aviso | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const renderFormattedText = (content: string) => {
+    if (!content) return null;
+    let formatted = content
+      .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+      .replace(/\*(.*?)\*/g, '<i>$1</i>');
+
+    return (
+      <span 
+        className="w-full text-xs font-sans leading-snug text-amber-950 break-words inline-block"
+        dangerouslySetInnerHTML={{ __html: formatted }}
+      />
+    );
+  };
+
+  const applyFormatting = (type: 'bold' | 'italic') => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = newAvisoContent.substring(start, end);
+
+    if (!selectedText) {
+      const tagOpen = type === 'bold' ? '<b>' : '<i>';
+      const tagClose = type === 'bold' ? '</b>' : '</i>';
+      const placeholder = type === 'bold' ? 'texto en negrita' : 'texto en cursiva';
+      const newContent = newAvisoContent.substring(0, start) + `${tagOpen}${placeholder}${tagClose}` + newAvisoContent.substring(end);
+      setNewAvisoContent(newContent);
+      setTimeout(() => {
+        textarea.focus();
+        textarea.setSelectionRange(start + tagOpen.length, start + tagOpen.length + placeholder.length);
+      }, 0);
+      return;
+    }
+
+    const tagOpen = type === 'bold' ? '<b>' : '<i>';
+    const tagClose = type === 'bold' ? '</b>' : '</i>';
+    const formatted = `${tagOpen}${selectedText}${tagClose}`;
+
+    const newContent = newAvisoContent.substring(0, start) + formatted + newAvisoContent.substring(end);
+    setNewAvisoContent(newContent);
+
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + tagOpen.length, end + tagOpen.length);
+    }, 0);
+  };
 
   const handleEditActiveAviso = () => {
     const currentAviso = avisos[activeAvisoIndex % avisos.length];
@@ -414,7 +465,7 @@ const MainMenuDashboard: React.FC<MainMenuDashboardProps> = ({
                             )}
 
                             <div className="text-xs font-sans leading-snug text-amber-950 w-full h-full break-words bg-yellow-50 py-1.5 px-2 rounded-lg border border-yellow-200/80 overflow-y-auto custom-scrollbar flex items-center">
-                              <span className="w-full">{currentAviso.content}</span>
+                              <div className="w-full">{renderFormattedText(currentAviso.content)}</div>
                             </div>
                           </div>
                         </div>
@@ -562,19 +613,56 @@ const MainMenuDashboard: React.FC<MainMenuDashboardProps> = ({
             </div>
 
             {/* Modal Form */}
-            <form onSubmit={handleCreateAviso} className="p-5 space-y-4">
+            <form onSubmit={handleCreateAviso} className="p-5 space-y-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
-                  Contenido del Aviso
-                </label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                    Contenido del Aviso
+                  </label>
+                  {/* Rich Text Toolbar */}
+                  <div className="flex items-center space-x-1">
+                    <button
+                      type="button"
+                      onClick={() => applyFormatting('bold')}
+                      className="px-2 py-1 bg-slate-100 hover:bg-sky-100 hover:text-sky-700 text-slate-700 rounded transition-colors text-xs font-bold border border-slate-200 cursor-pointer flex items-center gap-1 active:scale-95"
+                      title="Negrita"
+                    >
+                      <Bold className="w-3.5 h-3.5" />
+                      <span className="text-[10px] font-bold">Negrita</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => applyFormatting('italic')}
+                      className="px-2 py-1 bg-slate-100 hover:bg-sky-100 hover:text-sky-700 text-slate-700 rounded transition-colors text-xs italic border border-slate-200 cursor-pointer flex items-center gap-1 active:scale-95"
+                      title="Cursiva"
+                    >
+                      <Italic className="w-3.5 h-3.5" />
+                      <span className="text-[10px] italic">Cursiva</span>
+                    </button>
+                  </div>
+                </div>
+
                 <textarea
+                  ref={textareaRef}
                   required
-                  rows={4}
-                  placeholder="Escriba el aviso que desea compartir con los demás usuarios..."
+                  rows={3}
+                  placeholder="Escriba el aviso que desea compartir. Seleccione texto y presione Negrita o Cursiva..."
                   value={newAvisoContent}
                   onChange={e => setNewAvisoContent(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none resize-none text-slate-800 leading-normal"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none resize-none text-slate-800 leading-normal font-sans"
                 />
+
+                {/* Live Formatted Preview */}
+                {newAvisoContent.trim() && (
+                  <div className="mt-2 p-2 bg-yellow-50/80 border border-yellow-200 rounded-lg">
+                    <span className="block text-[9.5px] font-extrabold uppercase text-amber-900 tracking-wider mb-1">
+                      Vista previa de formato:
+                    </span>
+                    <div className="text-xs leading-snug">
+                      {renderFormattedText(newAvisoContent)}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="flex gap-3 pt-2">

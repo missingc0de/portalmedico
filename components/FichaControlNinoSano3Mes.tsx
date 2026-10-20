@@ -106,7 +106,8 @@ interface FichaControlNinoSano3MesProps {
 
 const FichaControlNinoSano3Mes: React.FC<FichaControlNinoSano3MesProps> = ({ onBackToMenu, loggedInUser }) => {
     const [formData, setFormData] = useFormLocalStorage<FichaControlNinoSano3MesFormData>('local_FichaControlNinoSano3Mes', initialFormData);
-    const [anamnesisText, setAnamnesisText] = useState('');
+    const [isUppercase, setIsUppercase] = useState<boolean>(false);
+  const [anamnesisText, setAnamnesisText] = useState('');
     const [exploracionText, setExploracionText] = useState('');
     const [actuacionText, setActuacionText] = useState('');
     const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
@@ -202,6 +203,7 @@ const FichaControlNinoSano3Mes: React.FC<FichaControlNinoSano3MesProps> = ({ onB
     }, []);
 
     const handleCopyToClipboard = (text: string, title: string) => {
+    const textToCopy = isUppercase ? text.toUpperCase() : text;
         navigator.clipboard.writeText(text).then(() => {
             alert(`'${title}' copiado al portapapeles.`);
         });
@@ -465,6 +467,17 @@ const FichaControlNinoSano3Mes: React.FC<FichaControlNinoSano3MesProps> = ({ onB
               <div className="border-b border-sky-200/80 pb-1 mb-2 w-full flex-shrink-0">
                 <h3 className="text-xs font-bold text-sky-800 uppercase tracking-wider">Resumen Ficha Clínica (Editable)</h3>
               </div>
+            <div className="mb-2 flex items-center gap-1.5 flex-shrink-0">
+              <label className="flex items-center gap-1.5 cursor-pointer text-[11px] font-semibold text-slate-700 select-none">
+                <input
+                  type="checkbox"
+                  checked={isUppercase}
+                  onChange={e => setIsUppercase(e.target.checked)}
+                  className="h-3.5 w-3.5 text-sky-600 border-slate-300 rounded focus:ring-sky-500 cursor-pointer"
+                />
+                <span>MAYÚSCULAS</span>
+              </label>
+            </div>
               <div className="flex-1 flex flex-col gap-1.5 min-h-0 overflow-hidden">
                   <div className="flex-1 flex flex-col min-h-0">
                       <div className="flex justify-between items-center mb-0.5 flex-shrink-0">
@@ -472,7 +485,7 @@ const FichaControlNinoSano3Mes: React.FC<FichaControlNinoSano3MesProps> = ({ onB
                           <button onClick={() => handleCopyToClipboard(anamnesisText, 'Anamnesis')} className="px-2 py-0.5 text-[10px] font-bold text-slate-600 bg-slate-200 rounded uppercase hover:bg-slate-300">Copiar</button>
                       </div>
                       <textarea
-                          value={anamnesisText}
+                          value={isUppercase ? anamnesisText.toUpperCase() : anamnesisText}
                           onChange={(e) => setAnamnesisText(e.target.value)}
                           className="flex-1 w-full p-1.5 py-1 bg-white border border-slate-300 rounded-md shadow-sm custom-scrollbar text-[10.5px] text-slate-800 font-mono outline-none focus:ring-1 focus:ring-sky-500 focus:border-sky-500 resize-none"
                       />
@@ -484,7 +497,7 @@ const FichaControlNinoSano3Mes: React.FC<FichaControlNinoSano3MesProps> = ({ onB
                           <button onClick={() => handleCopyToClipboard(exploracionText, 'Exploración')} className="px-2 py-0.5 text-[10px] font-bold text-slate-600 bg-slate-200 rounded uppercase hover:bg-slate-300">Copiar</button>
                       </div>
                       <textarea
-                          value={exploracionText}
+                          value={isUppercase ? exploracionText.toUpperCase() : exploracionText}
                           onChange={(e) => setExploracionText(e.target.value)}
                           className="flex-1 w-full p-1.5 py-1 bg-white border border-slate-300 rounded-md shadow-sm custom-scrollbar text-[10.5px] text-slate-800 font-mono outline-none focus:ring-1 focus:ring-sky-500 focus:border-sky-500 resize-none"
                       />
@@ -496,10 +509,23 @@ const FichaControlNinoSano3Mes: React.FC<FichaControlNinoSano3MesProps> = ({ onB
                           <button onClick={() => handleCopyToClipboard(actuacionText, 'Actuación')} className="px-2 py-0.5 text-[10px] font-bold text-slate-600 bg-slate-200 rounded uppercase hover:bg-slate-300">Copiar</button>
                       </div>
                       <textarea
-                          value={actuacionText}
+                          value={isUppercase ? actuacionText.toUpperCase() : actuacionText}
                           onChange={(e) => setActuacionText(e.target.value)}
                           className="flex-1 w-full p-1.5 py-1 bg-white border border-slate-300 rounded-md shadow-sm custom-scrollbar text-[10.5px] text-slate-800 font-mono outline-none focus:ring-1 focus:ring-sky-500 focus:border-sky-500 resize-none"
                       />
+          <div className="pt-2 mt-1 border-t border-slate-200/80 flex-shrink-0">
+            <button
+              type="button"
+              onClick={handleNewDocument}
+              className="w-full py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg shadow-sm transition-all active:scale-95 text-xs uppercase tracking-wider cursor-pointer flex items-center justify-center gap-1.5"
+              id="btn-borrar-todo-right"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              BORRAR TODO
+            </button>
+          </div>
                   </div>
               </div>
             </div>

@@ -65,6 +65,9 @@ export const RecetaMedicaWindow: React.FC<RecetaMedicaWindowProps> = ({
       setIsMoving(false);
     };
     if (isOpen) {
+      setWidth(DEFAULT_WIDTH);
+      setHeight(DEFAULT_HEIGHT);
+      setXOffset(0);
       window.addEventListener('mousemove', handleMouseMove);
       window.addEventListener('mouseup', handleMouseUp);
     }

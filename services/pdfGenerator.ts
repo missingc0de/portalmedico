@@ -1,10 +1,12 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+import { getChileDate, getChileDDMMYYYY } from './dateService';
 // import fontkit from '@pdf-lib/fontkit'; // Removed because standard fonts don't need it and it can crash the bundler
-import { FormData, OrdenExamenRadiologicoFormData, CertificadoEscolarFormData, DerivacionesPscvFormData, OrdenLaboratorioFormData, RecetaMedicaFormData, User, FichaConsultoriaFormData, PccObjetivo } from '../types';
+import { FormData, OrdenExamenRadiologicoFormData, CertificadoEscolarFormData, DerivacionesPscvFormData, OrdenLaboratorioFormData, OrdenImagenologiaFormData, RecetaMedicaFormData, User, FichaConsultoriaFormData, PccObjetivo } from '../types';
 import { formatRutChilean } from '../components/RutInput'; // Import the formatter
 import { labCategoriesConfig, LabTestCategory, labTestDetails } from '../data/labTestData'; // Import the configuration
+import { imagingTestDetails } from '../data/imagingTestData';
 
 const LOGO_LEFT_URL = '/images/img_coquimbo.png'; // CESFAM San Juan logo
 const LOGO_RIGHT_URL = '/images/img_muni.png';
@@ -1073,8 +1075,8 @@ export const generateDerivacionesPscvPdf = async (data: DerivacionesPscvFormData
 
 
 export const generateOrdenLaboratorioPdf = async (data: OrdenLaboratorioFormData, loggedInUser: User): Promise<void> => {
-  const now = new Date();
-  const dateVal = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
+  const now = getChileDate();
+  const dateVal = getChileDDMMYYYY(now);
   const timeVal = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
   const doc = new jsPDF('p', 'mm', 'a4');
@@ -1083,21 +1085,17 @@ export const generateOrdenLaboratorioPdf = async (data: OrdenLaboratorioFormData
   let currentY = 18;
 
   // Header Titles
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'bold');
-  doc.text('CORPORACIÓN MUNICIPAL GABRIEL GONZÁLEZ VIDELA', margin, currentY);
-  currentY += 5;
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
   doc.text('CESFAM San Juan - Coquimbo', margin, currentY);
   doc.text(`Fecha Emisión: ${dateVal} ${timeVal}`, pageWidth - margin, currentY, { align: 'right' });
-  currentY += 8;
+  currentY += 14; // Increased spacing above title
 
-  // Main Document Title
+  // Main Document Title (Separated from top and bottom text)
   doc.setFontSize(14);
   doc.setFont('helvetica', 'bold');
   doc.text('ORDEN DE EXÁMENES DE LABORATORIO', pageWidth / 2, currentY, { align: 'center' });
-  currentY += 8;
+  currentY += 14; // Increased spacing below title
 
   // Patient Info Box
   autoTable(doc, {
@@ -1130,8 +1128,10 @@ export const generateOrdenLaboratorioPdf = async (data: OrdenLaboratorioFormData
 
   // Build Selected Examinations Table Rows
   const tableBody: string[][] = [];
+
+  // 1. Standard exams selected from database
   Object.keys(data).forEach(key => {
-    if ((key.startsWith('hematologia_') || 
+    if (key !== 'customExams' && (key.startsWith('hematologia_') || 
          key.startsWith('bioquimica_') ||
          key.startsWith('hormonas_') ||
          key.startsWith('orina_') ||
@@ -1155,6 +1155,21 @@ export const generateOrdenLaboratorioPdf = async (data: OrdenLaboratorioFormData
     }
   });
 
+  // 2. Custom manual exams typed by user
+  if (Array.isArray(data.customExams)) {
+    data.customExams.forEach(customLabel => {
+      if (customLabel.trim()) {
+        tableBody.push([
+          '', // Code left blank for custom manual exams
+          'GRUPO 01: EXÁMENES DE LABORATORIO',
+          customLabel.trim(),
+          'Normal',
+          data.observacionesGlobales || ''
+        ]);
+      }
+    });
+  }
+
   if (tableBody.length === 0) {
     tableBody.push(['---', '---', 'Sin exámenes seleccionados', '---', '---']);
   }
@@ -1170,7 +1185,7 @@ export const generateOrdenLaboratorioPdf = async (data: OrdenLaboratorioFormData
     bodyStyles: { fontSize: 8.5, textColor: [0, 0, 0], lineColor: [0, 0, 0], lineWidth: 0.1 },
     columnStyles: {
       0: { cellWidth: 24, halign: 'center' },
-      1: { cellWidth: 32 },
+      1: { cellWidth: 35 },
       2: { cellWidth: 'auto' },
       3: { cellWidth: 22, halign: 'center' },
       4: { cellWidth: 45 }
@@ -1185,15 +1200,7 @@ export const generateOrdenLaboratorioPdf = async (data: OrdenLaboratorioFormData
     currentY = 30;
   }
 
-  // Professional Signature block
-  let profTitle = 'MÉDICO TRATANTE';
-  if (loggedInUser.profession === 'enfermeria') profTitle = 'ENFERMERO/A TRATANTE';
-  else if (loggedInUser.profession === 'nutricion') profTitle = 'NUTRICIONISTA TRATANTE';
-  else if (loggedInUser.profession === 'matroneria') profTitle = 'MATRÓN/A TRATANTE';
-  else if (loggedInUser.profession === 'kinesiologo') profTitle = 'KINESIÓLOGO TRATANTE';
-  else if (loggedInUser.profession === 'psicologia') profTitle = 'PSICÓLOGO/A TRATANTE';
-  else if (loggedInUser.profession === 'asistente_social') profTitle = 'ASISTENTE SOCIAL';
-
+  // Professional Signature block with "MÉDICO CIRUJANO" line above RUT
   doc.setLineWidth(0.3);
   doc.line(pageWidth / 2 - 35, currentY, pageWidth / 2 + 35, currentY);
   currentY += 4;
@@ -1201,9 +1208,11 @@ export const generateOrdenLaboratorioPdf = async (data: OrdenLaboratorioFormData
   doc.setFont('helvetica', 'bold');
   doc.text(loggedInUser.fullName || 'PROFESIONAL RESPONSABLE', pageWidth / 2, currentY, { align: 'center' });
   currentY += 4;
-  doc.setFontSize(8);
+  doc.setFontSize(8.5);
   doc.setFont('helvetica', 'normal');
-  doc.text(`${profTitle} - RUT: ${formatRutChilean(loggedInUser.rut || '')}`, pageWidth / 2, currentY, { align: 'center' });
+  doc.text('MÉDICO CIRUJANO', pageWidth / 2, currentY, { align: 'center' });
+  currentY += 4;
+  doc.text(`RUT: ${formatRutChilean(loggedInUser.rut || '')}`, pageWidth / 2, currentY, { align: 'center' });
 
   const safeFileName = `Orden_Laboratorio_${(data.nombrePaciente || 'Paciente').replace(/[<>:"/\\|?*]+/g, '').replace(/\s+/g, '_')}.pdf`;
   await savePdf(doc, safeFileName);
@@ -1883,8 +1892,8 @@ export const generateEcicepResumenPdf = async (data: any, user: User): Promise<v
         const firstPage = pages[0];
         const { width, height } = firstPage.getSize();
         
-        const today = new Date();
-        const formattedDate = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
+        const today = getChileDate();
+        const formattedDate = getChileDDMMYYYY(today);
         const titleText = `RESUMEN DE ATENCIÓN ECICEP ${formattedDate}`;
         
         // Helper to wrap text robustly
@@ -2059,8 +2068,8 @@ export const generateGesPdf = async (data: any, user: User): Promise<void> => {
             });
         };
 
-        const now = new Date();
-        const formattedDate = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
+        const now = getChileDate();
+        const formattedDate = getChileDDMMYYYY(now);
         const formattedTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
         /* =========================================
@@ -2383,4 +2392,146 @@ export const generateFichaVdiPdf = async (
     console.error("Error generating VDI PDF", err);
     throw new Error(err.message);
   }
+};
+
+export const generateOrdenImagenologiaPdf = async (data: OrdenImagenologiaFormData, loggedInUser: User): Promise<void> => {
+  const now = getChileDate();
+  const dateVal = getChileDDMMYYYY(now);
+  const timeVal = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+  const doc = new jsPDF('p', 'mm', 'a4');
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const margin = 15;
+
+  // Build array of all requested imaging exams
+  const examItemsList: { code: string; group: string; label: string }[] = [];
+
+  // 1. Database matching exams
+  Object.keys(data).forEach(key => {
+    if (key !== 'customExams' && data[key] === true) {
+      const details = imagingTestDetails[key];
+      if (details) {
+        examItemsList.push({
+          code: details.code,
+          group: details.category.toUpperCase(),
+          label: details.label,
+        });
+      }
+    }
+  });
+
+  // 2. Custom manual exams
+  if (Array.isArray(data.customExams)) {
+    data.customExams.forEach(customLabel => {
+      if (customLabel.trim()) {
+        examItemsList.push({
+          code: '',
+          group: 'ESTUDIO DE IMÁGENES',
+          label: customLabel.trim(),
+        });
+      }
+    });
+  }
+
+  if (examItemsList.length === 0) {
+    examItemsList.push({
+      code: '---',
+      group: 'ESTUDIO DE IMÁGENES',
+      label: 'Sin exámenes seleccionados',
+    });
+  }
+
+  // Generate 1 page per requested imaging study
+  examItemsList.forEach((examItem, index) => {
+    if (index > 0) {
+      doc.addPage();
+    }
+
+    let currentY = 18;
+
+    // Header Titles
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.text('CESFAM San Juan - Coquimbo', margin, currentY);
+    doc.text(`Fecha Emisión: ${dateVal} ${timeVal}`, pageWidth - margin, currentY, { align: 'right' });
+    currentY += 14;
+
+    // Main Title
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('SOLICITUD DE EXÁMENES DE IMÁGENES', pageWidth / 2, currentY, { align: 'center' });
+    currentY += 14;
+
+    // Patient Info Table
+    autoTable(doc, {
+      startY: currentY,
+      margin: { left: margin, right: margin },
+      theme: 'plain',
+      styles: { fontSize: 9, font: 'helvetica', textColor: [0, 0, 0], cellPadding: 1.5 },
+      body: [
+        [
+          { content: `Paciente: ${data.nombrePaciente || 'N/I'}`, styles: { fontStyle: 'bold' } },
+          { content: `RUT: ${formatRutChilean(data.rutPaciente || '')}`, styles: { fontStyle: 'bold' } },
+          { content: `NHC / Ficha: ${data.nhcPaciente || data.numeroFicha || 'N/I'}` }
+        ],
+        [
+          { content: `Fecha Nac: ${formatDateToDDMMYYYY(data.fechaNacimiento)}` },
+          { content: `Edad: ${data.edad || 'N/I'}` },
+          { content: `Sexo: ${data.sexo || 'N/I'}` }
+        ],
+        [
+          { content: `Dirección: ${data.direccion || 'N/I'}`, colSpan: 2 },
+          { content: `Teléfono: ${data.telefono || 'N/I'}` }
+        ],
+        [
+          { content: `Diagnóstico: ${data.diagnostico || 'CONTROL GENERAL DE SALUD DE RUTINA'}`, colSpan: 3, styles: { fontStyle: 'italic' } }
+        ]
+      ]
+    });
+
+    currentY = (doc as any).lastAutoTable.finalY + 6;
+
+    // Table with THIS SINGLE EXAM
+    autoTable(doc, {
+      startY: currentY,
+      margin: { left: margin, right: margin },
+      head: [['CATEGORÍA / MODALIDAD', 'ESTUDIO SOLICITADO', 'PRIORIDAD', 'OBSERVACIONES']],
+      body: [
+        [
+          examItem.group,
+          examItem.label,
+          'Normal',
+          data.observacionesGlobales || ''
+        ]
+      ],
+      theme: 'grid',
+      headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold', fontSize: 8.5, lineColor: [0, 0, 0], lineWidth: 0.1 },
+      bodyStyles: { fontSize: 8.5, textColor: [0, 0, 0], lineColor: [0, 0, 0], lineWidth: 0.1 },
+      columnStyles: {
+        0: { cellWidth: 50 },
+        1: { cellWidth: 'auto' },
+        2: { cellWidth: 24, halign: 'center' },
+        3: { cellWidth: 45 }
+      }
+    });
+
+    currentY = (doc as any).lastAutoTable.finalY + 25;
+
+    // Professional Signature block
+    doc.setLineWidth(0.3);
+    doc.line(pageWidth / 2 - 35, currentY, pageWidth / 2 + 35, currentY);
+    currentY += 4;
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text(loggedInUser.fullName || 'PROFESIONAL RESPONSABLE', pageWidth / 2, currentY, { align: 'center' });
+    currentY += 4;
+    doc.setFontSize(8.5);
+    doc.setFont('helvetica', 'normal');
+    doc.text('MÉDICO CIRUJANO', pageWidth / 2, currentY, { align: 'center' });
+    currentY += 4;
+    doc.text(`RUT: ${formatRutChilean(loggedInUser.rut || '')}`, pageWidth / 2, currentY, { align: 'center' });
+  });
+
+  const safeFileName = `Orden_Imagenologia_${(data.nombrePaciente || 'Paciente').replace(/[<>:"/\\|?*]+/g, '').replace(/\s+/g, '_')}.pdf`;
+  await savePdf(doc, safeFileName);
 };

@@ -160,6 +160,21 @@ export const renderStatusBadge = (presenceStatus?: string, borderClass = "border
   return <div className={`${baseClass} w-3.5 h-3.5 bg-slate-400`}></div>;
 };
 
+export const getSectorColorClass = (sector?: string) => {
+  if (!sector) return 'bg-red-500 border-red-600';
+  const s = normalizeText(sector);
+  if (s.includes('naranj') || s.includes('orange')) {
+    return 'bg-orange-500 border-orange-600';
+  }
+  if (s.includes('verd') || s.includes('green')) {
+    return 'bg-emerald-500 border-emerald-600';
+  }
+  if (s.includes('amarill') || s.includes('yellow')) {
+    return 'bg-amber-400 border-amber-500';
+  }
+  // Por defecto rojo
+  return 'bg-red-500 border-red-600';
+};
 
 export const ChatLocal: React.FC<ChatLocalProps> = ({ 
   loggedInUser, 
@@ -183,7 +198,7 @@ export const ChatLocal: React.FC<ChatLocalProps> = ({
   const [activeChannel, setActiveChannel] = useState<string>('general');
   const [currentPane, setCurrentPane] = useState<'list' | 'chat'>('list');
   const [showContacts, setShowContacts] = useState(false);
-  const [activeTabSub, setActiveTabSub] = useState<'prioritarios' | 'otros'>('prioritarios');
+  const [activeTabSub, setActiveTabSub] = useState<'mensajes' | 'contactos'>('mensajes');
   const [messagesGeneral, setMessagesGeneral] = useState<Message[]>([]);
   const [messagesPrivate, setMessagesPrivate] = useState<Message[]>([]);
   const [onlineUsers, setOnlineUsers] = useState<PresenceUser[]>([]);
@@ -1013,10 +1028,91 @@ export const ChatLocal: React.FC<ChatLocalProps> = ({
     return { count: unread.length, lastTime: lastMsg.timestamp };
   };
 
-  const getSortedFilteredUsers = (usersList: PresenceUser[]) => {
+  // Consolidar todos los usuarios conocidos (datos locales + históricos registrados)
+  const allKnownUsersMap = useMemo(() => {
+    const map = new Map<string, PresenceUser>();
+
+    // 1. Usuarios registrados en el sistema estático
+    allUsersData.forEach(u => {
+      map.set(u.username.toLowerCase(), {
+        id: u.username,
+        fullName: u.fullName,
+        profession: u.profession,
+        box: '',
+        sector: u.sector || '',
+        cesfam: u.cesfam || '',
+        lastSeen: null,
+        status: 'Disponible.',
+        profilePictureUrl: u.profilePictureUrl || ''
+      });
+    });
+
+    // 2. Usuarios históricos en Firebase
+    historicalUsers.forEach(hu => {
+      const key = hu.id.toLowerCase();
+      const existing = map.get(key);
+      map.set(key, {
+        ...(existing || {}),
+        ...hu,
+        id: hu.id,
+        fullName: hu.fullName || existing?.fullName || hu.id,
+        cesfam: hu.cesfam || existing?.cesfam || '',
+        box: hu.box || existing?.box || '',
+        status: hu.status || existing?.status || 'Disponible.'
+      });
+    });
+
+    // 3. Usuarios actualmente en línea
+    onlineUsers.forEach(ou => {
+      const key = ou.id.toLowerCase();
+      const existing = map.get(key);
+      map.set(key, {
+        ...(existing || {}),
+        ...ou,
+        id: ou.id,
+        fullName: ou.fullName || existing?.fullName || ou.id,
+        cesfam: ou.cesfam || existing?.cesfam || '',
+        box: ou.box || existing?.box || '',
+        status: ou.status || existing?.status || 'Disponible.',
+        presenceStatus: ou.presenceStatus || 'online'
+      });
+    });
+
+    return map;
+  }, [historicalUsers, onlineUsers]);
+
+  // Lista de usuarios con los que se ha intercambiado mensajes privados
+  const messagePartnersList = useMemo(() => {
     const term = normalizeText(searchTerm);
-    return usersList
-      .filter(user => user.id !== loggedInUser.username && normalizeText(user.fullName).includes(term))
+    const partnersMap = new Map<string, PresenceUser>();
+
+    messagesPrivate.forEach(m => {
+      const otherUsername = m.senderUsername === loggedInUser.username ? m.receiverUsername : m.senderUsername;
+      if (otherUsername && otherUsername.toLowerCase() !== loggedInUser.username.toLowerCase()) {
+        const key = otherUsername.toLowerCase();
+        if (!partnersMap.has(key)) {
+          const userObj = allKnownUsersMap.get(key) || {
+            id: otherUsername,
+            fullName: m.senderUsername === otherUsername ? m.senderName : otherUsername,
+            profession: m.senderProfession || 'medicina',
+            box: m.senderBox || '',
+            sector: m.senderSector || '',
+            cesfam: '',
+            lastSeen: null,
+            status: 'Disponible.'
+          };
+          // Si el mensaje contenía box o sector del emisor, aprovechamos
+          if (m.senderUsername === otherUsername) {
+            if (m.senderBox && !userObj.box) userObj.box = m.senderBox;
+            if (m.senderSector && !userObj.sector) userObj.sector = m.senderSector;
+          }
+          partnersMap.set(key, userObj);
+        }
+      }
+    });
+
+    return Array.from(partnersMap.values())
+      .filter(u => normalizeText(u.fullName).includes(term))
       .sort((a, b) => {
         const unreadA = getUnreadForUser(a.id) ? 1 : 0;
         const unreadB = getUnreadForUser(b.id) ? 1 : 0;
@@ -1027,24 +1123,30 @@ export const ChatLocal: React.FC<ChatLocalProps> = ({
         if (timeB !== timeA) return timeB - timeA;
         return a.fullName.localeCompare(b.fullName);
       });
+  }, [messagesPrivate, allKnownUsersMap, searchTerm, loggedInUser.username, lastMessageTime]);
+
+  // Todos los contactos para la pestaña "Contactos"
+  const allContactsList = useMemo(() => {
+    const term = normalizeText(searchTerm);
+    return Array.from(allKnownUsersMap.values())
+      .filter(u => u.id.toLowerCase() !== loggedInUser.username.toLowerCase() && normalizeText(u.fullName).includes(term))
+      .sort((a, b) => {
+        const aOnline = onlineUsers.some(ou => ou.id.toLowerCase() === a.id.toLowerCase());
+        const bOnline = onlineUsers.some(ou => ou.id.toLowerCase() === b.id.toLowerCase());
+        if (aOnline !== bOnline) return aOnline ? -1 : 1;
+        return a.fullName.localeCompare(b.fullName);
+      });
+  }, [allKnownUsersMap, searchTerm, loggedInUser.username, onlineUsers]);
+
+  const getUserPresenceStatus = (userId: string): string => {
+    const onlineMatch = onlineUsers.find(ou => ou.id.toLowerCase() === userId.toLowerCase());
+    if (onlineMatch) {
+      return onlineMatch.presenceStatus || 'online';
+    }
+    return 'offline';
   };
 
-  const onlineFiltered = getSortedFilteredUsers(onlineUsers);
-  const offlineFiltered = getSortedFilteredUsers(
-    historicalUsers.filter(hu => !onlineUsers.some(ou => ou.id === hu.id))
-  );
-
-  const activeChatUsernames = useMemo(() => {
-    const usernames = new Set<string>();
-    messagesPrivate.forEach(m => {
-      const other = m.senderUsername === loggedInUser.username ? m.receiverUsername : m.senderUsername;
-      if (other) usernames.add(other);
-    });
-    return usernames;
-  }, [messagesPrivate, loggedInUser.username]);
-
   const isSearching = searchTerm.trim().length > 0;
-  const shouldShowContacts = showContacts || isSearching || (activeChatUsernames.size > 0);
 
   const EmptyIllustration = () => (
     <svg viewBox="0 0 200 130" className="w-44 h-28 mx-auto mb-2 select-none" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1307,7 +1409,7 @@ export const ChatLocal: React.FC<ChatLocalProps> = ({
                       setUnreadCount(0);
                     }
                     setIsProfileExpanded(false);
-                    setShowContacts(true);
+                    setActiveTabSub('contactos');
                     setSearchTerm('');
                   }}
                 >
@@ -1353,7 +1455,7 @@ export const ChatLocal: React.FC<ChatLocalProps> = ({
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Buscar mensajes"
+                  placeholder={activeTabSub === 'mensajes' ? "Buscar conversaciones" : "Buscar contactos"}
                   className="w-full text-xs outline-none bg-transparent text-slate-800 placeholder-slate-500 font-medium"
                 />
                 <button className="text-slate-500 hover:text-slate-700 transition-colors p-0.5">
@@ -1367,29 +1469,29 @@ export const ChatLocal: React.FC<ChatLocalProps> = ({
               </div>
             </div>
 
-            {/* Sub Tabs */}
+            {/* Sub Tabs: Mensajes vs Contactos */}
             <div className="flex border-b border-[#abc6e9] text-xs font-semibold text-[#183c7d] bg-[#f0f5fc] shrink-0 select-none">
               <button
-                onClick={() => setActiveTabSub('prioritarios')}
-                className={`flex-1 py-2.5 text-center transition-all cursor-pointer ${activeTabSub === 'prioritarios' ? 'text-[#183c7d] border-b-2 border-[#183c7d] font-bold bg-[#cbdffb]/40' : 'hover:bg-slate-50/50'}`}
+                onClick={() => setActiveTabSub('mensajes')}
+                className={`flex-1 py-2.5 text-center transition-all cursor-pointer ${activeTabSub === 'mensajes' ? 'text-[#183c7d] border-b-2 border-[#183c7d] font-bold bg-[#cbdffb]/40' : 'hover:bg-slate-50/50'}`}
               >
-                En línea
+                Mensajes
               </button>
               <button
-                onClick={() => setActiveTabSub('otros')}
-                className={`flex-1 py-2.5 text-center transition-all cursor-pointer ${activeTabSub === 'otros' ? 'text-[#183c7d] border-b-2 border-[#183c7d] font-bold bg-[#cbdffb]/40' : 'hover:bg-slate-50/50'}`}
+                onClick={() => setActiveTabSub('contactos')}
+                className={`flex-1 py-2.5 text-center transition-all cursor-pointer ${activeTabSub === 'contactos' ? 'text-[#183c7d] border-b-2 border-[#183c7d] font-bold bg-[#cbdffb]/40' : 'hover:bg-slate-50/50'}`}
               >
-                Desconectados
+                Contactos
               </button>
             </div>
 
             {/* Scrollable list body */}
             <div className="flex-1 overflow-y-auto min-h-0 bg-white border border-[#abc6e9] rounded-lg m-2">
               <div className="divide-y divide-slate-100">
-                  {/* Under Prioritarios: General channel + online contacts */}
-                  {activeTabSub === 'prioritarios' && (
+                  {/* PESTAÑA: MENSAJES (Grupo General + usuarios con quienes hay conversación) */}
+                  {activeTabSub === 'mensajes' && (
                     <>
-                      {/* General channel */}
+                      {/* Grupo General */}
                       {(!isSearching || normalizeText("Grupo General").includes(normalizeText(searchTerm))) && (
                         <div
                           onClick={() => {
@@ -1403,6 +1505,7 @@ export const ChatLocal: React.FC<ChatLocalProps> = ({
                               <path d="M19 3H5C3.89543 3 3 3.89543 3 5V21H21V5C21 3.89543 20.1046 3 19 3Z" />
                               <path d="M12 9V15" /><path d="M9 12H15" />
                             </svg>
+                            <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-white bg-emerald-600"></div>
                           </div>
                           <div className="flex-1 min-w-0">
                             {(() => {
@@ -1441,10 +1544,12 @@ export const ChatLocal: React.FC<ChatLocalProps> = ({
                         </div>
                       )}
 
-                      {/* Online contacts */}
-                      {onlineFiltered.map(user => {
+                      {/* Lista de usuarios con conversaciones privadas */}
+                      {messagePartnersList.map(user => {
                           const unread = getUnreadForUser(user.id);
                           const lastPrivateMsg = getLastPrivateMessage(user.id);
+                          const presence = getUserPresenceStatus(user.id);
+
                           return (
                             <div
                               key={user.id}
@@ -1462,11 +1567,24 @@ export const ChatLocal: React.FC<ChatLocalProps> = ({
                                     <LinkedInDefaultAvatar />
                                   )}
                                 </div>
-                                {renderStatusBadge(user.presenceStatus, "border-2 border-white")}
+                                {renderStatusBadge(presence, "border-2 border-white")}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <div className="flex justify-between items-baseline">
-                                  <h4 className="text-xs font-bold text-slate-800 truncate">{user.fullName}</h4>
+                                <div className="flex justify-between items-baseline gap-1">
+                                  <div className="flex items-center gap-1.5 truncate min-w-0">
+                                    <h4 className="text-xs font-bold text-slate-800 truncate">{user.fullName}</h4>
+                                    <div className="flex items-center gap-1 shrink-0">
+                                      {user.box && (
+                                        <span className="text-[9px] font-semibold text-slate-600 bg-slate-100 px-1 py-0.2 rounded border border-slate-200/80">
+                                          Box {user.box}
+                                        </span>
+                                      )}
+                                      <span
+                                        className={`w-2.5 h-2.5 rounded-xs border shrink-0 ${getSectorColorClass(user.sector)}`}
+                                        title={user.sector ? `Sector ${user.sector}` : 'Sector no asignado (Rojo)'}
+                                      />
+                                    </div>
+                                  </div>
                                   {lastPrivateMsg && (
                                     <span className="text-[9px] text-slate-400 font-medium shrink-0 ml-1">
                                       {formatLastMessageDateTime(lastPrivateMsg.timestamp)}
@@ -1474,13 +1592,18 @@ export const ChatLocal: React.FC<ChatLocalProps> = ({
                                   )}
                                 </div>
                                 <div className="flex justify-between items-center mt-0.5">
-                                  <p className="text-[10px] text-slate-400 truncate pr-2">
+                                  <p className="text-[10px] text-slate-500 truncate pr-2">
                                     {lastPrivateMsg ? (
                                       <>
-                                        <span className="font-semibold text-slate-500">{lastPrivateMsg.senderUsername === loggedInUser.username ? 'Tú' : lastPrivateMsg.senderName}:</span> <span className="text-slate-500">{lastPrivateMsg.isNudge ? '📢 Zumbido' : lastPrivateMsg.text}</span>
+                                        <span className="font-semibold text-slate-600">
+                                          {lastPrivateMsg.senderUsername === loggedInUser.username ? 'Tú' : lastPrivateMsg.senderName}:
+                                        </span>{' '}
+                                        <span className="text-slate-600">
+                                          {lastPrivateMsg.isNudge ? '📢 Zumbido' : lastPrivateMsg.text}
+                                        </span>
                                       </>
                                     ) : (
-                                      user.status || 'Disponible.'
+                                      <span className="text-slate-400 italic">Sin mensajes previos</span>
                                     )}
                                   </p>
                                   {unread && (
@@ -1493,18 +1616,23 @@ export const ChatLocal: React.FC<ChatLocalProps> = ({
                             </div>
                           );
                         })}
-                      {onlineFiltered.length === 0 && (
-                        <div className="p-8 text-center text-xs text-slate-400">No hay contactos conectados.</div>
+
+                      {messagePartnersList.length === 0 && (
+                        <div className="p-8 text-center text-xs text-slate-400">
+                          No tienes conversaciones activas. Haz clic en "Contactos" para iniciar un chat.
+                        </div>
                       )}
                     </>
                   )}
 
-                  {/* Under Otros: Offline contacts */}
-                  {activeTabSub === 'otros' && (
+                  {/* PESTAÑA: CONTACTOS (Todos los usuarios con su estado debajo del nombre) */}
+                  {activeTabSub === 'contactos' && (
                     <>
-                      {offlineFiltered.map(user => {
+                      {allContactsList.map(user => {
                           const unread = getUnreadForUser(user.id);
-                          const lastPrivateMsg = getLastPrivateMessage(user.id);
+                          const presence = getUserPresenceStatus(user.id);
+                          const isOnline = presence !== 'offline';
+
                           return (
                             <div
                               key={user.id}
@@ -1512,36 +1640,32 @@ export const ChatLocal: React.FC<ChatLocalProps> = ({
                                 setActiveChannel(`private_${user.id}`);
                                 setCurrentPane('chat');
                               }}
-                              className={`flex items-center space-x-3 p-3 transition-colors cursor-pointer bg-white hover:bg-slate-50 opacity-75 hover:opacity-100 ${activeChannel === `private_${user.id}` ? 'border-l-4 border-emerald-600 bg-emerald-50/10' : ''}`}
+                              className={`flex items-center space-x-3 p-3 transition-colors cursor-pointer bg-white hover:bg-slate-50 ${!isOnline ? 'opacity-80 hover:opacity-100' : ''} ${activeChannel === `private_${user.id}` ? 'border-l-4 border-emerald-600 bg-emerald-50/10' : ''}`}
                             >
                               <div className="relative shrink-0 w-9 h-9">
-                                <div className="w-full h-full rounded-full border border-slate-200 bg-slate-100 flex items-center justify-center text-slate-400 font-bold text-xs overflow-hidden">
+                                <div className="w-full h-full rounded-full border border-slate-200 bg-slate-100 flex items-center justify-center text-slate-600 font-bold text-xs overflow-hidden">
                                   {user.profilePictureUrl ? (
-                                    <img src={user.profilePictureUrl} className="w-full h-full object-cover grayscale opacity-80" />
+                                    <img src={user.profilePictureUrl} className={`w-full h-full object-cover ${!isOnline ? 'grayscale opacity-85' : ''}`} />
                                   ) : (
                                     <LinkedInDefaultAvatar />
                                   )}
                                 </div>
-                                <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-slate-400 border-2 border-white rounded-full"></div>
+                                {renderStatusBadge(presence, "border-2 border-white")}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <div className="flex justify-between items-baseline">
-                                  <h4 className="text-xs font-bold text-slate-600 truncate">{user.fullName}</h4>
-                                  {lastPrivateMsg && (
-                                    <span className="text-[9px] text-slate-400 font-medium shrink-0 ml-1">
-                                      {formatLastMessageDateTime(lastPrivateMsg.timestamp)}
-                                    </span>
-                                  )}
+                                <div className="flex justify-between items-baseline gap-1">
+                                  <div className="flex items-center gap-1.5 truncate min-w-0">
+                                    <h4 className="text-xs font-bold text-slate-800 truncate">{user.fullName}</h4>
+                                    {(user.box || user.cesfam) && (
+                                      <span className="text-[9px] text-slate-400 truncate shrink-0">
+                                        ({user.box ? `Box ${user.box}` : ''}{user.box && user.cesfam ? ' • ' : ''}{user.cesfam || ''})
+                                      </span>
+                                    )}
+                                  </div>
                                 </div>
                                 <div className="flex justify-between items-center mt-0.5">
-                                  <p className="text-[10px] text-slate-400 truncate pr-2">
-                                    {lastPrivateMsg ? (
-                                      <>
-                                        <span className="font-semibold text-slate-400">{lastPrivateMsg.senderUsername === loggedInUser.username ? 'Tú' : lastPrivateMsg.senderName}:</span> <span className="text-slate-400">{lastPrivateMsg.isNudge ? '📢 Zumbido' : lastPrivateMsg.text}</span>
-                                      </>
-                                    ) : (
-                                      user.status || 'Desconectado.'
-                                    )}
+                                  <p className="text-[10px] text-slate-500 truncate pr-2">
+                                    {user.status || (isOnline ? 'Disponible.' : 'Desconectado.')}
                                   </p>
                                   {unread && (
                                     <span className="bg-red-500 text-white text-[9px] font-black rounded-full px-1.5 py-0.5 leading-none shadow-sm shrink-0 border border-white">
@@ -1553,8 +1677,8 @@ export const ChatLocal: React.FC<ChatLocalProps> = ({
                             </div>
                           );
                         })}
-                      {offlineFiltered.length === 0 && (
-                        <div className="p-8 text-center text-xs text-slate-400">No hay contactos desconectados.</div>
+                      {allContactsList.length === 0 && (
+                        <div className="p-8 text-center text-xs text-slate-400">No se encontraron contactos.</div>
                       )}
                     </>
                   )}
@@ -1635,43 +1759,67 @@ export const ChatLocal: React.FC<ChatLocalProps> = ({
                       </div>
                     );
                   } else {
+                    const senderUser = onlineUsers.find(u => u.id === msg.senderUsername) || historicalUsers.find(u => u.id === msg.senderUsername);
+                    const senderPic = isMe ? (profilePic || loggedInUser.profilePictureUrl) : senderUser?.profilePictureUrl;
+
                     return (
-                      <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} ${isConsecutive ? 'mt-0.5' : 'mt-3'}`}>
-                        {!isConsecutive && (
-                          <div className="flex items-baseline space-x-1 mb-1 px-1">
-                            <span className={`text-[11px] font-bold ${amIMentioned ? 'text-rose-600' : 'text-slate-700'}`}>
-                              {isMe ? 'Tú' : msg.senderName}
-                            </span>
-                            {!isMe && msg.senderSector && msg.senderBox && (
-                              <span className="text-[9px] text-slate-400 font-semibold truncate shrink-0 max-w-[120px]">
-                                · SECTOR {msg.senderSector.toUpperCase()} (BOX {msg.senderBox})
+                      <div key={msg.id} className={`flex items-end gap-2 ${isMe ? 'flex-row-reverse' : 'flex-row'} ${isConsecutive ? 'mt-1' : 'mt-3'}`}>
+                        {/* Avatar Círculo a la izquierda (o derecha si es el usuario actual) */}
+                        <div className="w-7 h-7 rounded-full overflow-hidden border border-slate-200 bg-slate-100 shrink-0 flex items-center justify-center shadow-xs">
+                          {senderPic ? (
+                            <img src={senderPic} className="w-full h-full object-cover" alt={msg.senderName} />
+                          ) : (
+                            <LinkedInDefaultAvatar />
+                          )}
+                        </div>
+
+                        <div className={`flex flex-col max-w-[80%] ${isMe ? 'items-end' : 'items-start'}`}>
+                          {!isConsecutive && (
+                            <div className="flex items-baseline space-x-1 mb-1 px-1">
+                              <span className={`text-[11px] font-bold ${amIMentioned ? 'text-rose-600' : 'text-slate-700'}`}>
+                                {isMe ? 'Tú' : msg.senderName}
                               </span>
-                            )}
-                          </div>
-                        )}
-                        <div
-                          className={`px-3 py-2 flex flex-col relative min-w-[80px] shadow-sm text-sm break-words border max-w-[85%] ${amIMentioned ? 'bg-rose-50 border-rose-300 ring-1 ring-rose-400 text-slate-800'
-                              : isMe ? 'bg-sky-100 text-slate-800 border-sky-300 shadow-sky-100/50'
-                                : 'bg-white text-slate-800 border-slate-200'
-                            } ${isMe
-                              ? (isConsecutive && isNextConsecutive ? 'rounded-l-lg rounded-r-sm' : isConsecutive ? 'rounded-tl-lg rounded-bl-lg rounded-tr-sm rounded-br-lg' : isNextConsecutive ? 'rounded-tl-lg rounded-bl-lg rounded-tr-lg rounded-br-sm' : 'rounded-lg rounded-tr-none')
-                              : (isConsecutive && isNextConsecutive ? 'rounded-r-lg rounded-l-sm' : isConsecutive ? 'rounded-tr-lg rounded-br-lg rounded-tl-sm rounded-bl-lg' : isNextConsecutive ? 'rounded-tr-lg rounded-br-lg rounded-tl-lg rounded-bl-sm' : 'rounded-lg rounded-tl-none')
+                              {!isMe && msg.senderSector && msg.senderBox && (
+                                <span className="text-[9px] text-slate-400 font-semibold truncate shrink-0 max-w-[120px]">
+                                  · SECTOR {msg.senderSector.toUpperCase()} (BOX {msg.senderBox})
+                                </span>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Comic Speech Bubble with Tail Arrow */}
+                          <div
+                            className={`px-3 py-2 flex flex-col relative min-w-[90px] shadow-md text-sm border ${
+                              amIMentioned
+                                ? 'bg-rose-50 border-rose-300 ring-1 ring-rose-400 text-slate-800 rounded-2xl'
+                                : isMe
+                                ? 'bg-sky-100 text-slate-800 border-sky-300 shadow-sky-100/50 rounded-2xl rounded-br-xs'
+                                : 'bg-white text-slate-800 border-slate-200 rounded-2xl rounded-bl-xs'
                             }`}
-                        >
-                          <div className="mb-0.5 break-all">{renderMessageText(msg.text)}</div>
-                          <div className={`self-end flex items-center space-x-1 text-[9px] -mb-1 mt-0.5 ${isMe ? 'text-sky-700/60' : 'text-slate-400/80'}`}>
-                            <span>{formatTime(msg.timestamp)}</span>
-                            {isMe && activeChannel.startsWith('private_') && (
-                              <span className="font-bold leading-none flex items-center h-full">
-                                {msg.status === 'read' ? (
-                                  <span className="text-blue-500 text-[10px] tracking-tighter">✓✓</span>
-                                ) : msg.status === 'received' ? (
-                                  <span className="text-slate-400 text-[10px] tracking-tighter">✓✓</span>
-                                ) : (
-                                  <span className="text-slate-400 text-[10px]">✓</span>
-                                )}
-                              </span>
+                            style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}
+                          >
+                            {/* Comic Arrow Tail */}
+                            {!isMe ? (
+                              <div className="absolute -left-2 bottom-1.5 w-0 h-0 border-y-[6px] border-y-transparent border-r-[8px] border-r-white drop-shadow-xs" />
+                            ) : (
+                              <div className="absolute -right-2 bottom-1.5 w-0 h-0 border-y-[6px] border-y-transparent border-l-[8px] border-l-sky-100 drop-shadow-xs" />
                             )}
+
+                            <div className="mb-0.5 leading-relaxed">{renderMessageText(msg.text)}</div>
+                            <div className={`self-end flex items-center space-x-1 text-[9px] -mb-0.5 mt-0.5 ${isMe ? 'text-sky-700/70 font-medium' : 'text-slate-400/90'}`}>
+                              <span>{formatTime(msg.timestamp)}</span>
+                              {isMe && activeChannel.startsWith('private_') && (
+                                <span className="font-bold leading-none flex items-center h-full">
+                                  {msg.status === 'read' ? (
+                                    <span className="text-blue-500 text-[10px] tracking-tighter">✓✓</span>
+                                  ) : msg.status === 'received' ? (
+                                    <span className="text-slate-400 text-[10px] tracking-tighter">✓✓</span>
+                                  ) : (
+                                    <span className="text-slate-400 text-[10px]">✓</span>
+                                  )}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
