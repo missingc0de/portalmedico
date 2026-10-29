@@ -5,9 +5,10 @@ import CopyButton from './CopyButton';
 import { useFormLocalStorage } from '../hooks/useFormLocalStorage';
 import AutoExpandingTextArea from './AutoExpandingTextArea';
 import SmartAntecedentesTextarea from './SmartAntecedentesTextarea';
+import SmartFarmacosTextarea from './SmartFarmacosTextarea';
 import ColegioAutocomplete from './ColegioAutocomplete';
-import { generateClinicalRecordPdf } from '../services/pdfGenerator';
-import { FileText, PlusCircle } from 'lucide-react';
+import { generateAtencionResumenPdf } from '../services/pdfGenerator';
+import { Printer, PlusCircle } from 'lucide-react';
 import { TdahWizardModal } from './TdahWizardModal';
 
 const mentalHealthDiagnoses = [
@@ -74,9 +75,10 @@ const initialFormData: FichaConsultaPasmiFormData = {
 
   // Antecedentes Personales
   edad: '',
+  sexo: '',
   antecedentesMedicos: '',
+  farmacos: '',
   alergias: 'Niega',
-  farmacos: 'Niega',
   hospitalizaciones: 'Niega',
   consultasUrgencias: 'Niega',
   derivaciones: '',
@@ -368,10 +370,23 @@ const FichaConsultaPasmi: React.FC<FichaConsultaPasmiProps> = ({ onBackToMenu, l
     textA += `---------------------------------------\n\n`;
 
     textA += `ANTECEDENTES PERSONALES\n`;
-    textA += `Edad: ${formData.edad || ''}\n`;
+    let edadFormatted = (formData.edad || '').trim();
+    if (edadFormatted) {
+      if (!edadFormatted.toLowerCase().includes('año')) {
+        edadFormatted = `${edadFormatted} años.`;
+      } else if (!edadFormatted.endsWith('.')) {
+        edadFormatted = `${edadFormatted}.`;
+      }
+    }
+    textA += `Edad: ${edadFormatted}\n`;
+
+    if (formData.sexo) {
+      const sexoFormatted = formData.sexo.trim().endsWith('.') ? formData.sexo.trim() : `${formData.sexo.trim()}.`;
+      textA += `Sexo: ${sexoFormatted}\n`;
+    }
     textA += `Antecedentes médicos: \n${formData.antecedentesMedicos || ''}\n`;
+    textA += `Fármacos: ${formData.farmacos || 'Niega'}\n`;
     textA += `Alergias: ${formData.alergias || ''}\n`;
-    textA += `Fármacos: ${formData.farmacos || ''}\n`;
     textA += `Hospitalizaciones: ${formData.hospitalizaciones || ''}\n`;
     textA += `Consultas en urgencias: ${formData.consultasUrgencias || ''}\n`;
     textA += `Derivaciones: ${formData.derivaciones || ''}\n\n`;
@@ -481,7 +496,20 @@ const FichaConsultaPasmi: React.FC<FichaConsultaPasmiProps> = ({ onBackToMenu, l
     if (!loggedInUser) return;
     setStatus(FormStatus.Generating);
     try {
-      await generateClinicalRecordPdf({ title: 'Ficha Consulta PASMI', content: `${anamnesisText}\n\n${exploracionText}\n\n${actuacionText}` }, loggedInUser);
+      await generateAtencionResumenPdf(
+        {
+          ...formData,
+          indicaciones: formData.indicaciones,
+          actuacionText,
+          pccObjetivos: formData.pccObjetivos || [],
+        },
+        loggedInUser,
+        {
+          title: 'RESUMEN CONSULTA PASMI',
+          hasPci: true,
+          filePrefix: 'Resumen_PASMI',
+        }
+      );
     } catch (err) {
       console.error(err);
     } finally {
@@ -549,7 +577,7 @@ const FichaConsultaPasmi: React.FC<FichaConsultaPasmiProps> = ({ onBackToMenu, l
 
   const renderNiegaField = (label: string, name: keyof FichaConsultaPasmiFormData) => (
     <div className="flex flex-col gap-1 w-full">
-      <label className="text-sm font-semibold text-slate-700">{label}</label>
+      <label className="text-sm font-medium text-slate-700">{label}</label>
       <div className="flex gap-2">
         <div className="flex-1">
           <input
@@ -557,8 +585,8 @@ const FichaConsultaPasmi: React.FC<FichaConsultaPasmiProps> = ({ onBackToMenu, l
             name={name}
             value={(formData[name] as string) || ''}
             onChange={handleChange}
-            placeholder="Describa..."
-            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition-all text-slate-700 placeholder-slate-400"
+            placeholder={`Detalle de ${label.toLowerCase()}...`}
+            className="w-full h-[42px] px-3.5 py-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-800 shadow-sm outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed placeholder-slate-400 placeholder:opacity-50"
             disabled={formData[name] === 'Niega'}
           />
         </div>
@@ -591,18 +619,13 @@ const FichaConsultaPasmi: React.FC<FichaConsultaPasmiProps> = ({ onBackToMenu, l
               <form onSubmit={(e) => e.preventDefault()} className="bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-sm flex flex-col gap-4 pb-16">
                 
                 <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-3">
-                  <h3 className="text-lg font-semibold mb-3 text-sky-700 border-b border-sky-200 pb-2">Antecedentes Personales</h3>
-                  
-                  <div className="flex items-end gap-2.5 flex-wrap mb-4">
-                    <div className="flex-grow">
-                      <FormField label="Edad" id="edad" name="edad" value={formData.edad} onChange={handleChange} placeholder="Ej: 14 años" />
-                    </div>
-                    
+                  <div className="flex items-center justify-between border-b border-sky-200 pb-2 mb-1">
+                    <h3 className="text-lg font-semibold text-sky-700">Antecedentes Personales</h3>
                     {/* Botón WIZARD TDAH */}
                     <button
                       type="button"
                       onClick={() => setIsTdahWizardOpen(true)}
-                      className="flex items-center gap-1.5 px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-lg shadow transition-all h-[38px] cursor-pointer whitespace-nowrap"
+                      className="flex items-center gap-1.5 px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-lg shadow transition-all h-[36px] cursor-pointer whitespace-nowrap"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
                         <path d="M19 3l.5 1.5L21 4l-1.5.5L19 6l-.5-1.5L17 4l1.5-.5z" fill="currentColor" stroke="none" />
@@ -613,6 +636,42 @@ const FichaConsultaPasmi: React.FC<FichaConsultaPasmiProps> = ({ onBackToMenu, l
                       </svg>
                       <span>WIZARD TDAH</span>
                     </button>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
+                    <FormField
+                      label="Edad"
+                      id="edad"
+                      name="edad"
+                      value={formData.edad}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, '');
+                        setFormData(prev => ({ ...prev, edad: val }));
+                      }}
+                      placeholder="Ej: 14"
+                      inputClassName="!h-[42px] !text-slate-800 placeholder:opacity-50"
+                    />
+                    <div className="flex flex-col">
+                      <label className="block text-sm font-medium text-slate-700 mb-1.5">Sexo</label>
+                      <div className="flex items-center space-x-6 h-[42px]">
+                        {[
+                          { value: 'Masculino', label: 'Masculino' },
+                          { value: 'Femenino', label: 'Femenino' }
+                        ].map((opt) => (
+                          <label key={opt.value} className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="radio"
+                              name="sexo"
+                              value={opt.value}
+                              checked={formData.sexo === opt.value}
+                              onChange={handleChange}
+                              className="form-radio h-4 w-4 text-sky-600 transition duration-150 ease-in-out"
+                            />
+                            <span className="text-sm text-slate-700">{opt.label}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                   
                   <SmartAntecedentesTextarea
@@ -626,16 +685,35 @@ const FichaConsultaPasmi: React.FC<FichaConsultaPasmiProps> = ({ onBackToMenu, l
                     customTitle="Diagnósticos de Salud Mental"
                     bulletListMode={true}
                   />
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                    {renderNiegaField('Alergias', 'alergias')}
-                    {renderNiegaField('Hospitalizaciones', 'hospitalizaciones')}
-                    {renderNiegaField('Fármacos', 'farmacos')}
-                    {renderNiegaField('Consultas en urgencias', 'consultasUrgencias')}
+
+                  {/* Fármacos como bloque completo con SmartFarmacos */}
+                  <div className="w-full">
+                    <SmartFarmacosTextarea
+                      label="Fármacos"
+                      id="farmacos"
+                      name="farmacos"
+                      value={formData.farmacos || ''}
+                      onChange={(newValue) => setFormData(prev => ({ ...prev, farmacos: newValue }))}
+                      rows={3}
+                      placeholder="Fármacos en uso..."
+                    />
                   </div>
                   
-                  <div className="mt-4">
-                    <FormField label="Derivaciones" id="derivaciones" name="derivaciones" value={formData.derivaciones} onChange={handleChange} placeholder="Ej: Desde COSAM, colegio, etc." />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-1">
+                    {renderNiegaField('Alergias', 'alergias')}
+                    {renderNiegaField('Hospitalizaciones', 'hospitalizaciones')}
+                    {renderNiegaField('Consultas en urgencias', 'consultasUrgencias')}
+                    <div className="flex flex-col gap-1 w-full">
+                      <label className="text-sm font-medium text-slate-700">Derivaciones</label>
+                      <input
+                        type="text"
+                        name="derivaciones"
+                        value={formData.derivaciones || ''}
+                        onChange={handleChange}
+                        placeholder="Ej: Desde COSAM, colegio, etc."
+                        className="w-full h-[42px] px-3.5 py-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-800 shadow-sm outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors placeholder-slate-400 placeholder:opacity-50"
+                      />
+                    </div>
                   </div>
                 </section>
 
@@ -915,10 +993,10 @@ const FichaConsultaPasmi: React.FC<FichaConsultaPasmiProps> = ({ onBackToMenu, l
               type="button"
               onClick={handleExportPdf}
               className="w-full flex items-center justify-center gap-1 px-1 py-1.5 bg-sky-600 hover:bg-sky-700 text-white font-medium text-[11px] uppercase tracking-tight rounded-lg shadow-2xs transition-all duration-150 cursor-pointer h-[32px] overflow-hidden"
-              title="Exportar Resumen PDF"
+              title="Generar Resumen PDF"
             >
-              <FileText className="w-3.5 h-3.5 shrink-0" />
-              <span className="truncate">EXPORTAR PDF</span>
+              <Printer className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">RESUMEN PDF</span>
             </button>
 
             <button

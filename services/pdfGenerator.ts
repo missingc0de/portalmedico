@@ -1866,12 +1866,21 @@ export const generateFichaConsultoriaWord = async (data: FichaConsultoriaFormDat
 };
 
 export const generateEcicepResumenPdf = async (data: any, user: User): Promise<void> => {
+    return generateAtencionResumenPdf(data, user, { title: 'RESUMEN DE ATENCIÓN ECICEP', hasPci: true, filePrefix: 'Resumen_ECICEP' });
+};
+
+export interface AtencionResumenOptions {
+    title?: string;
+    hasPci?: boolean;
+    filePrefix?: string;
+}
+
+export const generateAtencionResumenPdf = async (data: any, user: User, options?: AtencionResumenOptions): Promise<void> => {
     try {
-        // En Electron (file://), la ruta a los assets en public requiere ser relativa. En web (http://), absoluto funciona.
         const baseUrl = window.location.origin !== "null" && !window.location.origin.includes("file://") 
            ? window.location.origin 
            : '.';
-        const url = `${baseUrl}/base_ecicep.pdf`.replace('//base', '/base'); // ensure no double slash
+        const url = `${baseUrl}/base_ecicep.pdf`.replace('//base', '/base');
 
         let existingPdfBytes;
         try {
@@ -1894,7 +1903,8 @@ export const generateEcicepResumenPdf = async (data: any, user: User): Promise<v
         
         const today = getChileDate();
         const formattedDate = getChileDDMMYYYY(today);
-        const titleText = `RESUMEN DE ATENCIÓN ECICEP ${formattedDate}`;
+        const customTitle = options?.title || 'RESUMEN DE ATENCIÓN MÉDICA';
+        const titleText = `${customTitle} ${formattedDate}`.toUpperCase();
         
         // Helper to wrap text robustly
         const drawWrappedText = (text: string, x: number, y: number, font: any, size: number, maxWidth: number) => {
@@ -1904,7 +1914,7 @@ export const generateEcicepResumenPdf = async (data: any, user: User): Promise<v
             let line = '';
             let currentY = y;
             for (let i = 0; i < words.length; i++) {
-                const word = words[i].replace(/\n/g, ''); // ignore internal newlines for horizontal breaks
+                const word = words[i].replace(/\n/g, '');
                 const testLine = line + word + ' ';
                 const testWidth = font.widthOfTextAtSize(testLine, size);
                 if (testWidth > maxWidth && i > 0) {
@@ -1927,107 +1937,130 @@ export const generateEcicepResumenPdf = async (data: any, user: User): Promise<v
         let startY = height - 120; // Title offset
 
         firstPage.drawText(titleText, {
-            x: width / 2 - (helveticaBold.widthOfTextAtSize(titleText, 14) / 2),
+            x: width / 2 - (helveticaBold.widthOfTextAtSize(titleText, 13) / 2),
             y: startY,
-            size: 14,
+            size: 13,
             font: helveticaBold,
-            color: rgb(0.04, 0.4, 0.61), // sky-700 approx
+            color: rgb(0.04, 0.4, 0.61),
         });
         startY -= 30;
 
         const getVal = (val: any) => (val === undefined || val === null || String(val).trim() === '') ? 'No ingresado' : String(val);
 
-        // Metricas
-        const metricasLine = `Peso: ${getVal(data.peso)} kg    Talla: ${getVal(data.talla)} cm    IMC: ${getVal(data.imc)} kg/m2    P.A: ${getVal(data.pa)} mmHg    F.C: ${getVal(data.fc)} lpm`;
-        firstPage.drawText(metricasLine, {
-            x: marginX,
-            y: startY,
-            size: 10,
-            font: helveticaBold,
-            color: rgb(0, 0, 0),
-        });
-        startY -= 35;
+        // Métricas / Signos Vitales (si existen en el formulario o data)
+        const metricasParts: string[] = [];
+        if (data.peso) metricasParts.push(`Peso: ${data.peso} kg`);
+        if (data.talla) metricasParts.push(`Talla: ${data.talla} cm`);
+        if (data.imc) metricasParts.push(`IMC: ${data.imc} kg/m2`);
+        if (data.pa) metricasParts.push(`P.A: ${data.pa} mmHg`);
+        if (data.fc) metricasParts.push(`F.C: ${data.fc} lpm`);
+        if (data.satO2 || data.saturacion) metricasParts.push(`SatO2: ${data.satO2 || data.saturacion}%`);
+        if (data.temperatura) metricasParts.push(`Temp: ${data.temperatura}°C`);
 
-        // Titulo PCI
-        firstPage.drawText(`PLAN DE CUIDADO INTEGRAL (PCI) Y TOMA DE DECISIONES COMPARTIDAS:`, { x: marginX, y: startY, size: 10, font: helveticaBold, color: rgb(0, 0, 0) });
-        startY -= 20;
-
-        // Problemas 
-        firstPage.drawText(`PROBLEMAS VISUALIZADOS:`, { x: marginX, y: startY, size: 10, font: helveticaBold, color: rgb(0, 0, 0) });
-        startY -= 15;
-        startY = drawWrappedText(`Persona y familia: ${getVal(data.pccPersonaFamilia)}`, marginX, startY, helveticaFont, 10, availableWidth);
-        startY -= 5;
-        startY = drawWrappedText(`Equipo de salud: ${getVal(data.pccEquipoSalud)}`, marginX, startY, helveticaFont, 10, availableWidth);
-        startY -= 15;
-
-        // Priorizacion Problemas
-        firstPage.drawText(`PRIORIZACIÓN DE PROBLEMAS:`, { x: marginX, y: startY, size: 10, font: helveticaBold, color: rgb(0, 0, 0) });
-        startY -= 15;
-        startY = drawWrappedText(getVal(data.tomaDecisionesCompartidas), marginX, startY, helveticaFont, 10, availableWidth);
-        startY -= 15;
-        
-        if (data.opcionesConversadas) {
-            firstPage.drawText(`OPCIONES CONVERSADAS:`, { x: marginX, y: startY, size: 10, font: helveticaBold, color: rgb(0, 0, 0) });
-            startY -= 15;
-            startY = drawWrappedText(getVal(data.opcionesConversadas), marginX, startY, helveticaFont, 10, availableWidth);
-            startY -= 15;
+        if (metricasParts.length > 0) {
+            const metricasLine = metricasParts.join('    ');
+            firstPage.drawText(metricasLine, {
+                x: marginX,
+                y: startY,
+                size: 10,
+                font: helveticaBold,
+                color: rgb(0, 0, 0),
+            });
+            startY -= 30;
         }
 
-        // Priorizacion Objetivos
-        firstPage.drawText(`PRIORIZACION DE OBJETIVOS, DIMENSIONES Y METAS:`, { x: marginX, y: startY, size: 10, font: helveticaBold, color: rgb(0, 0, 0) });
-        startY -= 15;
+        const includePci = options?.hasPci ?? false;
 
-        const objetivos: PccObjetivo[] = data.pccObjetivos || [];
-        if (objetivos.length === 0) {
-            startY = drawWrappedText(`No hay objetivos registrados.`, marginX, startY, helveticaFont, 10, availableWidth);
-        } else {
-            for (let i = 0; i < objetivos.length; i++) {
-                const obj = objetivos[i];
-                firstPage.drawText(`OBJETIVO/META #${i + 1}: ${getVal(obj.objetivo)}`, { x: marginX, y: startY, size: 10, font: helveticaBold, color: rgb(0, 0, 0) });
-                startY -= 15;
-                startY = drawWrappedText(`Acuerdo: ${getVal(obj.acuerdo)}`, marginX + 10, startY, helveticaFont, 10, availableWidth - 10);
-                startY -= 5;
-                startY = drawWrappedText(`Acciones específicas: ${getVal(obj.acciones)}`, marginX + 10, startY, helveticaFont, 10, availableWidth - 10);
-                startY -= 10;
-            }
-        }
-        startY -= 10;
-        
-        // Plan Adicional
-        if (data.indicaciones?.trim()) {
-            firstPage.drawText(`PLAN ADICIONAL / DETALLES:`, { x: marginX, y: startY, size: 10, font: helveticaBold, color: rgb(0, 0, 0) });
+        if (includePci) {
+            // Titulo PCI
+            firstPage.drawText(`PLAN DE CUIDADO INTEGRAL (PCI) Y TOMA DE DECISIONES COMPARTIDAS:`, { x: marginX, y: startY, size: 10, font: helveticaBold, color: rgb(0, 0, 0) });
+            startY -= 20;
+
+            // Problemas 
+            firstPage.drawText(`PROBLEMAS VISUALIZADOS:`, { x: marginX, y: startY, size: 10, font: helveticaBold, color: rgb(0, 0, 0) });
+            startY -= 15;
+            startY = drawWrappedText(`Persona y familia: ${getVal(data.pccPersonaFamilia)}`, marginX, startY, helveticaFont, 10, availableWidth);
+            startY -= 5;
+            startY = drawWrappedText(`Equipo de salud: ${getVal(data.pccEquipoSalud)}`, marginX, startY, helveticaFont, 10, availableWidth);
+            startY -= 15;
+
+            // Priorizacion Problemas
+            firstPage.drawText(`PRIORIZACIÓN DE PROBLEMAS:`, { x: marginX, y: startY, size: 10, font: helveticaBold, color: rgb(0, 0, 0) });
+            startY -= 15;
+            startY = drawWrappedText(getVal(data.tomaDecisionesCompartidas), marginX, startY, helveticaFont, 10, availableWidth);
             startY -= 15;
             
-            const lines = data.indicaciones.split('\n');
+            if (data.opcionesConversadas) {
+                firstPage.drawText(`OPCIONES CONVERSADAS:`, { x: marginX, y: startY, size: 10, font: helveticaBold, color: rgb(0, 0, 0) });
+                startY -= 15;
+                startY = drawWrappedText(getVal(data.opcionesConversadas), marginX, startY, helveticaFont, 10, availableWidth);
+                startY -= 15;
+            }
+
+            // Priorizacion Objetivos
+            firstPage.drawText(`PRIORIZACION DE OBJETIVOS, DIMENSIONES Y METAS:`, { x: marginX, y: startY, size: 10, font: helveticaBold, color: rgb(0, 0, 0) });
+            startY -= 15;
+
+            const objetivos: PccObjetivo[] = data.pccObjetivos || [];
+            if (objetivos.length === 0) {
+                startY = drawWrappedText(`No hay objetivos registrados.`, marginX, startY, helveticaFont, 10, availableWidth);
+            } else {
+                for (let i = 0; i < objetivos.length; i++) {
+                    const obj = objetivos[i];
+                    firstPage.drawText(`OBJETIVO/META #${i + 1}: ${getVal(obj.objetivo)}`, { x: marginX, y: startY, size: 10, font: helveticaBold, color: rgb(0, 0, 0) });
+                    startY -= 15;
+                    startY = drawWrappedText(`Acuerdo: ${getVal(obj.acuerdo)}`, marginX + 10, startY, helveticaFont, 10, availableWidth - 10);
+                    startY -= 5;
+                    startY = drawWrappedText(`Acciones específicas: ${getVal(obj.acciones)}`, marginX + 10, startY, helveticaFont, 10, availableWidth - 10);
+                    startY -= 10;
+                }
+            }
+            startY -= 10;
+        }
+
+        // INDICACIONES Y PLAN DE TRATAMIENTO
+        const rawIndicaciones = data.indicaciones || data.indicacionesFarmacologicas || data.indicacionesNoFarmacologicas || data.actuacionText || '';
+        if (rawIndicaciones.trim()) {
+            firstPage.drawText(`INDICACIONES Y PLAN DE ATENCIÓN:`, { x: marginX, y: startY, size: 10, font: helveticaBold, color: rgb(0, 0, 0) });
+            startY -= 15;
+            
+            const lines = rawIndicaciones.split('\n');
             for (const line of lines) {
                 const trimmedLine = line.trim();
                 if (!trimmedLine) continue;
                 
-                const bulletLine = trimmedLine.startsWith('-') ? trimmedLine : `- ${trimmedLine}`;
+                const bulletLine = (trimmedLine.startsWith('-') || trimmedLine.startsWith('•')) ? trimmedLine : `- ${trimmedLine}`;
                 startY = drawWrappedText(bulletLine, marginX, startY, helveticaFont, 10, availableWidth);
+                if (startY < 90) break;
             }
             startY -= 15;
         }
 
-        // Proximo control
-        const propControlText = `PRÓXIMO CONTROL EN ${getVal(data.planProximoControlTiempo)} CON MÉDICO + ${getVal(data.planProximoControlDupla)}`.toUpperCase();
-        firstPage.drawText(propControlText, {
-            x: marginX,
-            y: startY,
-            size: 14, // Fuente un poco mas grande (14 vs 10/11)
-            font: helveticaBold,
-            color: rgb(0, 0, 0),
-        });
+        // Proximo control (si existe)
+        const proxTiempo = data.planProximoControlTiempo || data.proximoControlTiempo || data.proximoControl || data.proxControl;
+        const proxDupla = data.planProximoControlDupla || data.proximoControlDupla;
+        if (proxTiempo) {
+            const propControlText = proxDupla 
+                ? `PRÓXIMO CONTROL EN ${proxTiempo} CON MÉDICO + ${proxDupla}`.toUpperCase()
+                : `PRÓXIMO CONTROL: ${proxTiempo}`.toUpperCase();
+            firstPage.drawText(propControlText, {
+                x: marginX,
+                y: Math.max(50, startY),
+                size: 13,
+                font: helveticaBold,
+                color: rgb(0, 0, 0),
+            });
+        }
 
         // Save PDF
         const pdfBytes = await pdfDoc.save();
-        const safeFileName = `Resumen_ECICEP_${(data.nombrePaciente || 'Paciente').replace(/[<>:"/\\|?*]+/g, '').replace(/\s+/g, '_')}.pdf`;
+        const safeFileName = `${options?.filePrefix || 'Resumen_Atencion'}_${(data.nombrePaciente || data.nombre || 'Paciente').replace(/[<>:"/\\|?*]+/g, '').replace(/\s+/g, '_')}.pdf`;
         const blob = new Blob([pdfBytes as unknown as BlobPart], { type: 'application/pdf' });
         
         openPdfInNewTab(blob, safeFileName);
         
     } catch (err: any) {
-        console.error("Error generating ECICEP Resumen", err);
+        console.error("Error generating Resumen PDF", err);
         alert(`Ocurrió un error al generar el PDF de resumen.\n\nDetalle técnico: ${err.message}`);
     }
 };

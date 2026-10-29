@@ -103,7 +103,9 @@ export type CertificateType =
   | 'hdReumatologia'
   | 'hojaDiariaRem'
   | 'tablaComposicionAlimentos'
-  | 'fichaVisitaDomiciliaria';
+  | 'fichaVisitaDomiciliaria'
+  | 'fichaIngresoPadds'
+  | 'fichaControlPadds';
 
 export interface PccObjetivo {
   titulo?: string;
@@ -1727,6 +1729,79 @@ export interface FichaIngresoEcicepFormData {
   sm_em_intelectual: string;
   sm_em_juicio: string;
   sm_em_insight: string;
+  [key: string]: any;
+}
+
+
+export interface FichaIngresoPaddsFormData extends FichaIngresoEcicepFormData {
+  // Piel, lesiones por presión y cuidados corporales
+  padds_barthel_calculado?: string;
+  padds_barthel_detalle?: string;
+  padds_zarit_calculado?: string;
+  padds_estado_piel?: string;
+  padds_lesiones_presion?: string;
+  padds_heridas_ulceras?: string;
+  padds_zonas_apoyo?: string[];
+  padds_cambios_posturales?: string;
+  padds_superficie_apoyo?: string;
+  padds_higiene_piel?: string;
+  padds_necesidad_curaciones?: string;
+  padds_piel_observaciones?: string;
+
+  // Cuidados, dispositivos y medicamentos
+  padds_ayudas_tecnicas?: string[];
+  padds_dificultad_medicamentos?: string[];
+  padds_cuidados_clinicos?: string[];
+  duplaProfesionalesTexto?: string;
+
+  // ABVD
+  abvd_alimentacion?: string;
+  abvd_bano?: string;
+  abvd_aseo?: string;
+  abvd_vestido?: string;
+  abvd_deposiciones?: string;
+  abvd_miccion?: string;
+  abvd_retrete?: string;
+  abvd_traslado?: string;
+  abvd_deambulacion?: string;
+  abvd_escaleras?: string;
+
+  // AIVD y Funcionalidad
+  aivd_preparacion_alimentos?: string;
+  aivd_administracion_dinero?: string;
+  aivd_compras?: string;
+  aivd_telefono?: string;
+  aivd_tareas_domesticas?: string;
+  aivd_medicamentos?: string;
+  aivd_salidas_controles?: string;
+  aivd_movilidad_transferencias?: string;
+  aivd_sedestacion_posturales?: string;
+  aivd_riesgo_caidas?: string;
+  aivd_asistencia_24h?: string;
+  aivd_observaciones_funcionales?: string;
+
+  // Alimentación, hidratación y eliminación
+  padds_via_alimentacion?: string;
+  padds_via_alimentacion_otro?: string;
+  padds_habito_miccional_otro?: string;
+  padds_estado_piel_otro?: string;
+  padds_superficie_apoyo_otro?: string;
+  padds_tipo_consistencia?: string;
+  padds_apetito_ingesta?: string;
+  padds_asistencia_alimentacion?: string;
+  padds_dificultad_deglutir?: string | boolean;
+  padds_aspiracion?: string;
+  padds_perdida_peso?: string;
+  padds_deshidratacion?: string;
+  padds_habito_miccional?: string;
+  padds_habito_defecatorio?: string;
+  padds_uso_panales?: boolean;
+  padds_apoyo_higiene?: boolean;
+  padds_obs_medidas?: string;
+}
+
+export interface FichaControlPaddsFormData extends FichaControlEcicepFormData {
+  duplaProfesionalesTexto?: string;
   [key: string]: any;
 }
 

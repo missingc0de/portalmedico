@@ -312,6 +312,10 @@ export const arsenalFarmacologicoData: Farmaco[] = [
   { registroISP: '', medicamento: 'Tiotropio', formaFarmaceutica: 'Cápsula para Inhalación', dosificacion: '18 mcg.', programaOges: '', observaciones: '', tipo: 'APS' },
   { registroISP: '', medicamento: 'Montelukast', formaFarmaceutica: 'Comprimido', dosificacion: '10 mg.', programaOges: '', observaciones: '', tipo: 'APS' },
   { registroISP: '', medicamento: 'Tamsulosina', formaFarmaceutica: 'Cápsula Liberación Prolongada', dosificacion: '0,4 mg.', programaOges: '', observaciones: '', tipo: 'APS' },
-  { registroISP: '', medicamento: 'Dutasteride', formaFarmaceutica: 'Cápsula Blanda', dosificacion: '0,5 mg.', programaOges: '', observaciones: '', tipo: 'APS' }
+  { registroISP: '', medicamento: 'Dutasteride', formaFarmaceutica: 'Cápsula Blanda', dosificacion: '0,5 mg.', programaOges: '', observaciones: '', tipo: 'APS' },
+  { registroISP: '', medicamento: 'Metilfenidato', formaFarmaceutica: 'Comprimido', dosificacion: '10 mg', programaOges: '', observaciones: '', tipo: 'APS' },
+  { registroISP: '', medicamento: 'Metilfenidato Retard', formaFarmaceutica: 'Comprimido de liberación prolongada', dosificacion: '10 mg', programaOges: '', observaciones: '', tipo: 'APS' },
+  { registroISP: '', medicamento: 'Metilfenidato', formaFarmaceutica: 'Comprimido', dosificacion: '20 mg', programaOges: '', observaciones: '', tipo: 'APS' },
+  { registroISP: '', medicamento: 'Metilfenidato Retard', formaFarmaceutica: 'Comprimido de liberación prolongada', dosificacion: '20 mg', programaOges: '', observaciones: '', tipo: 'APS' }
 ]
 

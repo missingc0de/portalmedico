@@ -1,4 +1,6 @@
 import { getChileDDMMYYYY } from './dateService';
+import { db } from './firebase';
+import { collection, doc, setDoc, deleteDoc, onSnapshot, getDocs } from 'firebase/firestore';
 
 export interface SavedFichaEntry {
   id: string;
@@ -109,32 +111,122 @@ export interface PatientRecord {
 }
 
 const STORAGE_KEY = 'portalmedico_patients_v1';
+export const PATIENTS_COLLECTION = 'patients';
 
 export const INITIAL_PATIENTS: PatientRecord[] = [];
 
 type Listener = (patients: PatientRecord[]) => void;
 const listeners: Set<Listener> = new Set();
 
+// In-memory cache synced with Firestore and backed by localStorage
+let memoryPatientsCache: PatientRecord[] = [];
+
+// Helper to sanitize document ID from RUT (e.g. 12.345.678-9 -> 12345678-9)
+export const sanitizeRutForDocId = (rut: string): string => {
+  return rut.replace(/[^a-zA-Z0-9_-]/g, '').toLowerCase() || 'unknown';
+};
+
+// Function to clean undefined fields before sending to Firestore
+const sanitizeForFirestore = (obj: any): any => {
+  if (obj === undefined) return null;
+  if (obj === null || typeof obj !== 'object') return obj;
+  if (Array.isArray(obj)) return obj.map(sanitizeForFirestore);
+  const cleaned: Record<string, any> = {};
+  for (const key of Object.keys(obj)) {
+    const val = obj[key];
+    if (val !== undefined) {
+      cleaned[key] = sanitizeForFirestore(val);
+    }
+  }
+  return cleaned;
+};
+
+// Start Firestore real-time listener
+let isListenerInitialized = false;
+const initCloudListener = () => {
+  if (isListenerInitialized) return;
+  isListenerInitialized = true;
+
+  try {
+    const colRef = collection(db, PATIENTS_COLLECTION);
+    onSnapshot(colRef, (snapshot) => {
+      const cloudList: PatientRecord[] = [];
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data() as PatientRecord;
+        if (data && data.rut) {
+          cloudList.push(data);
+        }
+      });
+
+      // Sort by latest attention or ID
+      cloudList.sort((a, b) => (b.id || '').localeCompare(a.id || ''));
+
+      // If cloud has documents, update cache and localStorage
+      if (cloudList.length > 0) {
+        memoryPatientsCache = cloudList;
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(cloudList));
+        } catch (e) {
+          console.error('Error saving patients backup to localStorage:', e);
+        }
+        patientStore._notify(cloudList);
+      } else {
+        // If cloud is empty but local has data, upload local data to cloud
+        const local = patientStore.getLocalBackup();
+        if (local.length > 0) {
+          local.forEach(p => {
+            patientStore.uploadToCloud(p).catch(err => console.error('Error syncing local patient to cloud:', err));
+          });
+        }
+      }
+    }, (error) => {
+      console.warn("Firestore patient listener warning (using local fallback):", error);
+    });
+  } catch (err) {
+    console.error("Failed to initialize Firestore patient listener:", err);
+  }
+};
+
 export const patientStore = {
-  getPatients(): PatientRecord[] {
+  getLocalBackup(): PatientRecord[] {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed)) {
-          // Remove default mock patients that start with PAT-00
           return parsed.filter(p => p && p.id && !p.id.startsWith('PAT-00'));
         }
       }
     } catch (e) {
       console.error('Error reading patients from localStorage:', e);
     }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_PATIENTS));
-    return INITIAL_PATIENTS;
+    return [];
+  },
+
+  getPatients(): PatientRecord[] {
+    initCloudListener();
+    if (memoryPatientsCache.length > 0) {
+      return memoryPatientsCache;
+    }
+    const local = this.getLocalBackup();
+    memoryPatientsCache = local;
+    return local;
+  },
+
+  async uploadToCloud(patient: PatientRecord): Promise<void> {
+    try {
+      const docId = sanitizeRutForDocId(patient.rut);
+      const docRef = doc(db, PATIENTS_COLLECTION, docId);
+      const cleanData = sanitizeForFirestore(patient);
+      await setDoc(docRef, cleanData, { merge: true });
+    } catch (e) {
+      console.error('Error uploading patient to Firestore:', e);
+    }
   },
 
   savePatient(data: Partial<PatientRecord> & { rut: string; nombre?: string }): PatientRecord {
-    const list = this.getPatients();
+    initCloudListener();
+    const list = [...this.getPatients()];
     const cleanRut = data.rut.trim();
     const uppercaseNombre = data.nombre ? data.nombre.toUpperCase().trim() : '';
 
@@ -169,6 +261,8 @@ export const patientStore = {
       list.unshift(updatedPatient);
     }
 
+    memoryPatientsCache = list;
+
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
     } catch (e) {
@@ -176,6 +270,10 @@ export const patientStore = {
     }
 
     this._notify(list);
+
+    // Save to Firestore Online Cloud
+    this.uploadToCloud(updatedPatient);
+
     return updatedPatient;
   },
 
@@ -193,7 +291,6 @@ export const patientStore = {
     const cleanTipo = tipoFicha.trim().toLowerCase();
 
     // Define forms that can only be saved ONCE per patient (unique instance).
-    // All other controls can have multiple instances.
     const isSingleInstance = (
       cleanTipo.includes('ingreso ecicep') ||
       cleanTipo.includes('preingreso ecicep') ||
@@ -208,11 +305,9 @@ export const patientStore = {
     const todayStr = fecha || getChileDDMMYYYY();
 
     if (isSingleInstance) {
-      // Find if this single-instance ficha already exists
       const existingIdx = existingFichas.findIndex(f => f.tipoFicha.trim().toLowerCase() === cleanTipo);
 
       if (existingIdx >= 0) {
-        // Overwrite / Update existing ficha entry
         const existingEntry = existingFichas[existingIdx];
         targetFichaEntry = {
           ...existingEntry,
@@ -222,7 +317,6 @@ export const patientStore = {
         updatedFichas = [...existingFichas];
         updatedFichas[existingIdx] = targetFichaEntry;
       } else {
-        // Create new single-instance ficha entry
         targetFichaEntry = {
           id: `FCH-${Date.now()}`,
           tipoFicha,
@@ -233,7 +327,6 @@ export const patientStore = {
         updatedFichas = [targetFichaEntry, ...existingFichas];
       }
     } else {
-      // Multiple instances allowed (e.g. controls)
       const priorControlsOfSameType = existingFichas.filter(f => f.tipoFicha.trim().toLowerCase() === cleanTipo);
       const numeroControl = priorControlsOfSameType.length + 1;
       const nombreNominal = `${tipoFicha} #${numeroControl}`;
@@ -278,13 +371,25 @@ export const patientStore = {
   },
 
   deletePatient(rut: string): void {
-    const list = this.getPatients().filter(p => p.rut.toLowerCase() !== rut.trim().toLowerCase());
+    initCloudListener();
+    const cleanRut = rut.trim().toLowerCase();
+    const list = this.getPatients().filter(p => p.rut.toLowerCase() !== cleanRut);
+    memoryPatientsCache = list;
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
     } catch (e) {
       console.error('Error deleting patient from localStorage:', e);
     }
     this._notify(list);
+
+    // Delete from Firestore Online Cloud
+    try {
+      const docId = sanitizeRutForDocId(rut);
+      const docRef = doc(db, PATIENTS_COLLECTION, docId);
+      deleteDoc(docRef).catch(err => console.error("Error deleting doc in Firestore:", err));
+    } catch (e) {
+      console.error("Error calling deleteDoc:", e);
+    }
   },
 
   findPatientByRut(rut: string): PatientRecord | undefined {
@@ -294,6 +399,7 @@ export const patientStore = {
   },
 
   subscribe(listener: Listener): () => void {
+    initCloudListener();
     listeners.add(listener);
     return () => {
       listeners.delete(listener);

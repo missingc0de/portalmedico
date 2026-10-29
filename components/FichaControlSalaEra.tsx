@@ -4,7 +4,7 @@ import { FichaControlSalaEraFormData, FormStatus, User } from '../types';
 import FormField from './FormField';
 import CopyButton from './CopyButton';
 import MedicamentoArsenalInput from './MedicamentoArsenalInput';
-import { generateClinicalRecordPdf } from '../services/pdfGenerator';
+import { generateClinicalRecordPdf, generateAtencionResumenPdf } from '../services/pdfGenerator';
 import { UniversalAIClient, Type } from '../utils/aiClient';
 import { getAiClient } from '../utils/aiClient';
 import ImportModal from './ImportModal';
@@ -454,13 +454,24 @@ const FichaControlSalaEra: React.FC<FichaControlSalaEraProps> = ({ onBackToMenu,
   }, [calculateGeneratedTextParts]);
 
   const handleExportPdf = async () => {
-    if (window.confirm("¿Seguro que desea exportar a PDF?")) {
-        if (!loggedInUser) return;
-        setStatus(FormStatus.Generating);
-        const titleText = isIraAge() ? 'Ficha Control Sala IRA' : 'Ficha Control Sala ERA';
-        try {
-        await generateClinicalRecordPdf({ title: titleText, content: `${anamnesisText}\n\n${exploracionText}\n\n${actuacionText}` }, loggedInUser);
-        } finally { setStatus(FormStatus.Idle); }
+    if (!loggedInUser) {
+      alert('Error: Usuario no identificado.');
+      return;
+    }
+    setStatus(FormStatus.Generating);
+    const titleText = isIraAge() ? 'RESUMEN CONTROL SALA IRA' : 'RESUMEN CONTROL SALA ERA';
+    try {
+      await generateAtencionResumenPdf({
+        ...formData,
+        indicaciones: formData.indicaciones,
+        actuacionText,
+      }, loggedInUser, {
+        title: titleText,
+        hasPci: false,
+        filePrefix: isIraAge() ? 'Resumen_Sala_IRA' : 'Resumen_Sala_ERA'
+      });
+    } finally { 
+      setStatus(FormStatus.Idle); 
     }
   };
 
@@ -785,7 +796,7 @@ const FichaControlSalaEra: React.FC<FichaControlSalaEraProps> = ({ onBackToMenu,
                 title="Imprimir PDF Resumen"
               >
                 <Printer className="w-3.5 h-3.5 shrink-0" />
-                <span className="truncate">{status === FormStatus.Generating ? 'Generando...' : 'EXPORTAR PDF'}</span>
+                <span className="truncate">{status === FormStatus.Generating ? 'Generando...' : 'RESUMEN PDF'}</span>
               </button>
 
               <button

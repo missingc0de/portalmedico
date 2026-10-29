@@ -31,7 +31,11 @@ export const generateUsersFromSchedule = (schedule: OnCallSchedule): User[] => {
     let finalFullName = fullName;
 
     // Diferenciación de usuarios con el mismo apellido
-    if (fullName === "BENJAMIN ROJAS") {
+    if (fullName === "PEREZ" || fullName === "PÉREZ") {
+      username = "larryperez";
+      finalFullName = "LARRY PÉREZ";
+      electronicSignature = `LARRY PÉREZ\nMédico Cirujano`;
+    } else if (fullName === "BENJAMIN ROJAS") {
       username = "benjarojas";
     } else if (fullName === "CAMILA ROJAS") {
       username = "camirojas";

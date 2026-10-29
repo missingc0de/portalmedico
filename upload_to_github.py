@@ -4,8 +4,22 @@ import urllib.request
 import os
 import sys
 
+def get_git_token():
+    env_token = os.environ.get('GH_TOKEN') or os.environ.get('GITHUB_TOKEN')
+    if env_token:
+        return env_token
+    try:
+        proc = subprocess.run(["git", "credential", "fill"], input=b"protocol=https\nhost=github.com\n", capture_output=True)
+        out = proc.stdout.decode('utf-8', errors='ignore')
+        for line in out.splitlines():
+            if line.startswith("password="):
+                return line.split("=", 1)[1].strip()
+    except Exception as e:
+        print("Could not retrieve git credential:", e)
+    return ""
+
 def main():
-    token = sys.argv[1] if len(sys.argv) > 1 else os.environ.get('GH_TOKEN') or os.environ.get('GITHUB_TOKEN')
+    token = sys.argv[1] if len(sys.argv) > 1 else get_git_token()
     if not token:
         print("Error: No GitHub token provided.")
         sys.exit(1)
@@ -17,9 +31,9 @@ def main():
     }
 
     repo = 'missingc0de/portalmedico'
-    tag = 'v1.4.24'
+    tag = 'v1.4.28'
+    version = '1.4.28'
     
-    # Check if release v1.4.24 exists
     release_id = None
     upload_url_base = None
     
@@ -29,16 +43,23 @@ def main():
             data = json.loads(resp.read().decode('utf-8'))
             release_id = data.get('id')
             upload_url_base = data.get('upload_url', '').split('{')[0]
-            print(f"Found existing Release v1.4.24 (ID: {release_id})")
+            print(f"Found existing Release {tag} (ID: {release_id})")
     except Exception as e:
-        print("Release tag not found by URL, attempting creation or lookup...")
+        print(f"Release tag {tag} not found by direct tag URL, attempting creation or lookup...")
         create_payload = {
             'tag_name': tag,
             'target_commitish': 'main',
-            'name': 'Portal Médico v1.4.24',
-            'body': '### Novedades v1.4.24:\n- **Nuevas Fichas y Módulos Clínicos:** Controles de Niño Sano, Nutrición e Imagenología integrados.\n- **Actualizaciones y Correcciones:** Optimización en componentes clínicos y recetas.\n- **Webview Bundling:** Ejecutable y empaquetado optimizado con WebView2 para Windows.\n- **Versión Oficial:** v1.4.24.',
+            'name': f'Portal Médico {tag}',
+            'body': (
+                f'### Novedades {tag}:\n'
+                '- **Nueva Ficha Control PADDS:** Integración completa de objetivos y planes consensuados PADDS, citación inteligente de equipo de cabecera con médico al inicio, cálculo de estratificación y modal de pacientes.\n'
+                '- **Ficha Ingreso PADDS:** Optimización de antecedentes, evaluación de escala Zarit, ayudas técnicas y precompletados clínicos.\n'
+                '- **Equipo de Cabecera:** Actualización y renombrado de ficha Visita Domiciliaria a Equipo de Cabecera en todas las vistas y reportes.\n'
+                '- **Webview Bundling:** Ejecutable e instalador oficial v1.4.28 optimizado con WebView2 para Windows.'
+            ),
             'draft': False,
-            'prerelease': False
+            'prerelease': False,
+            'make_latest': 'true'
         }
         req = urllib.request.Request(f'https://api.github.com/repos/{repo}/releases', data=json.dumps(create_payload).encode('utf-8'), headers=headers, method='POST')
         try:
@@ -46,27 +67,28 @@ def main():
                 data = json.loads(resp.read().decode('utf-8'))
                 release_id = data.get('id')
                 upload_url_base = data.get('upload_url', '').split('{')[0]
-                print(f"Created Release v1.4.24 (ID: {release_id})")
+                print(f"Created Release {tag} (ID: {release_id})")
         except Exception as create_err:
             print("Notice on creation (might already exist):", create_err)
-            # Fetch all releases to find v1.4.24
             all_req = urllib.request.Request(f'https://api.github.com/repos/{repo}/releases', headers=headers)
             with urllib.request.urlopen(all_req) as all_resp:
                 all_releases = json.loads(all_resp.read().decode('utf-8'))
                 for r in all_releases:
-                    if r.get('tag_name') == tag or r.get('name') == 'Portal Médico v1.4.24':
+                    if r.get('tag_name') == tag or r.get('name') == f'Portal Médico {tag}':
                         release_id = r.get('id')
                         upload_url_base = r.get('upload_url', '').split('{')[0]
-                        print(f"Found Release v1.4.24 via list search (ID: {release_id})")
+                        print(f"Found Release {tag} via list search (ID: {release_id})")
                         break
 
-    # List of assets to upload
+    if not release_id or not upload_url_base:
+        print("Error: Could not obtain release_id or upload_url_base.")
+        sys.exit(1)
+
     assets = [
-        ('dist-installer/PortalMedico_Setup_v1.4.24.exe', 'PortalMedico_Setup_v1.4.24.exe'),
-        ('dist-python/run_webview.exe', 'PortalMedico_v1.4.24.exe')
+        (f'dist-installer/PortalMedico_Setup_{tag}.exe', f'PortalMedico_Setup_{tag}.exe'),
+        ('dist-python/run_webview.exe', f'PortalMedico_{tag}.exe')
     ]
 
-    # Delete any existing assets with matching names
     try:
         assets_req = urllib.request.Request(f'https://api.github.com/repos/{repo}/releases/{release_id}/assets', headers=headers)
         with urllib.request.urlopen(assets_req) as resp:
@@ -96,7 +118,6 @@ def main():
 
         upload_url = f"{upload_url_base}?name={asset_name}"
         
-        # Use curl for reliable binary uploads
         cmd = [
             'curl.exe',
             '-X', 'POST',

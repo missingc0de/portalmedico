@@ -124,8 +124,11 @@ const MainMenu: React.FC<MainMenuProps> = ({ onSelectMenuItem, profession, onOpe
     {
       id: 'visitaDomiciliaria',
       label: 'VISITA DOMICILIARIA',
-      action: () => onSelectMenuItem('fichaVisitaDomiciliaria'),
-      isDirectAction: true
+      items: [
+        { label: 'EQUIPO DE CABECERA', type: 'fichaVisitaDomiciliaria' },
+        { label: 'INGRESO PADDS', type: 'fichaIngresoPadds' },
+        { label: 'CONTROL PADDS', type: 'fichaControlPadds' },
+      ]
     },
     { 
       id: 'fondoOjo',
@@ -142,6 +145,14 @@ const MainMenu: React.FC<MainMenuProps> = ({ onSelectMenuItem, profession, onOpe
       </div>
       <div className="flex flex-col gap-3">
         
+        {/* MIS PACIENTES */}
+        <div className="w-full flex">
+          <button onClick={() => onSelectMenuItem('misPacientes')} className="w-full py-2 px-4 bg-violet-500 hover:bg-violet-600 bg-gradient-to-r from-transparent to-black/10 text-white font-semibold rounded-lg shadow-sm hover:shadow transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-violet-500 flex flex-col items-center justify-center text-center border border-violet-600/50 cursor-pointer">
+            <span className="block text-sm uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">MIS PACIENTES</span>
+            <span className="block text-[10px] font-normal text-violet-100 mt-0.5 w-full whitespace-nowrap overflow-hidden text-ellipsis">Ver y gestionar tus pacientes registrados.</span>
+          </button>
+        </div>
+
         {/* PLANTILLAS DE FICHAS CLÍNICAS */}
         <div className="w-full flex flex-col">
           <button

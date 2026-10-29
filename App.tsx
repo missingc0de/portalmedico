@@ -25,6 +25,8 @@ import UnderConstruction from './components/UnderConstruction';
 import FichaControlHipotiroidismo from './components/FichaControlHipotiroidismo';
 import FichaPreingresoEcicep from './components/FichaPreingresoEcicep';
 import { FichaIngresoEcicep } from './components/FichaIngresoEcicep';
+import { FichaIngresoPadds } from './components/FichaIngresoPadds';
+import FichaControlPadds from './components/FichaControlPadds';
 import FichaControlEcicepNuevo from './components/FichaControlEcicepNuevo';
 import FichaSeguimientoEcicep from './components/FichaSeguimientoEcicep';
 import FichaControlSalaEra from './components/FichaControlSalaEra';
@@ -412,7 +414,7 @@ const App: React.FC = () => {
     error?: string;
   } | null>(null);
 
-  const APP_VERSION = '1.4.24';
+  const APP_VERSION = '1.4.28';
   const menuDropdownRef = useRef<HTMLDivElement>(null);
 
   const isNewerVersion = (latest: string, current: string): boolean => {
@@ -1249,7 +1251,7 @@ const App: React.FC = () => {
                 </h2>
               ) : currentView === 'fichaVisitaDomiciliaria' ? (
                 <h2 className="text-base font-bold text-slate-900 leading-tight">
-                  VISITA DOMICILIARIA
+                  EQUIPO DE CABECERA
                 </h2>
               ) : currentView === 'fichaFirmarGes' ? (
                 <h2 className="text-base font-bold text-slate-900 leading-tight">
@@ -1945,6 +1947,32 @@ const App: React.FC = () => {
             />
           </div>
         );
+      case 'fichaIngresoPadds':
+        return (
+          <div className="w-full">
+            <FichaIngresoPadds
+              onBackToMenu={() => navigateTo('menu')}
+              loggedInUser={loggedInUser}
+              actionsRef={ingresoActionsRef}
+              fechaIngresoProp={ingresoFecha}
+              onFechaIngresoChange={setIngresoFecha}
+              patientData={activePatient}
+            />
+          </div>
+        );
+      case 'fichaControlPadds':
+        return (
+          <div className="w-full">
+            <FichaControlPadds
+              onBackToMenu={() => navigateTo('menu')}
+              loggedInUser={loggedInUser}
+              actionsRef={controlEcicepActionsRef}
+              fechaControlProp={controlEcicepFecha}
+              onFechaControlChange={setControlEcicepFecha}
+              patientData={activePatient}
+            />
+          </div>
+        );
       case 'fichaIngresoEcicep':
         return (
           <div className="w-full">
@@ -2173,7 +2201,11 @@ const App: React.FC = () => {
               <rect x="10" y="30" width="80" height="40" rx="5" />
             </svg>
             <h1 className={`text-base font-bold tracking-tight ${globalAnimationClass}`}>
-              {currentView === 'fichaIngresoEcicep'
+              {currentView === 'fichaControlPadds'
+                ? 'PORTAL MÉDICO: CONTROL PADDS'
+                : currentView === 'fichaIngresoPadds'
+                ? 'PORTAL MÉDICO: FICHA INGRESO PADDS'
+                : currentView === 'fichaIngresoEcicep'
                 ? 'PORTAL MÉDICO: FICHA INGRESO ECICEP'
                 : currentView === 'fichaIngresoSm'
                   ? 'PORTAL MÉDICO: INGRESO SALUD MENTAL'
@@ -2190,7 +2222,7 @@ const App: React.FC = () => {
                           : currentView === 'fichaControlSm'
                             ? 'PORTAL MÉDICO: CONTROL DE SALUD MENTAL'
                             : currentView === 'fichaVisitaDomiciliaria'
-                              ? 'PORTAL MÉDICO: VISITA DOMICILIARIA'
+                              ? 'PORTAL MÉDICO: EQUIPO DE CABECERA'
                             : currentView === 'fichaControlSalaIra' || currentView === 'fichaControlSalaEra'
                               ? 'PORTAL MÉDICO: CONTROL SALA IRA/ERA'
                               : currentView === 'fichaControlNinoSano1Mes'

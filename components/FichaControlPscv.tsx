@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { AlertTriangle, X } from 'lucide-react';
 import { FichaControlPscvFormData, FormStatus, User, PccObjetivo } from '../types';
-import { FileText, PlusCircle } from 'lucide-react';
+import { FileText, PlusCircle, Printer } from 'lucide-react';
 import FormField from './FormField';
 import DateField from './DateField';
 import AvisHojaRutaWizard from './AvisHojaRutaWizard';
@@ -10,7 +10,7 @@ import SmartFarmacosTextarea from './SmartFarmacosTextarea';
 import SmartAntecedentesTextarea from './SmartAntecedentesTextarea';
 import { UniversalAIClient, Type } from '../utils/aiClient';
 import { getAiClient } from '../utils/aiClient';
-import { generateClinicalRecordPdf } from '../services/pdfGenerator';
+import { generateClinicalRecordPdf, generateAtencionResumenPdf } from '../services/pdfGenerator';
 import ImportModal from './ImportModal';
 import CopyButton from './CopyButton';
 import BorgScaleModal from './BorgScaleModal';
@@ -860,13 +860,25 @@ const FichaControlPscv: React.FC<FichaControlPscvProps> = ({
 
 
   const handleExportPdf = async () => {
-    if (!loggedInUser) return;
+    if (!loggedInUser) {
+      alert('Error: Usuario no identificado.');
+      return;
+    }
     setStatus(FormStatus.Generating);
     try {
-      const fullContent = `${anamnesisText}\n\n${exploracionText}\n\n${actuacionText}`;
-      const documentTitle = formData.tipoControlCronico ? `Ficha Clínica: ${formData.tipoControlCronico}` : 'Ficha Clínica: Control Crónico';
-      await generateClinicalRecordPdf({ title: documentTitle, content: fullContent }, loggedInUser);
-    } finally { setStatus(FormStatus.Idle); }
+      const titleText = formData.tipoControlCronico ? `RESUMEN CONTROL ${formData.tipoControlCronico.toUpperCase()}` : 'RESUMEN CONTROL CRÓNICO';
+      await generateAtencionResumenPdf({
+        ...formData,
+        indicaciones: formData.indicaciones,
+        actuacionText,
+      }, loggedInUser, {
+        title: titleText,
+        hasPci: false,
+        filePrefix: 'Resumen_Control_Cronico'
+      });
+    } finally { 
+      setStatus(FormStatus.Idle); 
+    }
   };
 
   useEffect(() => {
@@ -1253,11 +1265,12 @@ const FichaControlPscv: React.FC<FichaControlPscvProps> = ({
             <button
               type="button"
               onClick={handleExportPdf}
+              disabled={status === FormStatus.Generating}
               className="w-full flex items-center justify-center gap-1 px-1 py-1.5 bg-sky-600 hover:bg-sky-700 text-white font-medium text-[11px] uppercase tracking-tight rounded-lg shadow-2xs transition-all duration-150 cursor-pointer h-[32px] overflow-hidden"
               title="Exportar Resumen PDF"
             >
-              <FileText className="w-3.5 h-3.5 shrink-0" />
-              <span className="truncate">EXPORTAR PDF</span>
+              <Printer className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">{status === FormStatus.Generating ? 'Generando...' : 'RESUMEN PDF'}</span>
             </button>
 
             <button

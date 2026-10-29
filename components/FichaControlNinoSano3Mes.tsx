@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { FichaControlNinoSano3MesFormData, FormStatus, User } from '../types';
 import FormField from './FormField';
+import CopyButton from './CopyButton';
 import CurvasCrecimientoModal from './CurvasCrecimientoModal';
 import ScoreRMNModal from './ScoreRMNModal';
 import ScoreNeurosensorialModal from './ScoreNeurosensorialModal';
@@ -442,20 +443,13 @@ const FichaControlNinoSano3Mes: React.FC<FichaControlNinoSano3MesProps> = ({ onB
                     </section>
 
                     {/* Barra de Acciones Inferior */}
-                    <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4 sm:p-6 border border-slate-200 bg-white mt-2 rounded-xl shadow-sm mb-6">
+                    <div className="flex justify-start items-center p-4 sm:p-6 border border-slate-200 bg-white mt-2 rounded-xl shadow-sm mb-6">
                         <button 
                             type="button" 
                             onClick={onBackToMenu} 
                             className="w-full sm:w-auto px-6 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold rounded-lg shadow-sm uppercase text-xs tracking-widest cursor-pointer"
                         >
                             Volver al Menú
-                        </button>
-                        <button 
-                            type="button" 
-                            onClick={handleNewDocument} 
-                            className="w-full sm:w-auto px-8 py-3 bg-slate-700 text-white font-black rounded-xl shadow-lg hover:bg-slate-800 transition-all active:scale-95 uppercase text-xs tracking-widest cursor-pointer"
-                        >
-                            BORRAR TODO
                         </button>
                     </div>
                     </form>
@@ -482,7 +476,7 @@ const FichaControlNinoSano3Mes: React.FC<FichaControlNinoSano3MesProps> = ({ onB
                   <div className="flex-1 flex flex-col min-h-0">
                       <div className="flex justify-between items-center mb-0.5 flex-shrink-0">
                           <label className="block text-[11px] font-semibold text-slate-800">ANAMNESIS</label>
-                          <button onClick={() => handleCopyToClipboard(anamnesisText, 'Anamnesis')} className="px-2 py-0.5 text-[10px] font-bold text-slate-600 bg-slate-200 rounded uppercase hover:bg-slate-300">Copiar</button>
+                          <CopyButton textToCopy={isUppercase ? anamnesisText.toUpperCase() : anamnesisText} />
                       </div>
                       <textarea
                           value={isUppercase ? anamnesisText.toUpperCase() : anamnesisText}
@@ -494,7 +488,7 @@ const FichaControlNinoSano3Mes: React.FC<FichaControlNinoSano3MesProps> = ({ onB
                   <div className="flex-1 flex flex-col min-h-0">
                       <div className="flex justify-between items-center mb-0.5 flex-shrink-0">
                           <label className="block text-[11px] font-semibold text-slate-800">EXPLORACIÓN</label>
-                          <button onClick={() => handleCopyToClipboard(exploracionText, 'Exploración')} className="px-2 py-0.5 text-[10px] font-bold text-slate-600 bg-slate-200 rounded uppercase hover:bg-slate-300">Copiar</button>
+                          <CopyButton textToCopy={isUppercase ? exploracionText.toUpperCase() : exploracionText} />
                       </div>
                       <textarea
                           value={isUppercase ? exploracionText.toUpperCase() : exploracionText}
@@ -506,7 +500,7 @@ const FichaControlNinoSano3Mes: React.FC<FichaControlNinoSano3MesProps> = ({ onB
                   <div className="flex-1 flex flex-col min-h-0">
                       <div className="flex justify-between items-center mb-0.5 flex-shrink-0">
                           <label className="block text-[11px] font-semibold text-slate-800">ACTUACIÓN</label>
-                          <button onClick={() => handleCopyToClipboard(actuacionText, 'Actuación')} className="px-2 py-0.5 text-[10px] font-bold text-slate-600 bg-slate-200 rounded uppercase hover:bg-slate-300">Copiar</button>
+                          <CopyButton textToCopy={isUppercase ? actuacionText.toUpperCase() : actuacionText} />
                       </div>
                       <textarea
                           value={isUppercase ? actuacionText.toUpperCase() : actuacionText}

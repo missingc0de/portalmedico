@@ -207,8 +207,21 @@ const AutomaticTranscriber: React.FC<AutomaticTranscriberProps> = ({ loggedInUse
     };
   }, [dailyHistory, selectedMonth]);
 
-  // Estado del tablero
-  // Timer: momento de inicio y tiempo final (persistidos por día)
+  // Indica si el usuario ya completó el sudoku oficial del día
+  const [dailyCompletedToday, setDailyCompletedToday] = useState<boolean>(() => {
+    const saved = localStorage.getItem(`${LS}completed_day_${currentDayKey}`);
+    return saved === 'true';
+  });
+
+  // Modo práctica posterior al sudoku diario completado (no califica para ranking ni puntaje)
+  const [isPracticeMode, setIsPracticeMode] = useState<boolean>(false);
+  const [practiceCompleted, setPracticeCompleted] = useState<boolean>(false);
+
+  // Semilla / variación del tablero activo (para rotar o variar el puzzle en práctica)
+  const [activePuzzle, setActivePuzzle] = useState<number[][]>(() => PUZZLE_EASY_2_5.map(row => [...row]));
+  const [activeSolution, setActiveSolution] = useState<number[][]>(() => SOLUTION_EASY_2_5.map(row => [...row]));
+
+  // Timer: momento de inicio y tiempo final
   const [startedAt, setStartedAt] = useState<number | null>(() => {
     const saved = localStorage.getItem(`${LS}startedat_day_${currentDayKey}`);
     return saved ? parseInt(saved, 10) : null;
@@ -227,12 +240,8 @@ const AutomaticTranscriber: React.FC<AutomaticTranscriberProps> = ({ loggedInUse
 
   const [selectedCell, setSelectedCell] = useState<[number, number] | null>(null);
   const [highlightedNum, setHighlightedNum] = useState<number | null>(null);
-  // Comprobar si ya fue completado hoy
-  const [isCompleted, setIsCompleted] = useState<boolean>(() => {
-    const saved = localStorage.getItem(`${LS}completed_day_${currentDayKey}`);
-    return saved === 'true';
-  });
   const [showFloatingSuccess, setShowFloatingSuccess] = useState<boolean>(false);
+  const [successMessage, setSuccessMessage] = useState<string>('');
 
   // Contador de errores (máximo 3)
   const [mistakes, setMistakes] = useState<number>(() => {
@@ -245,8 +254,10 @@ const AutomaticTranscriber: React.FC<AutomaticTranscriberProps> = ({ loggedInUse
     return saved === 'true';
   });
 
+  // Estado activo de juego
   const isStarted = startedAt !== null;
-  const isRunning = isStarted && !isCompleted && !isGameOver;
+  const isCurrentlyFinished = isPracticeMode ? practiceCompleted : dailyCompletedToday;
+  const isRunning = isStarted && !isCurrentlyFinished && !isGameOver;
   const elapsedMs = finalTimeMs !== null ? finalTimeMs : startedAt !== null ? Math.max(0, now - startedAt) : 0;
 
   // Tick del timer
@@ -258,18 +269,47 @@ const AutomaticTranscriber: React.FC<AutomaticTranscriberProps> = ({ loggedInUse
   }, [isRunning]);
 
   const handleStart = () => {
-    if (isStarted || isCompleted || isGameOver) return;
+    if (isStarted || isCurrentlyFinished || isGameOver) return;
     const t = Date.now();
     setStartedAt(t);
     setNow(t);
-    localStorage.setItem(`${LS}startedat_day_${currentDayKey}`, t.toString());
+    if (!isPracticeMode) {
+      localStorage.setItem(`${LS}startedat_day_${currentDayKey}`, t.toString());
+    }
   };
 
   const stopTimer = (): number => {
     const total = startedAt !== null ? Date.now() - startedAt : 0;
     setFinalTimeMs(total);
-    localStorage.setItem(`${LS}finaltime_day_${currentDayKey}`, total.toString());
+    if (!isPracticeMode) {
+      localStorage.setItem(`${LS}finaltime_day_${currentDayKey}`, total.toString());
+    }
     return total;
+  };
+
+  // Iniciar partida de práctica (ilimitada, sin puntaje)
+  const startPracticeGame = () => {
+    // Generar permutación de dígitos para variar el tablero de práctica
+    const perm = [1, 2, 3, 4, 5, 6, 7, 8, 9].sort(() => Math.random() - 0.5);
+    const mapVal = (v: number) => (v === 0 ? 0 : perm[v - 1]);
+
+    const newPuzzle = PUZZLE_EASY_2_5.map(row => row.map(mapVal));
+    const newSolution = SOLUTION_EASY_2_5.map(row => row.map(mapVal));
+
+    setActivePuzzle(newPuzzle);
+    setActiveSolution(newSolution);
+    setBoard(newPuzzle.map(r => [...r]));
+    setSelectedCell(null);
+    setHighlightedNum(null);
+    setMistakes(0);
+    setIsGameOver(false);
+    setPracticeCompleted(false);
+    setIsPracticeMode(true);
+
+    const t = Date.now();
+    setStartedAt(t);
+    setNow(t);
+    setFinalTimeMs(null);
   };
 
   // Lista de ganadores sincronizada en tiempo real con Firebase Firestore
@@ -320,7 +360,7 @@ const AutomaticTranscriber: React.FC<AutomaticTranscriberProps> = ({ loggedInUse
         if (currentUserName) {
           const found = remoteUsers.find(u => u.name === currentUserName);
           if (found && found.lastCompletedDay === currentDayKey) {
-            setIsCompleted(true);
+            setDailyCompletedToday(true);
             localStorage.setItem(`${LS}completed_day_${currentDayKey}`, 'true');
           }
         }
@@ -379,10 +419,10 @@ const AutomaticTranscriber: React.FC<AutomaticTranscriberProps> = ({ loggedInUse
   // Manejar entrada por teclado físico (1-9 y Delete/Backspace)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (!selectedCell || isCompleted || isGameOver || !isStarted) return;
+      if (!selectedCell || isCurrentlyFinished || isGameOver || !isStarted) return;
       const [r, c] = selectedCell;
 
-      if (PUZZLE_EASY_2_5[r][c] !== 0) return;
+      if (activePuzzle[r][c] !== 0) return;
 
       if (e.key >= '1' && e.key <= '9') {
         const num = parseInt(e.key, 10);
@@ -394,30 +434,36 @@ const AutomaticTranscriber: React.FC<AutomaticTranscriberProps> = ({ loggedInUse
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedCell, board, isCompleted, isGameOver, mistakes, isStarted, startedAt]);
+  }, [selectedCell, board, isCurrentlyFinished, isGameOver, mistakes, isStarted, startedAt, activePuzzle, activeSolution]);
 
   const updateCellValue = (r: number, c: number, num: number) => {
-    if (PUZZLE_EASY_2_5[r][c] !== 0 || isGameOver || isCompleted || !isStarted) return;
+    if (activePuzzle[r][c] !== 0 || isGameOver || isCurrentlyFinished || !isStarted) return;
 
     if (num === 0) {
       const newBoard = board.map(row => [...row]);
       newBoard[r][c] = 0;
       setBoard(newBoard);
-      localStorage.setItem(`${LS}board_day_${currentDayKey}`, JSON.stringify(newBoard));
+      if (!isPracticeMode) {
+        localStorage.setItem(`${LS}board_day_${currentDayKey}`, JSON.stringify(newBoard));
+      }
       return;
     }
 
-    const expected = SOLUTION_EASY_2_5[r][c];
+    const expected = activeSolution[r][c];
 
     if (num !== expected) {
       const newMistakes = mistakes + 1;
       setMistakes(newMistakes);
-      localStorage.setItem(`${LS}mistakes_day_${currentDayKey}`, newMistakes.toString());
+      if (!isPracticeMode) {
+        localStorage.setItem(`${LS}mistakes_day_${currentDayKey}`, newMistakes.toString());
+      }
 
       if (newMistakes >= 3) {
         stopTimer();
         setIsGameOver(true);
-        localStorage.setItem(`${LS}gameover_day_${currentDayKey}`, 'true');
+        if (!isPracticeMode) {
+          localStorage.setItem(`${LS}gameover_day_${currentDayKey}`, 'true');
+        }
       }
       return;
     }
@@ -425,14 +471,16 @@ const AutomaticTranscriber: React.FC<AutomaticTranscriberProps> = ({ loggedInUse
     const newBoard = board.map(row => [...row]);
     newBoard[r][c] = num;
     setBoard(newBoard);
-    localStorage.setItem(`${LS}board_day_${currentDayKey}`, JSON.stringify(newBoard));
+    if (!isPracticeMode) {
+      localStorage.setItem(`${LS}board_day_${currentDayKey}`, JSON.stringify(newBoard));
+    }
     setHighlightedNum(num);
 
     checkCompletion(newBoard);
   };
 
   const handleCellClick = (r: number, c: number) => {
-    if (isGameOver || !isStarted) return;
+    if (isGameOver || !isStarted || isCurrentlyFinished) return;
     setSelectedCell([r, c]);
     const clickedValue = board[r][c];
     if (clickedValue !== 0) {
@@ -441,12 +489,14 @@ const AutomaticTranscriber: React.FC<AutomaticTranscriberProps> = ({ loggedInUse
   };
 
   const handleClearAll = () => {
-    if (isGameOver || isCompleted || !isStarted) return;
-    const initialBoard = PUZZLE_EASY_2_5.map(row => [...row]);
+    if (isGameOver || isCurrentlyFinished || !isStarted) return;
+    const initialBoard = activePuzzle.map(row => [...row]);
     setBoard(initialBoard);
     setSelectedCell(null);
     setHighlightedNum(null);
-    localStorage.setItem(`${LS}board_day_${currentDayKey}`, JSON.stringify(initialBoard));
+    if (!isPracticeMode) {
+      localStorage.setItem(`${LS}board_day_${currentDayKey}`, JSON.stringify(initialBoard));
+    }
   };
 
   const checkCompletion = async (currentBoard: number[][]) => {
@@ -459,7 +509,7 @@ const AutomaticTranscriber: React.FC<AutomaticTranscriberProps> = ({ loggedInUse
     let isValid = true;
     for (let r = 0; r < 9; r++) {
       for (let c = 0; c < 9; c++) {
-        if (currentBoard[r][c] !== SOLUTION_EASY_2_5[r][c]) {
+        if (currentBoard[r][c] !== activeSolution[r][c]) {
           isValid = false;
         }
       }
@@ -467,8 +517,20 @@ const AutomaticTranscriber: React.FC<AutomaticTranscriberProps> = ({ loggedInUse
 
     if (isValid) {
       const timeMs = stopTimer();
-      setIsCompleted(true);
+
+      // Si es modo práctica o ya se completó el oficial hoy: NO sube puntuación
+      if (isPracticeMode || dailyCompletedToday) {
+        setPracticeCompleted(true);
+        setSuccessMessage(`¡Sudoku de práctica completado en ${formatTime(timeMs)}! (Sin puntuación)`);
+        setShowFloatingSuccess(true);
+        setTimeout(() => setShowFloatingSuccess(false), 4000);
+        return;
+      }
+
+      // SUDOKU OFICIAL DEL DÍA: Sube puntuación
+      setDailyCompletedToday(true);
       localStorage.setItem(`${LS}completed_day_${currentDayKey}`, 'true');
+      setSuccessMessage(`¡Sudoku del día completado en ${formatTime(timeMs)}!`);
       setShowFloatingSuccess(true);
 
       // Ocultar mensaje flotante después de 3.5 segundos
@@ -606,43 +668,138 @@ const AutomaticTranscriber: React.FC<AutomaticTranscriberProps> = ({ loggedInUse
   };
 
   return (
-    <div className="w-full h-full flex flex-col justify-between relative">
-      {/* MENSAJE FLOTANTE BREVE DE ÉXITO QUE DESAPARECE AUTOMÁTICAMENTE */}
+    /* CONTENEDOR FUSIONADO COMO UN ÚNICO BLOQUE UNIFICADO */
+    <div className="w-full bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs flex flex-col gap-3 relative">
+      {/* MENSAJE FLOTANTE BREVE DE ÉXITO */}
       {showFloatingSuccess && (
-        <div className="absolute top-2 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-emerald-600 text-white rounded-xl shadow-lg font-bold text-xs flex items-center gap-2 animate-bounce">
+        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-emerald-600 text-white rounded-xl shadow-lg font-bold text-xs flex items-center gap-2 animate-bounce">
           <span>🎉</span>
-          <span>¡Sudoku Completado en {formatTime(elapsedMs)}!</span>
+          <span>{successMessage}</span>
         </div>
       )}
+
+      {/* ENCABEZADO SUPERIOR UNIFICADO DEL BLOQUE */}
+      <div className="border-b border-slate-100 pb-2.5 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded-lg bg-sky-600 text-white font-black text-xs flex items-center justify-center shadow-xs">
+            🧩
+          </div>
+          <div className="flex items-center gap-2">
+            <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider">
+              SUDOKU DIARIO
+            </h3>
+            {isPracticeMode ? (
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-100 text-amber-800 border border-amber-300">
+                Modo Práctica (Sin Puntuación)
+              </span>
+            ) : dailyCompletedToday ? (
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                ✓ Desafío Oficial Completado
+              </span>
+            ) : (
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-200">
+                Puntúa para Cuadro de Honor
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {dailyCompletedToday && (
+            <button
+              type="button"
+              onClick={startPracticeGame}
+              className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 transition-all cursor-pointer flex items-center gap-1 active:scale-95"
+              title="Jugar otro Sudoku (Modo Práctica - No califica para puntuación)"
+            >
+              <span>🔄</span>
+              <span>{isPracticeMode ? 'Nuevo Sudoku Práctica' : 'Jugar otro Sudoku'}</span>
+            </button>
+          )}
+
+          {/* BOTÓN ROJO SOLO CON ICONO DE BASURERO BLANCO */}
+          <button
+            onClick={handleClearAll}
+            disabled={isGameOver || isCurrentlyFinished}
+            className="p-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all cursor-pointer flex items-center justify-center shadow-2xs disabled:opacity-40 shrink-0"
+            title="Borrar valores ingresados y reiniciar tablero"
+          >
+            <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+              <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+            </svg>
+          </button>
+        </div>
+      </div>
 
       {/* MENSAJE DE PÉRDIDA POR 3 ERRORES */}
       {isGameOver && (
-        <div className="mb-2.5 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs font-bold text-center animate-fadeIn">
-          ❌ Has cometido 3 errores y has perdido el Sudoku. No podrás volver a intentarlo hasta mañana a las 00:00.
+        <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs font-bold text-center animate-fadeIn flex items-center justify-between gap-2">
+          <span>❌ Has cometido 3 errores.</span>
+          {dailyCompletedToday && (
+            <button
+              onClick={startPracticeGame}
+              className="px-3 py-1 bg-red-600 text-white rounded-lg text-[11px] font-extrabold hover:bg-red-700 transition cursor-pointer"
+            >
+              Reintentar en modo práctica
+            </button>
+          )}
         </div>
       )}
 
-      {/* DISPOSICIÓN DE DOS COLUMNAS PARALELAS */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5 h-full items-stretch flex-1">
-        {/* LADO IZQUIERDO: RECUADRO GRILLA SUDOKU */}
-        <div className="md:col-span-7 bg-white border border-slate-200/90 rounded-2xl p-3.5 shadow-2xs flex flex-col items-center justify-center h-full relative overflow-hidden">
-          {/* BLOQUEO TOTAL CUANDO YA FUE COMPLETADO HOY */}
-          {isCompleted && (
-            <div className="absolute inset-0 bg-slate-900/75 backdrop-blur-xs z-40 flex flex-col items-center justify-center p-6 text-center text-white space-y-3 rounded-2xl animate-fadeIn">
+      {/* CUERPO DEL BLOQUE: GRILLA Y ESTADÍSTICAS/CUADRO DE HONOR FUSIONADOS */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-stretch w-full">
+        {/* LADO IZQUIERDO: GRILLA SUDOKU (Ocupa todo su espacio, sin doble marco) */}
+        <div className="w-full flex flex-col items-center justify-center relative overflow-hidden">
+          {/* OVERLAY CUANDO EL DESAFÍO DIARIO FUE COMPLETADO (CON OPCIÓN DE JUGAR PRÁCTICA) */}
+          {dailyCompletedToday && !isPracticeMode && (
+            <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-xs z-40 flex flex-col items-center justify-center p-6 text-center text-white space-y-3 rounded-xl animate-fadeIn">
               <span className="text-4xl animate-bounce">🏆</span>
               <h3 className="text-base font-extrabold text-emerald-400">¡Sudoku del día completado!</h3>
               {finalTimeMs !== null && (
                 <p className="font-mono text-2xl font-black text-white tracking-wider">⏱ {formatTime(finalTimeMs)}</p>
               )}
               <p className="text-xs text-slate-200 max-w-xs leading-relaxed font-medium">
-                Solo se permite 1 victoria por día. El tablero ha quedado bloqueado y podrás jugar un nuevo desafío mañana a las 00:00.
+                Tu puntuación del día ya quedó registrada en el Cuadro de Honor. Puedes continuar jugando todos los sudokus que desees en modo práctica.
               </p>
+              <button
+                type="button"
+                onClick={startPracticeGame}
+                className="mt-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-sky-500 to-emerald-500 hover:from-sky-400 hover:to-emerald-400 text-white font-extrabold text-xs shadow-lg shadow-sky-900/40 transition-all hover:scale-105 active:scale-95 cursor-pointer flex items-center gap-2"
+              >
+                <span>🎮</span>
+                <span>Jugar otro Sudoku (Modo Práctica)</span>
+              </button>
+              <span className="text-[10px] text-amber-300 font-medium">
+                * Las partidas adicionales no califican para puntuación
+              </span>
             </div>
           )}
 
-          {/* OVERLAY DE INICIO: el tablero se revela al presionar "Iniciar" */}
-          {!isStarted && !isCompleted && !isGameOver && (
-            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md z-40 flex flex-col items-center justify-center p-6 text-center text-white space-y-3 rounded-2xl animate-fadeIn">
+          {/* OVERLAY CUANDO LA PARTIDA DE PRÁCTICA SE COMPLETA */}
+          {isPracticeMode && practiceCompleted && (
+            <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-xs z-40 flex flex-col items-center justify-center p-6 text-center text-white space-y-3 rounded-xl animate-fadeIn">
+              <span className="text-4xl animate-bounce">✨</span>
+              <h3 className="text-base font-extrabold text-sky-400">¡Sudoku de Práctica Completado!</h3>
+              {finalTimeMs !== null && (
+                <p className="font-mono text-2xl font-black text-white tracking-wider">⏱ {formatTime(finalTimeMs)}</p>
+              )}
+              <p className="text-xs text-slate-200 max-w-xs leading-relaxed font-medium">
+                ¡Gran partida! Recuerda que esta partida fue de entrenamiento y no modifica tu ranking oficial de hoy.
+              </p>
+              <button
+                type="button"
+                onClick={startPracticeGame}
+                className="mt-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-sky-500 to-emerald-500 hover:from-sky-400 hover:to-emerald-400 text-white font-extrabold text-xs shadow-lg shadow-sky-900/40 transition-all hover:scale-105 active:scale-95 cursor-pointer flex items-center gap-2"
+              >
+                <span>🔄</span>
+                <span>Jugar otro Sudoku</span>
+              </button>
+            </div>
+          )}
+
+          {/* OVERLAY DE INICIO: tablero antes de presionar Iniciar */}
+          {!isStarted && !dailyCompletedToday && !isGameOver && (
+            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md z-40 flex flex-col items-center justify-center p-6 text-center text-white space-y-3 rounded-xl animate-fadeIn">
               <span className="text-4xl">⏱️</span>
               <h3 className="text-base font-extrabold">¿List@ para el desafío de hoy?</h3>
               <p className="text-xs text-slate-200 max-w-xs leading-relaxed">
@@ -660,12 +817,12 @@ const AutomaticTranscriber: React.FC<AutomaticTranscriberProps> = ({ loggedInUse
             </div>
           )}
 
-          {/* GRILLA SUDOKU CON ESQUINAS NÍTIDAS Y BORDES PERFECTOS */}
-          <div className="border-2 border-slate-800 rounded-lg overflow-hidden bg-slate-800 shadow-sm w-full max-w-[324px] aspect-square">
-            <div className="grid grid-cols-9 gap-[1px] bg-slate-300 w-full h-full">
+          {/* GRILLA SUDOKU: Ocupa todo el espacio de su mitad con cuadrados completos */}
+          <div className="w-full max-w-[400px] aspect-square rounded-xl overflow-hidden border-2 border-slate-700 bg-slate-300 shadow-xs flex">
+            <div className="grid grid-cols-9 grid-rows-9 gap-[1px] bg-slate-300 w-full h-full p-0">
               {board.map((row, r) =>
                 row.map((val, c) => {
-                  const isOriginal = PUZZLE_EASY_2_5[r][c] !== 0;
+                  const isOriginal = activePuzzle[r][c] !== 0;
                   const isSelected = selectedCell?.[0] === r && selectedCell?.[1] === c;
                   const isMatchHighlight = val !== 0 && val === highlightedNum;
                   const isBorderRight = (c + 1) % 3 === 0 && c < 8;
@@ -674,17 +831,17 @@ const AutomaticTranscriber: React.FC<AutomaticTranscriberProps> = ({ loggedInUse
                   return (
                     <button
                       key={`${r}-${c}`}
-                      disabled={isGameOver || isCompleted || !isStarted}
+                      disabled={isGameOver || isCurrentlyFinished || !isStarted}
                       onClick={() => handleCellClick(r, c)}
-                      className={`flex items-center justify-center font-sans text-base md:text-lg transition-all w-full h-full ${
+                      className={`flex items-center justify-center font-sans font-bold text-base sm:text-lg transition-colors p-0 m-0 w-full h-full leading-none select-none ${
                         isMatchHighlight
-                          ? 'bg-amber-300 text-amber-950 font-bold scale-[0.98] shadow-inner'
+                          ? 'bg-amber-300 text-amber-950 shadow-inner'
                           : isOriginal
-                          ? 'bg-slate-100 text-slate-800 font-semibold'
-                          : 'bg-white text-sky-600 font-medium'
-                      } ${isSelected ? 'ring-2 ring-sky-500 ring-offset-1 z-10 bg-sky-50' : 'hover:bg-slate-50'} ${
-                        isBorderRight ? 'border-r-2 border-r-slate-500' : ''
-                      } ${isBorderBottom ? 'border-b-2 border-b-slate-500' : ''}`}
+                          ? 'bg-slate-100 text-slate-800'
+                          : 'bg-white text-sky-600'
+                      } ${isSelected ? 'ring-2 ring-sky-500 ring-inset z-10 bg-sky-50' : 'hover:bg-slate-50'} ${
+                        isBorderRight ? 'border-r-2 border-r-slate-700' : ''
+                      } ${isBorderBottom ? 'border-b-2 border-b-slate-700' : ''}`}
                     >
                       {val !== 0 ? val : ''}
                     </button>
@@ -695,42 +852,18 @@ const AutomaticTranscriber: React.FC<AutomaticTranscriberProps> = ({ loggedInUse
           </div>
         </div>
 
-        {/* LADO DERECHO: RECUADRO "SUDOKU DIARIO", ERRORES, BOTÓN ROJO DE BASURERO Y CUADRO DE HONOR */}
-        <div className="md:col-span-5 bg-white border border-slate-200/90 rounded-2xl p-3.5 shadow-2xs flex flex-col justify-between h-full space-y-2.5">
-          {/* ENCABEZADO "SUDOKU DIARIO" + BOTÓN BASURERO ROJO */}
-          <div className="border-b border-slate-100 pb-2 flex items-center justify-between gap-1">
-            <div className="flex items-center gap-1.5">
-              <div className="w-5 h-5 rounded-md bg-sky-600 text-white font-black text-xs flex items-center justify-center shadow-xs">
-                🧩
-              </div>
-              <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider whitespace-nowrap">
-                SUDOKU DIARIO
-              </h3>
-            </div>
-
-            {/* BOTÓN ROJO SOLO CON ICONO DE BASURERO BLANCO */}
-            <button
-              onClick={handleClearAll}
-              disabled={isGameOver || isCompleted}
-              className="p-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all cursor-pointer flex items-center justify-center shadow-2xs disabled:opacity-50 shrink-0"
-              title="Borrar todo y reiniciar tablero"
-            >
-              <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
-                <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
-              </svg>
-            </button>
-          </div>
-
+        {/* LADO DERECHO: CRONÓMETRO, ERRORES Y CUADRO DE HONOR */}
+        <div className="w-full flex flex-col justify-between h-full space-y-2.5">
           {/* CRONÓMETRO */}
           <div className={`flex items-center justify-between p-2 rounded-xl border text-xs transition-colors ${
-            isRunning ? 'bg-sky-50 border-sky-200' : isCompleted ? 'bg-emerald-50 border-emerald-200' : 'bg-slate-50 border-slate-200/80'
+            isRunning ? 'bg-sky-50 border-sky-200' : isCurrentlyFinished ? 'bg-emerald-50 border-emerald-200' : 'bg-slate-50 border-slate-200/80'
           }`}>
             <span className="font-bold text-slate-700 text-[11px] flex items-center gap-1.5">
               {isRunning && <span className="w-2 h-2 rounded-full bg-sky-500 animate-pulse" />}
               Tiempo:
             </span>
             <span id="sudoku-timer" className={`font-mono text-sm font-black tabular-nums ${
-              isRunning ? 'text-sky-700' : isCompleted ? 'text-emerald-700' : 'text-slate-500'
+              isRunning ? 'text-sky-700' : isCurrentlyFinished ? 'text-emerald-700' : 'text-slate-500'
             }`}>
               {isStarted ? formatTime(elapsedMs) : '00:00'}
             </span>

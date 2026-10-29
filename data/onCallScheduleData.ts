@@ -145,7 +145,7 @@ export const onCallScheduleData: OnCallSchedule = {
       13: ["MARIANY DAVILA", "RODRIGO PIZARRO", "DANIELA ZAMORANO"],
       14: ["VICTOR VEGA", "CAMILA ROJAS", "ROMINA LOPEZ"],
       15: ["BENJAMIN ROJAS", "FRANCO MILOS", "HENRY PATIÑO"],
-      16: ["PEREZ", "CORTES"],
+      16: ["LARRY PÉREZ", "CORTES"],
       17: ["CUELLO", "OCHOA"],
       18: [],
       19: [],
@@ -153,7 +153,7 @@ export const onCallScheduleData: OnCallSchedule = {
       21: ["CAMILA ROJAS", "VICTOR VEGA", "ROMINA LOPEZ"],
       22: ["FRANCO MILOS", "HENRY PATIÑO", "BENJAMIN ROJAS"],
       23: ["PIZARRO", "VALDES"],
-      24: ["CORTES", "PEREZ"],
+      24: ["CORTES", "LARRY PÉREZ"],
       25: [],
       26: [],
       27: ["MARIANY DAVILA", "DANIELA ZAMORANO", "RODRIGO PIZARRO"],
@@ -479,8 +479,8 @@ export const onCallScheduleData: OnCallSchedule = {
       26: ["SOFIA ROJAS", "ROMINA LOPEZ"],
       27: ["CAMILA ROJAS", "GABRIELA CUELLO"],
       28: ["DAVID CORTES", "HENRY PATIÑO"],
-      30: ["CECILIA YEPEZ", "LUCIANO RAMOS"],
-      31: ["BENJAMÍN ROJAS", "SOFIA ROJAS"]
+      29: ["CECILIA YEPEZ", "LUCIANO RAMOS"],
+      30: ["BENJAMÍN ROJAS", "SOFIA ROJAS"]
     },
     10: { // November (0-indexed)
       // Semana 1 (Nov 2 - 6)

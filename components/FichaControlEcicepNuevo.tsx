@@ -1312,11 +1312,9 @@ export const FichaControlEcicepNuevo: React.FC<FichaControlEcicepNuevoProps> = (
 
   const duplaProfesionalOptions = [
     { value: '', label: 'Seleccione...' },
-    { value: 'Enfermera', label: 'Enfermera' },
-    { value: 'Enfermero', label: 'Enfermero' },
+    { value: 'Enfermera/o', label: 'Enfermera/o' },
     { value: 'Nutricionista', label: 'Nutricionista' },
-    { value: 'Psicóloga', label: 'Psicóloga' },
-    { value: 'Psicólogo', label: 'Psicólogo' },
+    { value: 'Psicóloga/o', label: 'Psicóloga/o' },
     { value: 'Kinesiólogo', label: 'Kinesiólogo' },
     { value: 'Matrona', label: 'Matrona' },
     { value: 'TENS', label: 'TENS' },

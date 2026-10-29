@@ -150,7 +150,7 @@ export default function FichaVisitaDomiciliaria({ onBackToMenu, loggedInUser }: 
   const [actuacionText, setActuacionText] = useState('');
 
   useEffect(() => {
-    let anamnesis = `FICHA VISITA DOMICILIARIA INTEGRAL (VDI)
+    let anamnesis = `FICHA EQUIPO DE CABECERA (VDI)
 ---------------------------------------\n`;
     if (formData.sector) anamnesis += `SECTOR: ${formData.sector}\n`;
     if (formData.direccion) anamnesis += `DIRECCIÓN: ${formData.direccion}\n`;

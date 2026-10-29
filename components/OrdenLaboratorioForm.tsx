@@ -5,8 +5,9 @@ import RutInput from './RutInput';
 import DateField from './DateField';
 import { generateOrdenLaboratorioPdf } from '../services/pdfGenerator';
 import { labTestDetails } from '../data/labTestData';
-import { getSharedGeneratorPatient, setSharedGeneratorPatient, subscribeSharedGeneratorPatient, clearSharedGeneratorPatient } from '../services/sharedGeneratorPatient';
 import { useFormLocalStorage } from '../hooks/useFormLocalStorage';
+import { Trash2 } from 'lucide-react';
+import { getSharedGeneratorPatient, setSharedGeneratorPatient, subscribeSharedGeneratorPatient, clearSharedGeneratorPatient } from '../services/sharedGeneratorPatient';
 
 // ... existing helpers ...
 
@@ -514,13 +515,15 @@ const OrdenLaboratorioForm: React.FC<OrdenLaboratorioFormProps> = ({ onBackToMen
         </section>
 
         {/* BOTTOM ACTION BAR */}
-        <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-200 shrink-0">
+        <div className="flex items-center justify-end gap-2 pt-1 border-t border-slate-200 shrink-0">
           <button
             type="button"
             onClick={handleNewDocument}
-            className="px-3 py-1.5 bg-white border border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 font-medium text-[11px] uppercase tracking-tight rounded-lg shadow-2xs transition-all active:scale-95 cursor-pointer flex items-center gap-1"
+            className="px-3 py-1.5 bg-white border border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 font-medium text-[11px] uppercase tracking-tight rounded-lg shadow-2xs transition-all active:scale-95 cursor-pointer flex items-center gap-1.5"
+            title="Limpiar Formulario"
           >
-            Limpiar Formulario
+            <Trash2 className="w-3.5 h-3.5 shrink-0" />
+            <span>Limpiar Formulario</span>
           </button>
 
           <button

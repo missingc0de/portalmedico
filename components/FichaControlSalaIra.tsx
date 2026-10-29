@@ -4,7 +4,7 @@ import { FichaControlSalaIraFormData, FormStatus, User } from '../types';
 import FormField from './FormField';
 import CopyButton from './CopyButton';
 import MedicamentoArsenalInput from './MedicamentoArsenalInput';
-import { generateClinicalRecordPdf } from '../services/pdfGenerator';
+import { generateClinicalRecordPdf, generateAtencionResumenPdf } from '../services/pdfGenerator';
 import { UniversalAIClient, Type } from '../utils/aiClient';
 import { getAiClient } from '../utils/aiClient';
 import ImportModal from './ImportModal';
@@ -474,11 +474,24 @@ const FichaControlSalaIra: React.FC<FichaControlSalaIraProps> = ({ onBackToMenu,
   };
 
   const handleExportPdf = async () => {
-    if(!loggedInUser) return;
+    if (!loggedInUser) {
+      alert('Error: Usuario no identificado.');
+      return;
+    }
     setStatus(FormStatus.Generating);
     try {
-      await generateClinicalRecordPdf({ title: 'Ficha Control Sala IRA', content: `${anamnesisText}\n\n${exploracionText}\n\n${actuacionText}` }, loggedInUser);
-    } finally { setStatus(FormStatus.Idle); }
+      await generateAtencionResumenPdf({
+        ...formData,
+        indicaciones: formData.indicaciones,
+        actuacionText,
+      }, loggedInUser, {
+        title: 'RESUMEN CONTROL SALA IRA',
+        hasPci: false,
+        filePrefix: 'Resumen_Sala_IRA'
+      });
+    } finally { 
+      setStatus(FormStatus.Idle); 
+    }
   };
 
   const handleNewDocument = () => {
@@ -877,7 +890,7 @@ const FichaControlSalaIra: React.FC<FichaControlSalaIraProps> = ({ onBackToMenu,
                 title="Imprimir PDF Resumen"
               >
                 <Printer className="w-3.5 h-3.5 shrink-0" />
-                <span className="truncate">{status === FormStatus.Generating ? 'Generando...' : 'EXPORTAR PDF'}</span>
+                <span className="truncate">{status === FormStatus.Generating ? 'Generando...' : 'RESUMEN PDF'}</span>
               </button>
 
               <button

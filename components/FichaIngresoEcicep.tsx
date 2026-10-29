@@ -647,12 +647,8 @@ const tiempoControlOptions = [
 const duplaProfesionalOptions = [
   { value: '', label: 'Seleccione...' },
   { value: 'Enfermera/o', label: 'Enfermera/o' },
-  { value: 'Enfermera', label: 'Enfermera' },
-  { value: 'Enfermero', label: 'Enfermero' },
   { value: 'Nutricionista', label: 'Nutricionista' },
   { value: 'Psicóloga/o', label: 'Psicóloga/o' },
-  { value: 'Psicólogo', label: 'Psicólogo' },
-  { value: 'Psicóloga', label: 'Psicóloga' },
   { value: 'Kinesiólogo/a', label: 'Kinesiólogo/a' },
   { value: 'Matrona/ón', label: 'Matrona/ón' },
   { value: 'TENS', label: 'TENS' },

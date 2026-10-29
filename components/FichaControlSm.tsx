@@ -2,12 +2,12 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { FichaIngresoSmFormData, FormStatus, User } from '../types';
 import FormField from './FormField';
 import CopyButton from './CopyButton';
-import { generateClinicalRecordPdf } from '../services/pdfGenerator';
+import { generateAtencionResumenPdf } from '../services/pdfGenerator';
 import { useFormLocalStorage } from '../hooks/useFormLocalStorage';
 import SmartAntecedentesTextarea from './SmartAntecedentesTextarea';
 import SmartFarmacosTextarea from './SmartFarmacosTextarea';
 import DateField from './DateField';
-import { FileText, PlusCircle } from 'lucide-react';
+import { Printer, PlusCircle } from 'lucide-react';
 
 const AutoExpandingTextArea: React.FC<{
   label: string;
@@ -113,14 +113,28 @@ const FichaControlSm: React.FC<FichaControlSmProps> = ({ onBackToMenu, loggedInU
   const [proximosControles, setProximosControles] = useState<{ id: number; tiempo: string; profesional: string }[]>([{ id: Date.now(), tiempo: '3 meses', profesional: 'médico' }]);
 
   const handleExportPdf = useCallback(async () => {
-    if (window.confirm("¿Seguro que desea exportar a PDF?")) {
-      if (!loggedInUser) return;
-      setStatus(FormStatus.Generating);
-      try {
-        await generateClinicalRecordPdf({ title: 'Ficha Control Salud Mental', content: `${anamnesisText}\n\n${exploracionText}\n\n${actuacionText}` }, loggedInUser);
-      } finally { setStatus(FormStatus.Idle); }
+    if (!loggedInUser) return;
+    setStatus(FormStatus.Generating);
+    try {
+      await generateAtencionResumenPdf(
+        {
+          ...formData,
+          indicaciones: actuacionText,
+          actuacionText,
+        },
+        loggedInUser,
+        {
+          title: 'RESUMEN CONTROL SALUD MENTAL',
+          hasPci: false,
+          filePrefix: 'Resumen_Salud_Mental',
+        }
+      );
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setStatus(FormStatus.Idle);
     }
-  }, [loggedInUser, anamnesisText, exploracionText, actuacionText]);
+  }, [loggedInUser, formData, actuacionText]);
 
   const handleNewDocument = useCallback(() => {
     if (window.confirm("¿Seguro que desea borrar el formulario actual?")) {
@@ -505,10 +519,10 @@ const FichaControlSm: React.FC<FichaControlSmProps> = ({ onBackToMenu, loggedInU
                 type="button"
                 onClick={handleExportPdf}
                 className="w-full flex items-center justify-center gap-1 px-1 py-1.5 bg-sky-600 hover:bg-sky-700 text-white font-medium text-[11px] uppercase tracking-tight rounded-lg shadow-2xs transition-all duration-150 cursor-pointer h-[32px] overflow-hidden"
-                title="Exportar Resumen PDF"
+                title="Generar Resumen PDF"
               >
-                <FileText className="w-3.5 h-3.5 shrink-0" />
-                <span className="truncate">EXPORTAR PDF</span>
+                <Printer className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate">RESUMEN PDF</span>
               </button>
 
               <button

@@ -23,7 +23,7 @@ const getDrugHighlightClass = (drugText: string): string => {
     'CLONAZEPAM', 'DIAZEPAM', 'LORAZEPAM', 'ALPRAZOLAM', 'CLOTIAZEPAM', 'ARIPIPRAZOL', 
     'CARBAMAZEPINA', 'VALPROICO', 'DIVALPROATO', 'FENITOÍNA', 'FENITOINA', 'LAMOTRIGINA', 
     'LEVETIRACETAM', 'MELATONINA', 'TRIHEXIFENIDILO', 'LEVODOPA', 'CARBIDOPA', 'BENSERAZIDA', 
-    'PRAMIPEXOL', 'LITIO'
+    'PRAMIPEXOL', 'LITIO', 'METILFENIDATO'
   ];
   if (mentalTerms.some(t => textUpper.includes(t))) {
     return 'bg-purple-300/80 rounded text-transparent px-0.5 inline';
