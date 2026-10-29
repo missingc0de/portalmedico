@@ -414,7 +414,11 @@ const App: React.FC = () => {
     error?: string;
   } | null>(null);
 
-  const APP_VERSION = '1.4.28';
+  const APP_VERSION = '1.4.29';
+  useEffect(() => {
+    document.title = 'PORTAL MÉDICO';
+  }, []);
+
   const menuDropdownRef = useRef<HTMLDivElement>(null);
 
   const isNewerVersion = (latest: string, current: string): boolean => {

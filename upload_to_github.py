@@ -31,8 +31,8 @@ def main():
     }
 
     repo = 'missingc0de/portalmedico'
-    tag = 'v1.4.28'
-    version = '1.4.28'
+    tag = 'v1.4.29'
+    version = '1.4.29'
     
     release_id = None
     upload_url_base = None
@@ -51,11 +51,12 @@ def main():
             'target_commitish': 'main',
             'name': f'Portal Médico {tag}',
             'body': (
-                f'### Novedades {tag}:\n'
-                '- **Nueva Ficha Control PADDS:** Integración completa de objetivos y planes consensuados PADDS, citación inteligente de equipo de cabecera con médico al inicio, cálculo de estratificación y modal de pacientes.\n'
-                '- **Ficha Ingreso PADDS:** Optimización de antecedentes, evaluación de escala Zarit, ayudas técnicas y precompletados clínicos.\n'
-                '- **Equipo de Cabecera:** Actualización y renombrado de ficha Visita Domiciliaria a Equipo de Cabecera en todas las vistas y reportes.\n'
-                '- **Webview Bundling:** Ejecutable e instalador oficial v1.4.28 optimizado con WebView2 para Windows.'
+                f"### Novedades {tag}:\n"
+                "- **Corrección del Nombre de la App:** Nombre oficial PORTAL MÉDICO normalizado con soporte UTF-8 sin caracteres corruptos en el instalador, accesos directos, registro de Windows y en la interfaz de la aplicación.\n"
+                "- **Nueva Ficha Control PADDS:** Integración completa de objetivos y planes consensuados PADDS, citación inteligente de equipo de cabecera con médico al inicio, cálculo de estratificación y modal de pacientes.\n"
+                "- **Ficha Ingreso PADDS:** Optimización de antecedentes, evaluación de escala Zarit, ayudas técnicas y precompletados clínicos.\n"
+                "- **Equipo de Cabecera:** Actualización y renombrado de ficha Visita Domiciliaria a Equipo de Cabecera en todas las vistas y reportes.\n"
+                "- **Webview Bundling:** Ejecutable e instalador oficial v1.4.29 optimizado con WebView2 para Windows."
             ),
             'draft': False,
             'prerelease': False,
