@@ -15,7 +15,9 @@
     "lint": "tsc --noEmit",
     "electron:dev": "concurrently \"vite\" \"wait-on http://localhost:3000 && cross-env ELECTRON_START_URL=http://localhost:3000 electron electron/main.cjs\"",
     "start:offline": "vite build && cls && echo La aplicacion esta corriendo localmente en http://localhost:3000 sin internet. && npx serve -s dist",
-    "electron:build": "vite build && electron-builder"
+    "electron:build": "vite build && electron-builder",
+    "cap:sync": "cap sync",
+    "android:sync": "npm run build && npx cap sync android"
   },
   "build": {
     "appId": "com.portalmedico.app",
@@ -48,6 +50,9 @@
     ]
   },
   "dependencies": {
+    "@capacitor/android": "^8.6.0",
+    "@capacitor/cli": "^8.6.0",
+    "@capacitor/core": "^8.6.0",
     "@google/genai": "^1.45.0",
     "@pdf-lib/fontkit": "^1.1.1",
     "app-builder-bin": "^5.0.0-alpha.12",
