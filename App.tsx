@@ -1,6 +1,6 @@
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { getChileDate, getChileYMD, getChileDDMMYYYY } from './services/dateService';
+import { getChileDate, getChileYMD, getChileDDMMYYYY, getChileDateTime } from './services/dateService';
 import ErrorBoundary from './components/ErrorBoundary';
 import { doc, onSnapshot, setDoc, collection, query, orderBy, serverTimestamp } from 'firebase/firestore';
 import { db } from './services/firebase';
@@ -471,9 +471,9 @@ const SavePatientCloudModal: React.FC<SavePatientCloudModalProps> = ({
         isOverwrite,
       });
       onClose();
-    } catch (err) {
-      console.error(err);
-      alert('Error al guardar en la nube.');
+    } catch (err: any) {
+      console.error('Error al guardar registro en la nube:', err);
+      alert(`Error al guardar en la nube: ${err?.message || err}`);
     } finally {
       setIsSaving(false);
     }

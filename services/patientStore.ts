@@ -139,11 +139,12 @@ export const sanitizeRutForDocId = (rut: string): string => {
 const sanitizeForFirestore = (obj: any): any => {
   if (obj === undefined) return null;
   if (obj === null || typeof obj !== 'object') return obj;
+  if (obj instanceof Date) return obj.toISOString();
   if (Array.isArray(obj)) return obj.map(sanitizeForFirestore);
   const cleaned: Record<string, any> = {};
   for (const key of Object.keys(obj)) {
     const val = obj[key];
-    if (val !== undefined) {
+    if (val !== undefined && typeof val !== 'function') {
       cleaned[key] = sanitizeForFirestore(val);
     }
   }
