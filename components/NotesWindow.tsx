@@ -484,10 +484,10 @@ export const NotesWindow: React.FC<NotesWindowProps> = ({ isOpen, onClose, usern
     ],
   };
 
-  // ── MODO MÓVIL: Full viewport edge-to-edge sin bordes con notas individuales apiladas ──
+  // ── MODO MÓVIL: Ajustado entre el encabezado azul (top-12) y la barra inferior de navegación (bottom-14) ──
   if (isMobile) {
     return (
-      <div className="fixed inset-0 z-[10000] w-full h-[100dvh] max-h-[100dvh] bg-slate-50 flex flex-col font-sans select-none overflow-hidden animate-fadeIn">
+      <div className="fixed top-12 bottom-14 left-0 right-0 z-[60] bg-slate-50 flex flex-col font-sans select-none overflow-hidden animate-fadeIn">
         {/* Confirm dialog overlay */}
         {confirmDelete && (
           <ConfirmDialog
@@ -531,7 +531,7 @@ export const NotesWindow: React.FC<NotesWindowProps> = ({ isOpen, onClose, usern
             </div>
 
             {/* Lista de notas individuales: una debajo de la otra */}
-            <div className="flex-1 overflow-y-auto p-3 space-y-2.5 pb-24 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto p-3 space-y-2.5 pb-6 custom-scrollbar">
               {notes.length === 0 ? (
                 <div className="text-center py-20 px-4 text-slate-400">
                   <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 mx-auto flex items-center justify-center mb-3">
