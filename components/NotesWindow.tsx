@@ -152,6 +152,7 @@ export const NotesWindow: React.FC<NotesWindowProps> = ({ isOpen, onClose, usern
   const [showMenu, setShowMenu] = useState<string | null>(null);
   const [editingTitleId, setEditingTitleId] = useState<string | null>(null);
   const [editingTitleVal, setEditingTitleVal] = useState('');
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string; title: string } | null>(null);
   const [isMobile, setIsMobile] = useState<boolean>(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
   const [mobileView, setMobileView] = useState<'list' | 'editor'>('list');
 
