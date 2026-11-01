@@ -450,7 +450,7 @@ const SavePatientCloudModal: React.FC<SavePatientCloudModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
       <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden">
         <header className="px-5 py-4 bg-gradient-to-r from-sky-600 to-sky-700 text-white flex justify-between items-center">
           <div className="flex items-center gap-2.5">
@@ -529,6 +529,7 @@ const SavePatientCloudModal: React.FC<SavePatientCloudModalProps> = ({
 const App: React.FC = () => {
   const [activeFichaView, setActiveFichaView] = useState<View | null>(null);
   const [isSaveCloudModalOpen, setIsSaveCloudModalOpen] = useState(false);
+  const [initialPatientData, setInitialPatientData] = useState<{ nombre: string; rut: string }>({ nombre: '', rut: '' });
   const [currentView, setCurrentView] = useState<View>('login');
   const [animationState, setAnimationState] = useState<'idle' | 'fading-out' | 'invisible' | 'fading-in'>('idle');
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -2296,7 +2297,7 @@ const App: React.FC = () => {
       prestacionCategory: category,
     });
 
-    patientStore.addFichaToPatient(
+    const addResult = patientStore.addFichaToPatient(
       cleanRut,
       fichaTitle,
       snapshot,
@@ -2304,10 +2305,28 @@ const App: React.FC = () => {
       category
     );
 
-    await patientStore.uploadToCloud(savedPatient);
+    if (addResult?.patient) {
+      await patientStore.uploadToCloud(addResult.patient);
+    } else {
+      await patientStore.uploadToCloud(savedPatient);
+    }
 
     alert(`¡Paciente "${uppercaseNombre}" (RUT: ${cleanRut}) guardado exitosamente en la nube (Firebase)!\nPuede ser consultado en "Mis pacientes" desde cualquier dispositivo.`);
   }, [currentView, getCombinedFichaText]);
+
+  const handleOpenSaveCloudModal = useCallback(() => {
+    let preNombre = '';
+    let preRut = '';
+    const container = document.querySelector('.mobile-ficha-container');
+    if (container) {
+      const rutInput = container.querySelector('input[name*="rut" i], input[id*="rut" i], input[placeholder*="rut" i]') as HTMLInputElement;
+      const nombreInput = container.querySelector('input[name*="nombre" i], input[id*="nombre" i], input[placeholder*="nombre" i], input[name*="paciente" i]') as HTMLInputElement;
+      if (rutInput && rutInput.value) preRut = rutInput.value.trim();
+      if (nombreInput && nombreInput.value) preNombre = nombreInput.value.trim();
+    }
+    setInitialPatientData({ nombre: preNombre, rut: preRut });
+    setIsSaveCloudModalOpen(true);
+  }, []);
 
   const handleMobileClearForm = useCallback(() => {
     if (!window.confirm('¿Estás seguro de que deseas borrar todo el contenido de la ficha? Esta acción no se puede deshacer.')) {
@@ -3183,7 +3202,7 @@ const App: React.FC = () => {
               {/* 2. Guardar en la nube (Centro) */}
               <button
                 type="button"
-                onClick={() => setIsSaveCloudModalOpen(true)}
+                onClick={handleOpenSaveCloudModal}
                 className="flex-1 h-9 bg-sky-600 hover:bg-sky-700 active:bg-sky-800 text-white font-bold rounded-lg text-xs flex items-center justify-center gap-1.5 shadow-2xs active:scale-95 transition-all cursor-pointer"
                 title="Guardar paciente en Firebase para Mis Pacientes"
               >
@@ -3541,6 +3560,16 @@ const App: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Modal para guardar paciente en la nube desde móvil */}
+      <SavePatientCloudModal
+        isOpen={isSaveCloudModalOpen}
+        onClose={() => setIsSaveCloudModalOpen(false)}
+        onSave={handleSaveToCloud}
+        initialNombre={initialPatientData.nombre}
+        initialRut={initialPatientData.rut}
+        fichaTitle={getFichaTitle(currentView)}
+      />
     </div>
     </ErrorBoundary>
   );

@@ -853,8 +853,8 @@ const Sidebar: React.FC<SidebarProps> = ({
             {/* Scrollable Navigation Options */}
             <div className="flex-1 overflow-y-auto px-3 py-3 space-y-4 custom-scrollbar">
               {/* Direct Quick Nav */}
-              <div className="space-y-1">
-                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 pb-0.5">
+              <div className="space-y-1 text-left">
+                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 pb-0.5 text-left">
                   Navegación Rápida
                 </div>
                 <button
@@ -862,14 +862,14 @@ const Sidebar: React.FC<SidebarProps> = ({
                     onSelectMenuItem('menu');
                     onCloseMobileDrawer?.();
                   }}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold text-xs tracking-tight transition-all cursor-pointer ${
+                  className={`w-full flex items-center justify-start text-left gap-3 px-3 py-2.5 rounded-xl font-bold text-xs tracking-tight transition-all cursor-pointer ${
                     currentView === 'menu'
                       ? 'bg-gradient-to-r from-sky-600 to-sky-700 text-white shadow-sm'
                       : 'text-slate-700 hover:bg-slate-200/60'
                   }`}
                 >
                   <Home className="w-4 h-4 shrink-0" />
-                  <span>Inicio</span>
+                  <span className="text-left">Inicio</span>
                 </button>
 
                 <button
@@ -877,17 +877,17 @@ const Sidebar: React.FC<SidebarProps> = ({
                     onSelectMenuItem('chat');
                     onCloseMobileDrawer?.();
                   }}
-                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-bold text-xs tracking-tight transition-all cursor-pointer ${
+                  className={`w-full flex items-center justify-between text-left px-3 py-2.5 rounded-xl font-bold text-xs tracking-tight transition-all cursor-pointer ${
                     currentView === 'chat'
                       ? 'bg-gradient-to-r from-sky-600 to-sky-700 text-white shadow-sm'
                       : 'text-slate-700 hover:bg-slate-200/60'
                   }`}
                 >
-                  <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex items-center justify-start text-left gap-3 min-w-0">
                     <MessageSquare className="w-4 h-4 shrink-0 text-sky-600" />
-                    <span>Chat y Mensajería</span>
+                    <span className="text-left truncate">Chat y Mensajería</span>
                   </div>
-                  <span className="text-[10px] bg-sky-100 text-sky-800 font-bold px-2 py-0.5 rounded-full">
+                  <span className="text-[10px] bg-sky-100 text-sky-800 font-bold px-2 py-0.5 rounded-full shrink-0">
                     Pestaña
                   </span>
                 </button>
@@ -897,14 +897,14 @@ const Sidebar: React.FC<SidebarProps> = ({
                     onSelectMenuItem('misPacientes');
                     onCloseMobileDrawer?.();
                   }}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold text-xs tracking-tight transition-all cursor-pointer ${
+                  className={`w-full flex items-center justify-start text-left gap-3 px-3 py-2.5 rounded-xl font-bold text-xs tracking-tight transition-all cursor-pointer ${
                     currentView === 'misPacientes'
                       ? 'bg-gradient-to-r from-sky-600 to-sky-700 text-white shadow-sm'
                       : 'text-slate-700 hover:bg-slate-200/60'
                   }`}
                 >
                   <Users className="w-4 h-4 shrink-0" />
-                  <span>Mis Pacientes</span>
+                  <span className="text-left">Mis Pacientes</span>
                 </button>
 
                 <button
@@ -912,14 +912,14 @@ const Sidebar: React.FC<SidebarProps> = ({
                     onSelectMenuItem('sapu');
                     onCloseMobileDrawer?.();
                   }}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold text-xs tracking-tight transition-all cursor-pointer ${
+                  className={`w-full flex items-center justify-start text-left gap-3 px-3 py-2.5 rounded-xl font-bold text-xs tracking-tight transition-all cursor-pointer ${
                     currentView === 'sapu'
                       ? 'bg-gradient-to-r from-sky-600 to-sky-700 text-white shadow-sm'
                       : 'text-slate-700 hover:bg-slate-200/60'
                   }`}
                 >
                   <Hospital className="w-4 h-4 shrink-0" />
-                  <span>Portal Clínico SAPU</span>
+                  <span className="text-left">Portal Clínico SAPU</span>
                 </button>
               </div>
 
@@ -1046,26 +1046,26 @@ const Sidebar: React.FC<SidebarProps> = ({
             </div>
 
             {/* Footer with Edit Profile and Logout */}
-            <div className="p-3 bg-white border-t border-slate-200 space-y-2 shrink-0">
+            <div className="p-3 bg-white border-t border-slate-200 space-y-2 shrink-0 text-left">
               <button
                 onClick={() => {
                   onEditProfile();
                   onCloseMobileDrawer?.();
                 }}
-                className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer"
+                className="w-full flex items-center justify-start text-left gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer"
               >
-                <User className="w-4 h-4 text-slate-500" />
-                <span>Editar Perfil</span>
+                <User className="w-4 h-4 text-slate-500 shrink-0" />
+                <span className="text-left">Editar Perfil</span>
               </button>
               <button
                 onClick={() => {
                   onLogout();
                   onCloseMobileDrawer?.();
                 }}
-                className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 transition-colors cursor-pointer"
+                className="w-full flex items-center justify-start text-left gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 transition-colors cursor-pointer"
               >
-                <LogOut className="w-4 h-4 text-red-500" />
-                <span>Cerrar Sesión</span>
+                <LogOut className="w-4 h-4 text-red-500 shrink-0" />
+                <span className="text-left">Cerrar Sesión</span>
               </button>
             </div>
           </div>
