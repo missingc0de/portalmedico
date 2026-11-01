@@ -101,7 +101,7 @@ import { Home, Users, MessageSquare, Hospital, Menu, ChevronLeft, ClipboardList,
 import { App as CapApp } from '@capacitor/app';
 import FichasCatalog from './components/FichasCatalog';
 import AppSettingsView from './components/AppSettingsView';
-import { initNotificationChannels } from './services/notificationService';
+import { initNotificationChannels, requestNotificationPermission } from './services/notificationService';
 
 const MaskedDateInput: React.FC<{ value: string; onChange: (val: string) => void; className?: string }> = ({ value, onChange, className }) => {
   const [localValue, setLocalValue] = useState(value || '');
@@ -1054,6 +1054,7 @@ const App: React.FC = () => {
   isPhoneDirectoryModalOpenRef.current = isPhoneDirectoryModalOpen;
   const isUrgenciasModalOpenRef = useRef(isUrgenciasModalOpen);
   isUrgenciasModalOpenRef.current = isUrgenciasModalOpen;
+  const fichasCatalogBackRef = useRef<(() => boolean) | null>(null);
 
   const navigateTo = useCallback((view: View, patientData?: PatientRecord) => {
     if (patientData) {
@@ -1116,36 +1117,38 @@ const App: React.FC = () => {
       setIsUrgenciasModalOpen(false);
       return true;
     }
-    // If currently inside a clinical record, return to 'fichas' catalog
+    // 5. If currently inside a clinical record, return to 'fichas' catalog
     if (isClinicalRecord(currentViewRef.current)) {
       setActiveFichaView(null);
       navigateTo('fichas');
       return true;
     }
-    // 4. If current view is not 'menu' and not 'login', navigate back
+    // 6. If currently inside fichas catalog, check if Level 2 (or search) is handled by FichasCatalog
+    if (currentViewRef.current === 'fichas') {
+      if (fichasCatalogBackRef.current && fichasCatalogBackRef.current()) {
+        return true;
+      }
+      // If at Level 1 of fichas catalog, navigate back to 'menu'
+      navigateTo('menu');
+      return true;
+    }
+    // 7. If current view is not 'menu' and not 'login', navigate back to 'menu'
     if (currentViewRef.current !== 'menu' && currentViewRef.current !== 'login') {
-      setViewHistory(prev => {
-        if (prev.length > 1) {
-          const newHist = prev.slice(0, -1);
-          const prevView = newHist[newHist.length - 1];
-          navigateTo(prevView || 'menu');
-          return newHist;
-        } else {
-          navigateTo('menu');
-          return ['menu'];
-        }
-      });
+      navigateTo('menu');
       return true;
     }
     return false;
   }, [navigateTo]);
 
   useEffect(() => {
+    // Initialize notification channels and request permissions
+    requestNotificationPermission();
+
     let sub: any = null;
     try {
-      CapApp.addListener('backButton', ({ canGoBack }) => {
+      CapApp.addListener('backButton', () => {
         const handled = handleBackNavigation();
-        if (!handled && canGoBack) {
+        if (!handled) {
           CapApp.minimizeApp().catch(() => {});
         }
       }).then(handle => {
@@ -2643,7 +2646,13 @@ const App: React.FC = () => {
       case 'sapu':
         return <SapuMenu onBackToMenu={() => navigateTo('menu')} loggedInUser={loggedInUser} />;
       case 'fichas':
-        return <FichasCatalog onSelectFicha={(view) => navigateTo(view)} onBack={() => navigateTo('menu')} />;
+        return (
+          <FichasCatalog 
+            onSelectFicha={(view) => navigateTo(view)} 
+            onBack={() => navigateTo('menu')}
+            onRegisterBackHandler={(fn) => { fichasCatalogBackRef.current = fn; }}
+          />
+        );
       case 'chat':
         return (
           <div className="w-full h-full flex flex-col flex-1 min-h-[500px] bg-[#E3EFFE]">
@@ -2690,7 +2699,7 @@ const App: React.FC = () => {
     globalAnimationClass = 'opacity-0';
   }
 
-  const isFullScreenTab = currentView === 'chat' || currentView === 'ajustes' || currentView === 'bitacora' || currentView === 'fichas';
+  const isFullScreenTab = currentView === 'chat';
 
   const renderMainContent = () => {
     const isLockedView = currentView === 'menu' || currentView.startsWith('ficha') || currentView === 'sapu' || currentView === 'comunidad' || isFullScreenTab;
@@ -2731,16 +2740,6 @@ const App: React.FC = () => {
                 title="Abrir menú"
               >
                 <Menu className="w-6 h-6" />
-              </button>
-            )}
-            {/* Mobile back button */}
-            {currentView !== 'menu' && (
-              <button
-                onClick={() => handleBackNavigation()}
-                className="md:hidden mr-1.5 p-1 text-white hover:bg-white/20 rounded-lg transition-colors cursor-pointer shrink-0"
-                title="Volver"
-              >
-                <ChevronLeft className="w-6 h-6" />
               </button>
             )}
             <svg className="w-6 h-6 mr-2 text-white shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="currentColor">

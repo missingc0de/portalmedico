@@ -12,6 +12,7 @@ import { GmailWindow } from './GmailWindow';
 import { soundService } from '../services/soundService';
 import { LoginToast } from './LoginToast';
 import { showUserConnectNotification, showChatMessageNotification, showChatNudgeNotification, requestNotificationPermission } from '../services/notificationService';
+import { App as CapApp } from '@capacitor/app';
 
 interface Message {
   id: string;
@@ -622,7 +623,10 @@ export const ChatLocal: React.FC<ChatLocalProps> = ({
                 ['general']: { count: (prev['general']?.count || 0) + 1, lastTime: newMsg.timestamp }
               }));
             }
-            if (!newMsg.isNudge) {
+            if (newMsg.isNudge) {
+              showChatNudgeNotification(newMsg.senderName || newMsg.senderUsername);
+              triggerNudge(newMsg.senderUsername, true);
+            } else {
               playedNotification = true;
               notificationMsg = newMsg;
             }
@@ -636,7 +640,7 @@ export const ChatLocal: React.FC<ChatLocalProps> = ({
       isFirstLoadGeneral.current = false;
     });
     return () => unsubscribe();
-  }, [loggedInUser.username, loggedInUser.profession]);
+  }, [loggedInUser.username, loggedInUser.profession, triggerNudge]);
 
 
 
@@ -670,7 +674,10 @@ export const ChatLocal: React.FC<ChatLocalProps> = ({
             if (!isOpenRef.current || activeChannelRef.current !== privateChannelId) {
               setUnreadCount(prev => prev + 1);
             }
-            if (!newMsg.isNudge) {
+            if (newMsg.isNudge) {
+              showChatNudgeNotification(newMsg.senderName || newMsg.senderUsername);
+              triggerNudge(newMsg.senderUsername, false);
+            } else {
               playedNotification = true;
               notificationMsg = newMsg;
             }
@@ -684,7 +691,69 @@ export const ChatLocal: React.FC<ChatLocalProps> = ({
       isFirstLoadPrivate.current = false;
     });
     return () => unsubscribe();
-  }, [loggedInUser.username]);
+  }, [loggedInUser.username, triggerNudge]);
+
+  // High-frequency watchdog for rapid background/locked message and nudge detection
+  useEffect(() => {
+    let isCancelled = false;
+    const handledMsgIds = new Set<string>();
+
+    const pollIncoming = async () => {
+      try {
+        const inboxQ = query(
+          collection(db, 'inbox', loggedInUser.username, 'messages'),
+          orderBy('timestamp', 'desc'),
+          limit(3)
+        );
+        const inboxSnap = await getDocs(inboxQ);
+        if (isCancelled) return;
+
+        inboxSnap.forEach(d => {
+          const msg = { id: d.id, ...d.data() } as Message;
+          if (msg.senderUsername?.toLowerCase().trim() !== loggedInUser.username?.toLowerCase().trim()) {
+            if (!handledMsgIds.has(msg.id)) {
+              handledMsgIds.add(msg.id);
+              let msgTime = Date.now();
+              if (msg.timestamp) {
+                if (typeof msg.timestamp.toMillis === 'function') msgTime = msg.timestamp.toMillis();
+                else if (msg.timestamp.seconds) msgTime = msg.timestamp.seconds * 1000;
+              }
+              // If message arrived within the last 20 seconds and was not yet notified
+              if (Date.now() - msgTime < 20000) {
+                if (msg.isNudge) {
+                  showChatNudgeNotification(msg.senderName || msg.senderUsername);
+                  triggerNudge(msg.senderUsername, false);
+                } else {
+                  showChatMessageNotification(msg.senderName, msg.text);
+                }
+              }
+            }
+          }
+        });
+      } catch (e) {
+        // network silent
+      }
+    };
+
+    const interval = setInterval(pollIncoming, 2000);
+
+    let appStateSub: any = null;
+    try {
+      CapApp.addListener('appStateChange', (state) => {
+        if (state.isActive) {
+          pollIncoming();
+        }
+      }).then(handle => {
+        appStateSub = handle;
+      }).catch(() => {});
+    } catch (e) {}
+
+    return () => {
+      isCancelled = true;
+      clearInterval(interval);
+      if (appStateSub && appStateSub.remove) appStateSub.remove();
+    };
+  }, [loggedInUser.username, triggerNudge]);
 
 
   const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {

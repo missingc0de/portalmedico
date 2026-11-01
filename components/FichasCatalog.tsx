@@ -42,6 +42,7 @@ interface MacroCategory {
 interface FichasCatalogProps {
   onSelectFicha: (view: View) => void;
   onBack: () => void;
+  onRegisterBackHandler?: (handler: () => boolean) => void;
 }
 
 const MACRO_CATEGORIES: MacroCategory[] = [
@@ -146,9 +147,26 @@ const MACRO_CATEGORIES: MacroCategory[] = [
   }
 ];
 
-export const FichasCatalog: React.FC<FichasCatalogProps> = ({ onSelectFicha, onBack }) => {
+export const FichasCatalog: React.FC<FichasCatalogProps> = ({ onSelectFicha, onBack, onRegisterBackHandler }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedMacroId, setSelectedMacroId] = useState<string | null>(null);
+
+  // Register back button handler for Android / App back navigation
+  useEffect(() => {
+    if (onRegisterBackHandler) {
+      onRegisterBackHandler(() => {
+        if (searchTerm) {
+          setSearchTerm('');
+          return true;
+        }
+        if (selectedMacroId) {
+          setSelectedMacroId(null);
+          return true;
+        }
+        return false;
+      });
+    }
+  }, [onRegisterBackHandler, selectedMacroId, searchTerm]);
 
   const allFichas: (FichaItem & { macroId: string })[] = useMemo(() => [
     // 1. ECICEP (Solo ECICEP sin Demencias)
@@ -258,12 +276,9 @@ export const FichasCatalog: React.FC<FichasCatalogProps> = ({ onSelectFicha, onB
   }, [allFichas, selectedMacroId]);
 
   return (
-    <div 
-      className="w-full h-full flex-1 min-h-0 flex flex-col bg-[#f4f7fb] overflow-y-auto overscroll-contain custom-scrollbar"
-      style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}
-    >
+    <div className="w-full min-h-full flex flex-col bg-[#f4f7fb]">
       {/* Top Bar with Search & Title - Sticky at top */}
-      <div className="sticky top-0 z-20 bg-white border-b border-slate-200/80 px-4 py-3 shrink-0 shadow-xs">
+      <div className="sticky top-0 z-30 bg-white border-b border-slate-200/80 px-4 py-3 shrink-0 shadow-xs">
         <div className="flex items-center gap-2 mb-2.5">
           <button
             onClick={() => {
@@ -273,7 +288,7 @@ export const FichasCatalog: React.FC<FichasCatalogProps> = ({ onSelectFicha, onB
                 onBack();
               }
             }}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
+            className="hidden md:flex w-8 h-8 rounded-lg items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
             title={selectedMacroId ? "Volver a Categorías" : "Volver al Menú"}
           >
             <ArrowLeft className="w-5 h-5" />
@@ -313,7 +328,7 @@ export const FichasCatalog: React.FC<FichasCatalogProps> = ({ onSelectFicha, onB
       </div>
 
       {/* Main Content Area - Flows naturally inside scrollable root with bottom padding */}
-      <div className="p-3 space-y-2.5 pb-32">
+      <div className="p-3 space-y-2.5 pb-40">
         {/* If user is searching: show search results directly */}
         {searchResults !== null ? (
           <div className="space-y-2">
@@ -407,7 +422,7 @@ export const FichasCatalog: React.FC<FichasCatalogProps> = ({ onSelectFicha, onB
             <div className="flex items-center justify-between px-1 mb-1">
               <button
                 onClick={() => setSelectedMacroId(null)}
-                className="text-xs font-bold text-sky-600 hover:text-sky-700 flex items-center gap-1 cursor-pointer"
+                className="hidden md:flex text-xs font-bold text-sky-600 hover:text-sky-700 items-center gap-1 cursor-pointer"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 <span>Volver a categorías</span>

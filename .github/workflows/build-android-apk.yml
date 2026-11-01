@@ -78,4 +78,4 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload v1.4.29 output-apk/PortalMedico_v1.4.29.apk --clobber || echo "Notice: Release v1.4.29 upload skipped or release not found."
+          gh release create v1.4.29 output-apk/*.apk --title "Portal Médico v1.4.29" --notes "Actualización móvil: corrección de scroll completo en catálogo de fichas clínicas, soporte de navegación con botón atrás nativo de Android, pesquisa y alertas de zumbidos/mensajes aceleradas en segundo plano, y apertura de menú lateral móvil." || gh release upload v1.4.29 output-apk/*.apk --clobber || echo "Notice: Release v1.4.29 upload skipped."

@@ -218,12 +218,17 @@ body {
     height: auto !important;
   }
 
-  /* Hide internal return buttons ONLY in the main form on mobile */
+  /* Hide internal return/back buttons on mobile (user wants only Android back button) */
   .mobile-ficha-container form button.bg-slate-200:not(.fixed *):not([role="dialog"] *),
   .mobile-ficha-container form button.bg-slate-300:not(.fixed *):not([role="dialog"] *),
   .mobile-ficha-container form button.bg-gray-200:not(.fixed *):not([role="dialog"] *),
   .mobile-ficha-container form button[title*="Volver" i]:not(.fixed *):not([role="dialog"] *),
-  .mobile-ficha-container form button[aria-label*="Volver" i]:not(.fixed *):not([role="dialog"] *) {
+  .mobile-ficha-container form button[aria-label*="Volver" i]:not(.fixed *):not([role="dialog"] *),
+  button[title*="Volver al Menú" i],
+  button[title*="Volver a Categorías" i],
+  button[title*="Volver a Macrocategorías" i],
+  button[title*="Volver" i]:not(.fixed *):not([role="dialog"] *),
+  #btn-mobile-header-back {
     display: none !important;
   }
 
@@ -234,8 +239,7 @@ body {
 
   /* Modal Overlays: strictly pinned on top of the entire screen and bottom nav */
   .mobile-ficha-container .fixed.inset-0,
-  .mobile-ficha-container [role="dialog"],
-  .fixed.inset-0 {
+  .mobile-ficha-container [role="dialog"] {
     position: fixed !important;
     top: 0 !important;
     right: 0 !important;
@@ -253,8 +257,7 @@ body {
 
   /* Modal Dialog Cards: solid white, crisp borders, prominent elevation */
   .mobile-ficha-container .fixed.inset-0 > div,
-  .mobile-ficha-container [role="dialog"] > div,
-  .fixed.inset-0 > div {
+  .mobile-ficha-container [role="dialog"] > div {
     background: #ffffff !important;
     background-color: #ffffff !important;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45) !important;
@@ -273,8 +276,7 @@ body {
 
   /* Modal Headers */
   .mobile-ficha-container .fixed.inset-0 header,
-  .mobile-ficha-container [role="dialog"] header,
-  .fixed.inset-0 header {
+  .mobile-ficha-container [role="dialog"] header {
     padding: 0.875rem 1rem !important;
     border-bottom: 1px solid #e2e8f0 !important;
     margin-bottom: 0 !important;
@@ -284,8 +286,7 @@ body {
   /* Modal Body Scroll Area */
   .mobile-ficha-container .fixed.inset-0 main,
   .mobile-ficha-container .fixed.inset-0 > div > div.overflow-y-auto,
-  .mobile-ficha-container [role="dialog"] main,
-  .fixed.inset-0 main {
+  .mobile-ficha-container [role="dialog"] main {
     padding: 1rem !important;
     margin-bottom: 0 !important;
     overflow-y: auto !important;

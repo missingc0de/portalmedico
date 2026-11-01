@@ -120,6 +120,9 @@ export const showChatMessageNotification = async (
     try {
       await initNotificationChannels();
 
+      // Audio inmediato
+      soundService.play('/notification.mp3');
+
       // Doble vibración nativa estilo WhatsApp (pulso, pausa, pulso)
       if (typeof navigator !== 'undefined' && navigator.vibrate) {
         navigator.vibrate([100, 80, 100]);
@@ -195,6 +198,9 @@ export const showChatNudgeNotification = async (senderName: string) => {
   if (Capacitor.isNativePlatform()) {
     try {
       await initNotificationChannels();
+
+      // Audio inmediato
+      soundService.play('/nudge.mp3');
 
       // Vibración de 1 segundo de corrido (largo continuo)
       if (typeof navigator !== 'undefined' && navigator.vibrate) {

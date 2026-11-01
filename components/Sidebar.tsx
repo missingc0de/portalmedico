@@ -807,15 +807,18 @@ const Sidebar: React.FC<SidebarProps> = ({
     </aside>
       {/* Mobile Drawer (sliding from left) for smartphones / vertical orientation */}
       {isMobileDrawerOpen && (
-        <div className="fixed inset-0 z-[100] md:hidden flex justify-start">
+        <div className="fixed inset-0 z-[999] md:hidden flex justify-start">
           {/* Backdrop Overlay */}
           <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity duration-300"
+            className="absolute inset-0 bg-black/60 backdrop-blur-xs transition-opacity duration-300"
             onClick={onCloseMobileDrawer}
           />
 
           {/* Drawer Panel */}
-          <div className="relative w-[85%] max-w-[340px] h-full bg-[#f8fafc] text-slate-800 shadow-2xl flex flex-col z-10 animate-slideInLeft border-r border-slate-200">
+          <div 
+            className="relative w-[85%] max-w-[340px] h-full bg-[#f8fafc] text-slate-800 shadow-2xl flex flex-col z-10 animate-slideInLeft border-r border-slate-200"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Header with User Info and Close Button */}
             <div className="p-4 bg-white border-b border-slate-200 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-3 min-w-0">
