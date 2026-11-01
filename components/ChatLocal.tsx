@@ -11,7 +11,7 @@ import { DriveEcicepWindow } from './DriveEcicepWindow';
 import { GmailWindow } from './GmailWindow';
 import { soundService } from '../services/soundService';
 import { LoginToast } from './LoginToast';
-import { showUserConnectNotification, showChatMessageNotification, requestNotificationPermission } from '../services/notificationService';
+import { showUserConnectNotification, showChatMessageNotification, showChatNudgeNotification, requestNotificationPermission } from '../services/notificationService';
 
 interface Message {
   id: string;
@@ -61,6 +61,7 @@ interface ChatLocalProps {
   setIsCalcOpen: React.Dispatch<React.SetStateAction<boolean>>;
   isNotesOpen: boolean;
   setIsNotesOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  isDedicatedTab?: boolean;
 }
 
 const PROFESSION_ALIAS_LIST = [
@@ -188,9 +189,16 @@ export const ChatLocal: React.FC<ChatLocalProps> = ({
   isCalcOpen,
   setIsCalcOpen,
   isNotesOpen,
-  setIsNotesOpen
+  setIsNotesOpen,
+  isDedicatedTab = false
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(isDedicatedTab ? true : false);
+
+  useEffect(() => {
+    if (isDedicatedTab) {
+      setIsOpen(true);
+    }
+  }, [isDedicatedTab]);
   const [isSSVBrowserOpen, setIsSSVBrowserOpen] = useState(false);
   const [isCYBBrowserOpen, setIsCYBBrowserOpen] = useState(false);
   const [isGmailOpen, setIsGmailOpen] = useState(false);
@@ -260,20 +268,20 @@ export const ChatLocal: React.FC<ChatLocalProps> = ({
     soundService.preloadAll();
   }, []);
 
-  // Play nudge sound file
+  // Play nudge sound file / notification
   const playNudgeAudio = useCallback(() => {
     soundService.play('/nudge.mp3');
   }, []);
 
   const triggerNudge = useCallback((senderUsername: string, isGeneral: boolean = false) => {
-    playNudgeAudio();
+    showChatNudgeNotification(senderUsername);
     setIsOpen(true);
     const targetChannel = isGeneral ? 'general' : `private_${senderUsername}`;
     setActiveChannel(targetChannel);
     setCurrentPane('chat');
     setIsShaking(true);
     setTimeout(() => setIsShaking(false), 650);
-  }, [playNudgeAudio]);
+  }, []);
 
   // Declarative Nudge Auto-Open Handler
   useEffect(() => {
@@ -1189,12 +1197,14 @@ export const ChatLocal: React.FC<ChatLocalProps> = ({
 
       {/* Main Animated Messenger Box */}
       <div
-        className={`fixed bottom-0 right-0 md:right-6 z-50 border border-slate-300 shadow-[0_-2px_10px_rgba(0,0,0,0.06)] flex transition-all duration-300 ease-in-out overflow-hidden ${isShaking ? 'animate-shake' : ''} ${isOpen ? 'w-full md:w-[360px] h-[520px] rounded-t-2xl bg-[#E3EFFE] border-[#7A96DF]' : 'w-full md:w-[360px] h-12 rounded-t-xl cursor-pointer bg-white hover:bg-slate-50'}`}
-        onClick={!isOpen ? () => { setIsOpen(true); setIsProfileExpanded(false); setUnreadCount(0); } : undefined}
+        className={isDedicatedTab 
+          ? "w-full h-full flex flex-col bg-[#E3EFFE] overflow-hidden select-none border-0 rounded-none shadow-none"
+          : `hidden md:flex fixed bottom-0 right-0 md:right-6 z-50 border border-slate-300 shadow-[0_-2px_10px_rgba(0,0,0,0.06)] transition-all duration-300 ease-in-out overflow-hidden ${isShaking ? 'animate-shake' : ''} ${isOpen ? 'w-full md:w-[360px] h-[520px] rounded-t-2xl bg-[#E3EFFE] border-[#7A96DF]' : 'w-full md:w-[360px] h-12 rounded-t-xl cursor-pointer bg-white hover:bg-slate-50'}`}
+        onClick={(!isOpen && !isDedicatedTab) ? () => { setIsOpen(true); setIsProfileExpanded(false); setUnreadCount(0); } : undefined}
       >
         {/* Profile Panel */}
         {isOpen && isProfileExpanded && (
-          <div className="w-full md:w-[360px] flex flex-col h-full bg-white select-none shrink-0 animate-fadeIn">
+          <div className={`w-full ${isDedicatedTab ? 'flex-1' : 'md:w-[360px]'} flex flex-col h-full bg-white select-none shrink-0 animate-fadeIn`}>
             {/* Header of Profile Panel */}
             <div className="bg-white p-3 h-12 flex justify-between items-center text-slate-800 shadow-sm border-b border-slate-100 shrink-0">
               <h3 className="font-bold text-sm text-shadow-sm truncate">Mi Perfil de Usuario</h3>
@@ -1350,17 +1360,18 @@ export const ChatLocal: React.FC<ChatLocalProps> = ({
         )}
 
         {(!isOpen || !isProfileExpanded) && (
-          <div className="flex flex-col h-full w-full md:w-[360px] shrink-0">
-          {/* Unified Header: Visible when closed, or when open and in list pane */}
-          {(!isOpen || currentPane === 'list') && (
+          <div className={`flex flex-col h-full w-full ${isDedicatedTab ? 'flex-1' : 'md:w-[360px]'} shrink-0`}>
+          {/* Unified Header: Visible when closed, or when open and in list pane (hidden on mobile dedicated tab) */}
+          {(!isOpen || currentPane === 'list') && !isDedicatedTab && (
             <div
-              onClick={!isOpen ? () => { setIsOpen(true); setIsProfileExpanded(false); setUnreadCount(0); } : undefined}
-              className={`px-3 h-12 flex justify-between items-center shrink-0 select-none ${!isOpen ? 'w-full h-full bg-gradient-to-b from-[#e1ecfc] to-[#cbdffb]' : 'border-b border-[#a6c1e3] bg-gradient-to-b from-[#e1ecfc] to-[#cbdffb]'}`}
+              onClick={(!isOpen && !isDedicatedTab) ? () => { setIsOpen(true); setIsProfileExpanded(false); setUnreadCount(0); } : undefined}
+              className={`px-3 h-12 flex justify-between items-center shrink-0 select-none ${(!isOpen && !isDedicatedTab) ? 'w-full h-full bg-gradient-to-b from-[#e1ecfc] to-[#cbdffb]' : 'border-b border-[#a6c1e3] bg-gradient-to-b from-[#e1ecfc] to-[#cbdffb]'}`}
             >
               <div 
                 className="flex items-center gap-2.5 cursor-pointer"
                 onClick={(e) => {
                   e.stopPropagation();
+                  if (isDedicatedTab) return;
                   if (isOpen) {
                     setIsOpen(false);
                   } else {
@@ -1446,8 +1457,8 @@ export const ChatLocal: React.FC<ChatLocalProps> = ({
         {isOpen && currentPane === 'list' && (
           <div className="flex-grow flex flex-col min-h-0 bg-[#E3EFFE]">
             {/* Search messages bar */}
-            <div className="px-3 py-2 bg-white shrink-0">
-              <div className="flex items-center bg-[#f3f6f8] rounded-lg px-2.5 py-1.5 gap-2 border border-slate-200/20">
+            <div className={`px-3 py-2.5 shrink-0 ${isDedicatedTab ? 'bg-[#E3EFFE]' : 'bg-white'}`}>
+              <div className="flex items-center bg-white rounded-lg px-2.5 py-1.5 gap-2 border border-[#abc6e9] shadow-xs">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-slate-500">
                   <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
                 </svg>
@@ -1684,6 +1695,24 @@ export const ChatLocal: React.FC<ChatLocalProps> = ({
                   )}
                 </div>
             </div>
+            {/* Mobile Floating Action Button (FAB) for new chat */}
+            {isDedicatedTab && (
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTabSub('contactos');
+                  setSearchTerm('');
+                }}
+                className="fixed bottom-18 right-4 w-12 h-12 rounded-full bg-gradient-to-tr from-sky-600 to-sky-500 hover:from-sky-500 hover:to-sky-600 text-white shadow-lg flex items-center justify-center transition-all active:scale-90 z-30 cursor-pointer border border-sky-300/40"
+                title="Nuevo chat"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                  <line x1="12" y1="8" x2="12" y2="14" />
+                  <line x1="9" y1="11" x2="15" y2="11" />
+                </svg>
+              </button>
+            )}
           </div>
         )}
 
@@ -1731,7 +1760,9 @@ export const ChatLocal: React.FC<ChatLocalProps> = ({
             </div>
 
             {/* Messages body */}
-            <div className="flex-1 p-3 md:p-4 overflow-y-auto space-y-4 shadow-inner bg-white border border-sky-200 rounded-lg m-2 min-h-0">
+            <div className={isDedicatedTab 
+              ? "flex-1 p-3 overflow-y-auto space-y-3 bg-[#f0f4fc] min-h-0" 
+              : "flex-1 p-3 md:p-4 overflow-y-auto space-y-4 shadow-inner bg-white border border-sky-200 rounded-lg m-2 min-h-0"}>
               {activeMessages.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-slate-400 space-y-3">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">

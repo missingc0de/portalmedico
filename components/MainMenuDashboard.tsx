@@ -20,7 +20,10 @@ import {
   ChevronLeft,
   ChevronRight,
   Bold,
-  Italic
+  Italic,
+  PhoneCall,
+  Stethoscope,
+  HeartPulse
 } from 'lucide-react';
 import { db } from '../services/firebase';
 import { collection, query, orderBy, onSnapshot, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
@@ -305,6 +308,8 @@ const MainMenuDashboard: React.FC<MainMenuDashboardProps> = ({
     return currentMonthData[dy] || [];
   }, [today, onCallScheduleData]);
 
+  const todayOnCall = todayTurnos;
+
   const todayEvents = useMemo(() => {
     const yr = today.getFullYear();
     const mo = today.getMonth();
@@ -320,10 +325,207 @@ const MainMenuDashboard: React.FC<MainMenuDashboardProps> = ({
   const completedTasks = useMemo(() => tasks.filter(t => t.completed), [tasks]);
 
   return (
-    <div className="w-full h-full flex flex-col gap-5 font-sans overflow-y-auto pr-1 pb-6 custom-scrollbar text-slate-800">
+    <div className="w-full h-full font-sans text-slate-800">
       
-      {/* Main Grid Layout: Balanced 50/50 columns (lg:grid-cols-2) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 w-full items-start">
+      {/* Mobile-Only Dashboard: Bienvenido, Llamado de Urgencia y Avisos con espacio uniforme */}
+      <div className="flex md:hidden flex-col gap-2 overflow-hidden">
+        
+        {/* 1. Mensaje de Bienvenida */}
+        <div className="bg-gradient-to-r from-sky-600 via-sky-700 to-indigo-700 rounded-2xl p-3 text-white shadow-xs flex items-center justify-between shrink-0">
+          <div className="min-w-0 pr-2">
+            <span className="text-[10px] font-bold tracking-wider text-sky-200 uppercase block">
+              PORTAL MÉDICO APS
+            </span>
+            <h2 className="text-sm font-black truncate leading-tight mt-0.5">
+              ¡Bienvenido(a), {loggedInUser.fullName}!
+            </h2>
+            <p className="text-[11px] text-sky-100 font-medium truncate mt-0.5">
+              {loggedInUser.cesfam || 'CESFAM San Juan'} {loggedInUser.sector ? `• Sector ${loggedInUser.sector}` : ''}
+            </p>
+          </div>
+          <div className="relative shrink-0">
+            {loggedInUser.profilePictureUrl ? (
+              <img src={loggedInUser.profilePictureUrl} className="w-10 h-10 rounded-full object-cover ring-2 ring-white/50" alt="Avatar" />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-xs text-white font-bold text-sm flex items-center justify-center uppercase ring-2 ring-white/40">
+                {(loggedInUser.fullName || 'U').charAt(0)}
+              </div>
+            )}
+            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-white"></span>
+          </div>
+        </div>
+
+        {/* 2. Quién está de Llamado de Urgencia */}
+        <div className="bg-white rounded-2xl p-3 border border-slate-200/90 shadow-2xs flex flex-col justify-between shrink-0">
+          <div className="flex items-center justify-between pb-1.5 border-b border-slate-100 mb-1.5">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+                <PhoneCall className="w-3.5 h-3.5" />
+              </div>
+              <h3 className="text-xs font-bold text-slate-800 tracking-tight uppercase">
+                Llamado de Urgencia Hoy
+              </h3>
+            </div>
+            <span className="text-[9px] bg-rose-100 text-rose-700 font-bold px-2 py-0.5 rounded-full">
+              {todayOnCall.length > 0 ? `${todayOnCall.length} de turno` : 'Sin turno'}
+            </span>
+          </div>
+
+          <div className="space-y-1">
+            {todayOnCall.length > 0 ? (
+              todayOnCall.map((docName, idx) => (
+                <div key={idx} className="flex items-center justify-between bg-slate-50 p-2 rounded-xl border border-slate-200/70">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Stethoscope className="w-4 h-4 text-sky-600 shrink-0" />
+                    <span className="text-xs font-bold text-slate-800 truncate uppercase">
+                      {docName}
+                    </span>
+                  </div>
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded-md shrink-0">
+                    De Llamado
+                  </span>
+                </div>
+              ))
+            ) : (
+              <div className="p-2 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                <p className="text-xs text-slate-500 font-medium">Sin personal de llamado registrado para hoy</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 3. Avisos Card (Avisos del Equipo compacto y flechas debajo) */}
+        <div className="bg-white rounded-2xl shadow-2xs border border-slate-200/80 p-3 flex flex-col shrink-0">
+          <div className="flex items-center justify-between pb-1.5 border-b border-slate-100 shrink-0">
+            <div className="flex items-center gap-1.5">
+              <Megaphone className="w-4 h-4 text-sky-600 shrink-0" />
+              <h3 className="text-xs font-bold text-slate-800 tracking-tight uppercase">Avisos del Equipo</h3>
+            </div>
+            <div className="flex items-center gap-1 shrink-0">
+              <button 
+                onClick={() => {
+                  setEditingAviso(null);
+                  setNewAvisoContent('');
+                  setIsAddAvisoOpen(true);
+                }}
+                className="w-5.5 h-5.5 bg-sky-600 hover:bg-sky-700 text-white rounded-md flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-95 shrink-0"
+                title="Crear aviso"
+              >
+                <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+              </button>
+              {avisos.length > 0 && (() => {
+                const currentAviso = avisos[activeAvisoIndex % avisos.length];
+                const isOwner = currentAviso && (currentAviso.username 
+                  ? currentAviso.username === loggedInUser.username 
+                  : currentAviso.userFullName === loggedInUser.fullName);
+                return isOwner ? (
+                  <>
+                    <button 
+                      onClick={handleEditActiveAviso}
+                      className="w-5.5 h-5.5 bg-amber-500 hover:bg-amber-600 text-white rounded-md flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-95 shrink-0"
+                      title="Editar aviso actual"
+                    >
+                      <Pencil className="w-3 h-3" />
+                    </button>
+                    <button 
+                      onClick={handleDeleteActiveAviso}
+                      className="w-5.5 h-5.5 bg-red-600 hover:bg-red-700 text-white rounded-md flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-95 shrink-0"
+                      title="Borrar aviso actual"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </>
+                ) : null;
+              })()}
+            </div>
+          </div>
+
+          {/* Avisos Body */}
+          <div className="flex flex-col min-h-0 mt-2">
+            {avisos.length > 0 ? (
+              (() => {
+                const currentAviso = avisos[activeAvisoIndex % avisos.length];
+                if (!currentAviso) return null;
+                const authorName = currentAviso.userFullName || 'Usuario';
+                const authorAvatar = currentAviso.profilePictureUrl 
+                  || (currentAviso.username && localStorage.getItem(`profile_picture_${currentAviso.username}`))
+                  || (currentAviso.username && localStorage.getItem(`user_avatar_${currentAviso.username}`))
+                  || (currentAviso.username === loggedInUser.username ? loggedInUser.profilePictureUrl : undefined);
+
+                return (
+                  <div key={`mob-${currentAviso.id}`} className="flex flex-col gap-1.5 animate-fadeIn w-full">
+                    <div className="flex items-center gap-1.5 w-full shrink-0">
+                      <div className="w-5 h-5 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center font-bold text-[9px] border border-sky-200 shrink-0 overflow-hidden">
+                        {authorAvatar ? (
+                          <img src={authorAvatar} alt={authorName} className="w-full h-full object-cover" />
+                        ) : (
+                          authorName.charAt(0)
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0 flex items-center justify-between">
+                        <span className="text-xs font-bold text-slate-900 truncate">
+                          {authorName}
+                        </span>
+                        <span className="text-[10px] font-semibold text-slate-400 shrink-0">
+                          {currentAviso.createdAt || ''}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Bloque amarillo: altura máxima para 3 renglones de texto */}
+                    <div className="text-xs leading-snug text-amber-950 w-full break-words bg-yellow-50 py-1.5 px-2.5 rounded-xl border border-yellow-200/80 max-h-[4.5rem] overflow-hidden flex items-center">
+                      <div className="line-clamp-3 w-full">
+                        {renderFormattedText(currentAviso.content)}
+                      </div>
+                    </div>
+
+                    {/* Flechas de navegación DEBAJO en la versión móvil */}
+                    {avisos.length > 1 && (
+                      <div className="flex items-center justify-between pt-1 px-1">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveAvisoIndex(prev => (prev - 1 + avisos.length) % avisos.length);
+                          }}
+                          className="w-7 h-6 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 flex items-center justify-center cursor-pointer active:scale-95 transition-colors"
+                          title="Aviso anterior"
+                        >
+                          <ChevronLeft className="w-3.5 h-3.5 stroke-[2.5]" />
+                        </button>
+                        <span className="text-[10px] font-bold text-slate-500">
+                          {(activeAvisoIndex % avisos.length) + 1} de {avisos.length}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveAvisoIndex(prev => (prev + 1) % avisos.length);
+                          }}
+                          className="w-7 h-6 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 flex items-center justify-center cursor-pointer active:scale-95 transition-colors"
+                          title="Siguiente aviso"
+                        >
+                          <ChevronRight className="w-3.5 h-3.5 stroke-[2.5]" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()
+            ) : (
+              <div className="text-center py-2 shrink-0 font-sans">
+                <p className="text-xs text-slate-400 font-medium italic">No hay avisos publicados en el mural</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+      </div>
+
+      {/* Desktop Dashboard (Original layout intact) */}
+      <div className="hidden md:flex w-full h-full flex-col gap-5 overflow-y-auto pr-1 pb-6 custom-scrollbar">
+        {/* Main Grid Layout: Balanced 50/50 columns (lg:grid-cols-2) */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 w-full items-start">
         
         {/* COLUMN 1 (50% width): Calendario de Urgencia */}
         <div className="flex flex-col gap-5 w-full">
@@ -505,6 +707,7 @@ const MainMenuDashboard: React.FC<MainMenuDashboardProps> = ({
 
         </div>
 
+      </div>
       </div>
 
       {/* Task Creation Modal */}

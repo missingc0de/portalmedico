@@ -12,6 +12,9 @@ on:
       - 'android/**'
       - 'capacitor.config.ts'
       - 'package.json'
+      - 'App.tsx'
+      - 'index.css'
+      - 'types.ts'
       - '.github/workflows/build-android-apk.yml'
   workflow_dispatch:
 

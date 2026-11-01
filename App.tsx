@@ -80,7 +80,7 @@ import TablaComposicionAlimentos from './components/TablaComposicionAlimentos';
 import FichaFirmarGes from './components/FichaFirmarGes';
 import MisPacientes from './components/MisPacientes';
 import { SapuMenu } from './components/SapuMenu';
-import { PatientRecord } from './services/patientStore';
+import { patientStore, PatientRecord } from './services/patientStore';
 import { onCallScheduleData, specialEventsData } from './data/onCallScheduleData';
 import { users as initialUsers } from './data/userData';
 import { subscribeToCloudUsers } from './services/userService';
@@ -97,7 +97,11 @@ import { DriveEcicepWindow } from './components/DriveEcicepWindow';
 import { NotesWindow } from './components/NotesWindow';
 import { CalculatorWindow } from './components/CalculatorWindow';
 import { LoginToast } from './components/LoginToast';
-import { showUserConnectNotification } from './services/notificationService';
+import { Home, Users, MessageSquare, Hospital, Menu, ChevronLeft, ClipboardList, BookOpen, Settings, Copy, CloudUpload, Trash2, X } from 'lucide-react';
+import { App as CapApp } from '@capacitor/app';
+import FichasCatalog from './components/FichasCatalog';
+import AppSettingsView from './components/AppSettingsView';
+import { initNotificationChannels } from './services/notificationService';
 
 const MaskedDateInput: React.FC<{ value: string; onChange: (val: string) => void; className?: string }> = ({ value, onChange, className }) => {
   const [localValue, setLocalValue] = useState(value || '');
@@ -334,7 +338,197 @@ const formatFeedDate = (date: any): string => {
   return `${d.getDate()} ${months[d.getMonth()]}`;
 };
 
+const isClinicalRecord = (v: View | null | undefined): boolean => {
+  if (!v) return false;
+  return (
+    v.startsWith('ficha') ||
+    v === 'ingresoDemencias' ||
+    v.startsWith('consultaNutricional') ||
+    v === 'derivacionesPscv' ||
+    v === 'ordenLaboratorio' ||
+    v === 'ordenExamenRadiologico' ||
+    v === 'recetaMedica' ||
+    v === 'certificadoMedico' ||
+    v === 'constanciaAtencion' ||
+    v === 'certificadoEscolar' ||
+    v === 'sapu'
+  );
+};
+
+const getFichaTitle = (view: View): string => {
+  switch (view) {
+    case 'fichaControlPadds': return 'Control PADDS';
+    case 'fichaIngresoPadds': return 'Ficha Ingreso PADDS';
+    case 'fichaIngresoEcicep': return 'Ficha Ingreso ECICEP';
+    case 'fichaIngresoSm': return 'Ingreso Salud Mental';
+    case 'fichaConsultaPasmi': return 'Ficha Consulta PASMI';
+    case 'fichaPreingresoEcicep': return 'Ficha Preingreso ECICEP';
+    case 'fichaSeguimientoEcicep': return 'Ficha Seguimiento ECICEP';
+    case 'fichaControlEcicepNuevo': return 'Control ECICEP';
+    case 'fichaControlPscv': return 'Ficha Control Crónico';
+    case 'fichaControlSm': return 'Control de Salud Mental';
+    case 'fichaVisitaDomiciliaria': return 'Equipo de Cabecera';
+    case 'fichaControlSalaIra': return 'Control Sala IRA';
+    case 'fichaControlSalaEra': return 'Control Sala ERA';
+    case 'fichaControlNinoSano': return 'Control Niño Sano';
+    case 'fichaControlCardiovascular': return 'Control Cardiovascular';
+    case 'fichaControlAdultoMayor': return 'Control Adulto Mayor';
+    case 'fichaControlHipotiroidismo': return 'Control Hipotiroidismo';
+    case 'fichaControlEpilepsia': return 'Control Epilepsia';
+    case 'fichaControlArtrosis': return 'Control Artrosis';
+    case 'fichaControlDemencias': return 'Control Demencias';
+    case 'fichaFondoOjo': return 'Fondo de Ojo';
+    case 'fichaGrupalDiabetes': return 'Grupal Diabetes';
+    default:
+      if (view.startsWith('fichaControlNinoSano')) return 'Control Niño Sano';
+      if (view.startsWith('consultaNutricional')) return 'Consulta Nutricional';
+      return 'Ficha Clínica';
+  }
+};
+
+const getPrestacionCategory = (view: View): 'ecicep' | 'pscv' | 'salud_mental' | 'respiratorio' | 'vdi' | 'nino_sano' | 'preingreso' | 'none' => {
+  if (view.includes('Ecicep') || view.includes('ecicep')) return 'ecicep';
+  if (view.includes('Pscv') || view.includes('Cardiovascular') || view.includes('Padds') || view.includes('padds')) return 'pscv';
+  if (view.includes('Sm') || view.includes('Pasmi') || view.includes('Demencia')) return 'salud_mental';
+  if (view.includes('Era') || view.includes('Ira')) return 'respiratorio';
+  if (view.includes('VisitaDomiciliaria')) return 'vdi';
+  if (view.includes('NinoSano') || view.includes('Nutricional')) return 'nino_sano';
+  return 'none';
+};
+
+interface SavePatientCloudModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (nombre: string, rut: string) => Promise<void>;
+  initialNombre?: string;
+  initialRut?: string;
+  fichaTitle: string;
+}
+
+const SavePatientCloudModal: React.FC<SavePatientCloudModalProps> = ({
+  isOpen,
+  onClose,
+  onSave,
+  initialNombre = '',
+  initialRut = '',
+  fichaTitle,
+}) => {
+  const [nombre, setNombre] = useState(initialNombre);
+  const [rut, setRut] = useState(initialRut);
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setNombre(initialNombre);
+      setRut(initialRut);
+      setIsSaving(false);
+    }
+  }, [isOpen, initialNombre, initialRut]);
+
+  if (!isOpen) return null;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!nombre.trim()) {
+      alert('Por favor ingrese el nombre del paciente.');
+      return;
+    }
+    if (!rut.trim()) {
+      alert('Por favor ingrese el RUT del paciente.');
+      return;
+    }
+    setIsSaving(true);
+    try {
+      await onSave(nombre.trim().toUpperCase(), rut.trim());
+      onClose();
+    } catch (err) {
+      console.error(err);
+      alert('Error al guardar en la nube.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
+      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden">
+        <header className="px-5 py-4 bg-gradient-to-r from-sky-600 to-sky-700 text-white flex justify-between items-center">
+          <div className="flex items-center gap-2.5">
+            <CloudUpload className="w-5 h-5 text-sky-100" />
+            <div>
+              <h3 className="text-base font-bold tracking-tight">Guardar en la Nube</h3>
+              <p className="text-[11px] text-sky-100/90 font-medium">{fichaTitle}</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1.5 hover:bg-white/20 rounded-lg text-white transition-colors cursor-pointer"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </header>
+
+        <form onSubmit={handleSubmit} className="p-5 flex flex-col gap-4">
+          <p className="text-xs text-slate-600 leading-relaxed">
+            Se creará un registro de este paciente en <strong>"Mis pacientes"</strong> y se guardará en <strong>Firebase</strong> para consultarlo luego desde cualquier dispositivo.
+          </p>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+              Nombre y Apellidos del Paciente
+            </label>
+            <input
+              type="text"
+              required
+              autoFocus
+              value={nombre}
+              onChange={e => setNombre(e.target.value.toUpperCase())}
+              placeholder="EJ: MARÍA TERESA SOTO LÓPEZ"
+              className="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white font-medium text-slate-800 uppercase transition-all"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+              RUT del Paciente
+            </label>
+            <input
+              type="text"
+              required
+              value={rut}
+              onChange={e => setRut(e.target.value)}
+              placeholder="EJ: 12.345.678-9"
+              className="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white font-medium text-slate-800 transition-all"
+            />
+          </div>
+
+          <div className="flex justify-end gap-2.5 pt-2 border-t border-slate-100">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isSaving}
+              className="px-4 py-2.5 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={isSaving}
+              className="px-5 py-2.5 text-xs font-bold text-white bg-sky-600 hover:bg-sky-700 active:scale-95 rounded-lg shadow-sm transition-all cursor-pointer flex items-center gap-1.5"
+            >
+              <CloudUpload className="w-4 h-4" />
+              <span>{isSaving ? 'Guardando...' : 'Guardar en Firebase'}</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
 const App: React.FC = () => {
+  const [activeFichaView, setActiveFichaView] = useState<View | null>(null);
+  const [isSaveCloudModalOpen, setIsSaveCloudModalOpen] = useState(false);
   const [currentView, setCurrentView] = useState<View>('login');
   const [animationState, setAnimationState] = useState<'idle' | 'fading-out' | 'invisible' | 'fading-in'>('idle');
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -344,6 +538,7 @@ const App: React.FC = () => {
   const [computerBox, setComputerBox] = useState<string>(localStorage.getItem('computerBox') || '');
   const [computerSector, setComputerSector] = useState<string>(localStorage.getItem('computerSector') || '');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState<boolean>(false);
 
   useEffect(() => {
     const handleResize = () => {
@@ -643,6 +838,7 @@ const App: React.FC = () => {
 
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState<boolean>(false);
   const [isUserProfileModalOpen, setIsUserProfileModalOpen] = useState<boolean>(false);
+  const [isAppSettingsOpen, setIsAppSettingsOpen] = useState<boolean>(false);
   const [isPhoneDirectoryModalOpen, setIsPhoneDirectoryModalOpen] = useState<boolean>(false);
   const [isUrgenciasModalOpen, setIsUrgenciasModalOpen] = useState<boolean>(false);
   const [isCertificadoWindowOpen, setIsCertificadoWindowOpen] = useState<boolean>(false);
@@ -737,6 +933,8 @@ const App: React.FC = () => {
       setInstallPromptEvent(e);
     };
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    // Initialize native Android notification channels (sounds & vibrations)
+    initNotificationChannels().catch(err => console.warn('Init notifications failed:', err));
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
@@ -842,10 +1040,32 @@ const App: React.FC = () => {
     }
   }, [users]);
 
+  // Native Android Back Button & Navigation History
+  const [viewHistory, setViewHistory] = useState<View[]>(['menu']);
+  const isMobileDrawerOpenRef = useRef(isMobileDrawerOpen);
+  isMobileDrawerOpenRef.current = isMobileDrawerOpen;
+  const currentViewRef = useRef(currentView);
+  currentViewRef.current = currentView;
+  const isUserProfileModalOpenRef = useRef(isUserProfileModalOpen);
+  isUserProfileModalOpenRef.current = isUserProfileModalOpen;
+  const isAppSettingsOpenRef = useRef(isAppSettingsOpen);
+  isAppSettingsOpenRef.current = isAppSettingsOpen;
+  const isPhoneDirectoryModalOpenRef = useRef(isPhoneDirectoryModalOpen);
+  isPhoneDirectoryModalOpenRef.current = isPhoneDirectoryModalOpen;
+  const isUrgenciasModalOpenRef = useRef(isUrgenciasModalOpen);
+  isUrgenciasModalOpenRef.current = isUrgenciasModalOpen;
+
   const navigateTo = useCallback((view: View, patientData?: PatientRecord) => {
     if (patientData) {
       setActivePatient(patientData);
     }
+    if (isClinicalRecord(view)) {
+      setActiveFichaView(view);
+    }
+    setViewHistory(prev => (prev[prev.length - 1] === view ? prev : [...prev, view]));
+    try {
+      window.history.pushState({ view }, '');
+    } catch (e) {}
     setAnimationState('fading-out');
     setTimeout(() => {
       // Set to invisible BEFORE mounting the new view to prevent flash
@@ -870,6 +1090,83 @@ const App: React.FC = () => {
       }, 50); // 50ms is enough to render the DOM invisibly
     }, 250);
   }, []);
+
+  const handleBackNavigation = useCallback(() => {
+    // 1. If mobile drawer is open -> close it
+    if (isMobileDrawerOpenRef.current) {
+      setIsMobileDrawerOpen(false);
+      return true;
+    }
+    // 2. If app settings modal is open -> close it
+    if (isAppSettingsOpenRef.current) {
+      setIsAppSettingsOpen(false);
+      return true;
+    }
+    // 3. If user profile modal is open -> close it
+    if (isUserProfileModalOpenRef.current) {
+      setIsUserProfileModalOpen(false);
+      return true;
+    }
+    // 4. If other modals are open -> close them
+    if (isPhoneDirectoryModalOpenRef.current) {
+      setIsPhoneDirectoryModalOpen(false);
+      return true;
+    }
+    if (isUrgenciasModalOpenRef.current) {
+      setIsUrgenciasModalOpen(false);
+      return true;
+    }
+    // If currently inside a clinical record, return to 'fichas' catalog
+    if (isClinicalRecord(currentViewRef.current)) {
+      setActiveFichaView(null);
+      navigateTo('fichas');
+      return true;
+    }
+    // 4. If current view is not 'menu' and not 'login', navigate back
+    if (currentViewRef.current !== 'menu' && currentViewRef.current !== 'login') {
+      setViewHistory(prev => {
+        if (prev.length > 1) {
+          const newHist = prev.slice(0, -1);
+          const prevView = newHist[newHist.length - 1];
+          navigateTo(prevView || 'menu');
+          return newHist;
+        } else {
+          navigateTo('menu');
+          return ['menu'];
+        }
+      });
+      return true;
+    }
+    return false;
+  }, [navigateTo]);
+
+  useEffect(() => {
+    let sub: any = null;
+    try {
+      CapApp.addListener('backButton', ({ canGoBack }) => {
+        const handled = handleBackNavigation();
+        if (!handled && canGoBack) {
+          CapApp.minimizeApp().catch(() => {});
+        }
+      }).then(handle => {
+        sub = handle;
+      }).catch(err => {
+        console.log('CapApp backButton listener setup:', err);
+      });
+    } catch (e) {
+      console.log('CapApp not available in browser:', e);
+    }
+
+    const onPopState = () => {
+      handleBackNavigation();
+    };
+    window.addEventListener('popstate', onPopState);
+
+    return () => {
+      if (sub && sub.remove) sub.remove();
+      window.removeEventListener('popstate', onPopState);
+    };
+  }, [handleBackNavigation]);
 
   const loginUser = (user: User, rememberMe: boolean = false, box: string = '', sector: string = '') => {
     isAuthenticatedRef.current = true; // Update ref synchronously before React state updates
@@ -1885,6 +2182,178 @@ const App: React.FC = () => {
     );
   };
 
+  useEffect(() => {
+    if (isClinicalRecord(currentView) && window.innerWidth < 768) {
+      const timer = setTimeout(() => {
+        const container = document.querySelector('.mobile-ficha-container');
+        if (container) {
+          const buttons = container.querySelectorAll('button');
+          buttons.forEach(btn => {
+            const txt = (btn.textContent || '').trim().toLowerCase();
+            if (!btn.closest('.fixed') && !btn.closest('[role="dialog"]') && !btn.closest('[class*="z-"]') && (txt === 'volver' || txt === 'volver al menú' || txt === 'volver al menu')) {
+              btn.style.display = 'none';
+            }
+          });
+        }
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [currentView]);
+
+  const getCombinedFichaText = useCallback((): string => {
+    const container = document.querySelector('.mobile-ficha-container');
+    if (!container) return '';
+
+    let summaryCol = container.querySelector('.lg\\:col-span-4, .lg\\:w-2\\/5, .xl\\:w-5\\/12') as HTMLElement | null;
+    if (!summaryCol) {
+      const h3s = Array.from(container.querySelectorAll('h3'));
+      const resumenH3 = h3s.find(h => (h.textContent || '').includes('Resumen'));
+      if (resumenH3) {
+        summaryCol = resumenH3.closest('div.bg-white, div.rounded-xl') as HTMLElement;
+      }
+    }
+
+    if (summaryCol) {
+      const textareas = Array.from(summaryCol.querySelectorAll('textarea')) as HTMLTextAreaElement[];
+      if (textareas.length >= 3) {
+        const anamnesis = textareas[0]?.value?.trim() || "";
+        const exploracion = textareas[1]?.value?.trim() || "";
+        const actuacion = textareas[2]?.value?.trim() || "";
+
+        const parts: string[] = [];
+        if (anamnesis) parts.push(`ANAMNESIS:\n${anamnesis}`);
+        if (exploracion) parts.push(`EXPLORACIÓN:\n${exploracion}`);
+        if (actuacion) parts.push(`ACTUACIÓN:\n${actuacion}`);
+        if (parts.length > 0) return parts.join('\n\n');
+      } else if (textareas.length === 1 && textareas[0]?.value?.trim()) {
+        return textareas[0].value.trim();
+      }
+    }
+
+    const preEl = container.querySelector('pre');
+    if (preEl && preEl.textContent?.trim()) {
+      return preEl.textContent.trim();
+    }
+
+    const inputs = Array.from(container.querySelectorAll('input:not([type="hidden"]), select, textarea')) as (HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement)[];
+    const lines: string[] = [];
+    inputs.forEach(input => {
+      if (input.closest('.fixed') || input.closest('[role="dialog"]')) return;
+      if (input.type === 'checkbox') {
+        const cb = input as HTMLInputElement;
+        if (cb.checked) {
+          const lbl = container.querySelector(`label[for="${cb.id}"]`)?.textContent?.trim() || cb.name || cb.id;
+          lines.push(`- ${lbl}: Sí`);
+        }
+      } else if (input.value && input.value.trim() && !input.getAttribute('aria-hidden')) {
+        const lbl = container.querySelector(`label[for="${input.id}"]`)?.textContent?.trim() || input.name || input.id;
+        if (lbl && !lbl.includes('MAYÚSCULAS')) {
+          lines.push(`- ${lbl}: ${input.value.trim()}`);
+        }
+      }
+    });
+    return lines.join('\n');
+  }, []);
+
+  const handleMobileCopyText = useCallback(() => {
+    const text = getCombinedFichaText();
+    if (text) {
+      navigator.clipboard.writeText(text);
+      alert('¡Registro de ficha clínica copiado al portapapeles!');
+    } else {
+      alert('No hay información registrada aún en la ficha para copiar.');
+    }
+  }, [getCombinedFichaText]);
+
+  const handleSaveToCloud = useCallback(async (nombre: string, rut: string) => {
+    const cleanRut = rut.trim();
+    const uppercaseNombre = nombre.trim().toUpperCase();
+    const fichaTitle = getFichaTitle(currentView);
+    const fullText = getCombinedFichaText();
+
+    let snapshot: any = null;
+    try {
+      const raw = localStorage.getItem(`local_${currentView}`) || 
+                  localStorage.getItem(`local_${currentView.charAt(0).toUpperCase() + currentView.slice(1)}`);
+      if (raw) snapshot = JSON.parse(raw);
+    } catch (e) {}
+
+    if (!snapshot) {
+      snapshot = { fullText, date: getChileYMD(), view: currentView };
+    }
+
+    const category = getPrestacionCategory(currentView);
+
+    const savedPatient = patientStore.savePatient({
+      rut: cleanRut,
+      nombre: uppercaseNombre,
+      fechaUltimaAtencion: getChileDDMMYYYY(),
+      ultimaPrestacion: fichaTitle,
+      anamnesisGeneral: fullText,
+      prestacionCategory: category,
+    });
+
+    patientStore.addFichaToPatient(
+      cleanRut,
+      fichaTitle,
+      snapshot,
+      getChileDDMMYYYY(),
+      category
+    );
+
+    await patientStore.uploadToCloud(savedPatient);
+
+    alert(`¡Paciente "${uppercaseNombre}" (RUT: ${cleanRut}) guardado exitosamente en la nube (Firebase)!\nPuede ser consultado en "Mis pacientes" desde cualquier dispositivo.`);
+  }, [currentView, getCombinedFichaText]);
+
+  const handleMobileClearForm = useCallback(() => {
+    if (!window.confirm('¿Estás seguro de que deseas borrar todo el contenido de la ficha? Esta acción no se puede deshacer.')) {
+      return;
+    }
+
+    const container = document.querySelector('.mobile-ficha-container');
+    if (container) {
+      const internalBtn = container.querySelector('#btn-borrar-todo-right, button[title*="Restablecer" i]') as HTMLButtonElement;
+      if (internalBtn) {
+        internalBtn.click();
+      }
+    }
+
+    const keys = [
+      `local_${currentView}`,
+      `local_${currentView.charAt(0).toUpperCase() + currentView.slice(1)}`,
+      `local_${currentView.toLowerCase()}`,
+    ];
+    keys.forEach(k => {
+      try {
+        localStorage.removeItem(k);
+      } catch (e) {}
+    });
+
+    if (container) {
+      const form = container.querySelector('form') as HTMLFormElement;
+      if (form) {
+        form.reset();
+      }
+      const inputs = Array.from(container.querySelectorAll('input:not([type="checkbox"]):not([type="radio"]), textarea')) as (HTMLInputElement | HTMLTextAreaElement)[];
+      inputs.forEach(inp => {
+        inp.value = '';
+        inp.dispatchEvent(new Event('input', { bubbles: true }));
+        inp.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+      const cbs = Array.from(container.querySelectorAll('input[type="checkbox"], input[type="radio"]')) as HTMLInputElement[];
+      cbs.forEach(cb => {
+        cb.checked = false;
+        cb.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+    }
+
+    const viewToReset = currentView;
+    navigateTo('fichas');
+    setTimeout(() => {
+      navigateTo(viewToReset);
+    }, 40);
+  }, [currentView, navigateTo]);
   const renderView = () => {
     if (!isAuthenticated || !loggedInUser) {
       return <LoginForm onLoginSuccess={handleLoginSuccess} users={users} />;
@@ -2145,13 +2614,56 @@ const App: React.FC = () => {
       case 'buscadorExamenesLab':
         return <BuscadorExamenesLab onBackToMenu={() => navigateTo('menu')} />;
       case 'bitacora':
-        return <Bitacora onBackToMenu={() => navigateTo('menu')} loggedInUser={loggedInUser} />;
+        return (
+          <Bitacora 
+            onBackToMenu={() => navigateTo('menu')} 
+            loggedInUser={loggedInUser} 
+            onNavigate={(view) => navigateTo(view)}
+            onOpenNotes={() => setIsNotesOpen(true)}
+          />
+        );
+      case 'ajustes':
+        return (
+          <AppSettingsView
+            onBack={() => navigateTo('menu')}
+            loggedInUser={loggedInUser}
+            computerBox={computerBox}
+            setComputerBox={setComputerBox}
+            computerSector={computerSector}
+            setComputerSector={setComputerSector}
+            onOpenUserProfile={() => setIsUserProfileModalOpen(true)}
+            onLogout={handleLogout}
+            appVersion="1.4.29"
+          />
+        );
       case 'misPacientes':
         return <MisPacientes onSelectMenuItem={(view, patientData) => navigateTo(view, patientData)} loggedInUser={loggedInUser} />;
       case 'comunidad':
         return <ComunidadView loggedInUser={loggedInUser} onBackToMenu={() => navigateTo('menu')} />;
       case 'sapu':
         return <SapuMenu onBackToMenu={() => navigateTo('menu')} loggedInUser={loggedInUser} />;
+      case 'fichas':
+        return <FichasCatalog onSelectFicha={(view) => navigateTo(view)} onBack={() => navigateTo('menu')} />;
+      case 'chat':
+        return (
+          <div className="w-full h-full flex flex-col flex-1 min-h-[500px] bg-[#E3EFFE]">
+            <ChatLocal 
+              isDedicatedTab={true}
+              loggedInUser={loggedInUser!} 
+              computerBox={computerBox} 
+              computerSector={computerSector} 
+              isLowResources={lowResources} 
+              onViewSocialProfile={handleViewUserProfile}
+              onOpenMyProfile={() => setIsUserProfileModalOpen(true)}
+              isDriveOpen={isDriveOpen}
+              setIsDriveOpen={setIsDriveOpen}
+              isCalcOpen={isCalcOpen}
+              setIsCalcOpen={setIsCalcOpen}
+              isNotesOpen={isNotesOpen}
+              setIsNotesOpen={setIsNotesOpen}
+            />
+          </div>
+        );
 
       // Calculators
       case 'calculoLeches':
@@ -2178,17 +2690,28 @@ const App: React.FC = () => {
     globalAnimationClass = 'opacity-0';
   }
 
+  const isFullScreenTab = currentView === 'chat' || currentView === 'ajustes' || currentView === 'bitacora' || currentView === 'fichas';
+
   const renderMainContent = () => {
-    const isLockedView = currentView === 'menu' || currentView.startsWith('ficha') || currentView === 'sapu' || currentView === 'comunidad';
+    const isLockedView = currentView === 'menu' || currentView.startsWith('ficha') || currentView === 'sapu' || currentView === 'comunidad' || isFullScreenTab;
+    const isChat = currentView === 'chat';
     return (
       <main 
         key={currentView}
-        className={isLockedView 
-          ? `container mx-auto p-3 sm:p-4 flex-grow flex flex-col h-auto lg:h-[calc(100vh-48px)] overflow-y-auto lg:overflow-hidden ${globalAnimationClass}` 
-          : `container mx-auto p-2 sm:p-3 md:p-4 flex-grow ${globalAnimationClass}`}
+        className={isFullScreenTab
+          ? `w-full h-full flex-1 min-h-0 flex flex-col p-0 overflow-hidden ${globalAnimationClass}`
+          : isLockedView 
+            ? `container mx-auto p-1 sm:p-4 flex-grow flex flex-col h-auto lg:h-[calc(100vh-48px)] overflow-visible lg:overflow-hidden ${globalAnimationClass}` 
+            : `container mx-auto p-2 sm:p-3 md:p-4 flex-grow ${globalAnimationClass}`}
       >
         <ErrorBoundary fallbackTitle="Error al cargar la vista actual">
-          {renderView()}
+          {isClinicalRecord(currentView) ? (
+            <div className="w-full mobile-ficha-container">
+              {renderView()}
+            </div>
+          ) : (
+            renderView()
+          )}
         </ErrorBoundary>
       </main>
     );
@@ -2196,24 +2719,47 @@ const App: React.FC = () => {
 
   return (
     <ErrorBoundary fallbackTitle="Se produjo un error en la aplicación">
-      <div className="min-h-screen bg-slate-100 font-sans flex flex-col">
+      <div className="h-[100dvh] max-h-[100dvh] w-full overflow-hidden bg-slate-100 font-sans flex flex-col">
       <header className="bg-gradient-to-r from-sky-600 to-sky-700 shadow-md text-white sticky top-0 z-50">
-        <div className="w-full px-4 sm:px-6 h-12 flex justify-between items-center gap-x-4">
-          <div className="flex items-center flex-shrink-0">
-            <svg className="w-6 h-6 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="currentColor">
+        <div className="w-full px-3 sm:px-6 h-12 flex justify-between items-center gap-x-2 sm:gap-x-4">
+          <div className="flex items-center flex-shrink-0 min-w-0">
+            {/* Hamburger button on mobile (LEFT side) */}
+            {isAuthenticated && loggedInUser && (
+              <button
+                onClick={() => setIsMobileDrawerOpen(prev => !prev)}
+                className="md:hidden mr-1.5 p-1 rounded-lg text-white hover:bg-white/20 transition-colors cursor-pointer shrink-0"
+                title="Abrir menú"
+              >
+                <Menu className="w-6 h-6" />
+              </button>
+            )}
+            {/* Mobile back button */}
+            {currentView !== 'menu' && (
+              <button
+                onClick={() => handleBackNavigation()}
+                className="md:hidden mr-1.5 p-1 text-white hover:bg-white/20 rounded-lg transition-colors cursor-pointer shrink-0"
+                title="Volver"
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+            )}
+            <svg className="w-6 h-6 mr-2 text-white shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="currentColor">
               <rect x="30" y="10" width="40" height="80" rx="5" />
               <rect x="10" y="30" width="80" height="40" rx="5" />
             </svg>
-            <h1 className={`text-base font-bold tracking-tight ${globalAnimationClass}`}>
-              {currentView === 'fichaControlPadds'
-                ? 'PORTAL MÉDICO: CONTROL PADDS'
-                : currentView === 'fichaIngresoPadds'
-                ? 'PORTAL MÉDICO: FICHA INGRESO PADDS'
-                : currentView === 'fichaIngresoEcicep'
-                ? 'PORTAL MÉDICO: FICHA INGRESO ECICEP'
-                : currentView === 'fichaIngresoSm'
-                  ? 'PORTAL MÉDICO: INGRESO SALUD MENTAL'
-                  : currentView === 'fichaConsultaPasmi'
+            <h1 className={`text-sm sm:text-base font-bold tracking-tight truncate ${globalAnimationClass}`}>
+              {(() => {
+                const fullTitle = currentView === 'chat'
+                  ? 'PORTAL MÉDICO: CHAT'
+                  : currentView === 'fichaControlPadds'
+                  ? 'PORTAL MÉDICO: CONTROL PADDS'
+                  : currentView === 'fichaIngresoPadds'
+                  ? 'PORTAL MÉDICO: FICHA INGRESO PADDS'
+                  : currentView === 'fichaIngresoEcicep'
+                  ? 'PORTAL MÉDICO: FICHA INGRESO ECICEP'
+                  : currentView === 'fichaIngresoSm'
+                    ? 'PORTAL MÉDICO: INGRESO SALUD MENTAL'
+                    : currentView === 'fichaConsultaPasmi'
                     ? 'PORTAL MÉDICO: FICHA CONSULTA PASMI'
                     : currentView === 'fichaPreingresoEcicep'
                     ? 'PORTAL MÉDICO: FICHA PREINGRESO ECICEP'
@@ -2247,7 +2793,27 @@ const App: React.FC = () => {
                                             ? 'PORTAL MÉDICO: FIRMAR GES'
                                             : currentView === 'sapu'
                                               ? 'PORTAL MÉDICO: PORTAL CLÍNICO SAPU'
-                                              : 'PORTAL MÉDICO'}
+                                               : currentView === 'fichas'
+                                                 ? 'PORTAL MÉDICO: FICHAS CLÍNICAS'
+                                                 : currentView === 'chat'
+                                                   ? 'PORTAL MÉDICO: CHAT'
+                                                   : currentView === 'ajustes'
+                                                     ? 'PORTAL MÉDICO: AJUSTES'
+                                                     : currentView === 'bitacora'
+                                                       ? 'PORTAL MÉDICO: BITÁCORA'
+                                              : 'PORTAL MÉDICO';
+
+                if (fullTitle.startsWith('PORTAL MÉDICO: ')) {
+                  const shortTitle = fullTitle.replace('PORTAL MÉDICO: ', '');
+                  return (
+                    <>
+                      <span className="hidden md:inline">PORTAL MÉDICO: </span>
+                      <span>{shortTitle}</span>
+                    </>
+                  );
+                }
+                return fullTitle;
+              })()}
             </h1>
 
             {/* Menús de la Aplicación en la barra azul: Archivo, Vista, Ayuda */}
@@ -2385,7 +2951,8 @@ const App: React.FC = () => {
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          {/* Desktop Zoom & Action Shortcuts */}
+          <div className="hidden md:flex items-center gap-2">
             {/* Controles de Zoom */}
             <div className="flex items-center bg-sky-900/40 hover:bg-sky-900/60 border border-sky-400/30 rounded-lg p-0.5 shadow-inner transition-colors mr-1">
               <button
@@ -2515,7 +3082,7 @@ const App: React.FC = () => {
 
       
       {isAuthenticated && loggedInUser ? (
-        <div className="flex flex-1 min-h-0 relative">
+        <div className="flex flex-1 min-h-0 relative overflow-hidden">
           <Sidebar
             loggedInUser={loggedInUser}
             onSelectMenuItem={navigateTo}
@@ -2528,8 +3095,13 @@ const App: React.FC = () => {
             isCollapsed={isSidebarCollapsed}
             onToggleCollapse={() => setIsSidebarCollapsed(prev => !prev)}
             currentView={currentView}
+            isMobileDrawerOpen={isMobileDrawerOpen}
+            onCloseMobileDrawer={() => setIsMobileDrawerOpen(false)}
           />
-          <div className="flex-1 min-w-0 overflow-x-hidden overflow-y-auto lg:overflow-hidden h-[calc(100vh-48px)] flex flex-col p-3">
+          <div 
+            className={`flex-1 min-w-0 overflow-x-hidden ${isFullScreenTab ? 'overflow-hidden p-0 pb-14 md:pb-0' : 'overflow-y-auto lg:overflow-hidden p-2 md:p-3 pb-20 md:pb-3'} h-full flex flex-col`}
+            style={{ WebkitOverflowScrolling: 'touch' }}
+          >
             {renderMainContent()}
           </div>
         </div>
@@ -2560,6 +3132,20 @@ const App: React.FC = () => {
           onClose={() => setIsUrgenciasModalOpen(false)}
         />
       )}
+      {isAppSettingsOpen && (
+        <AppSettingsModal
+          isOpen={isAppSettingsOpen}
+          onClose={() => setIsAppSettingsOpen(false)}
+          loggedInUser={loggedInUser}
+          computerBox={computerBox}
+          setComputerBox={setComputerBox}
+          computerSector={computerSector}
+          setComputerSector={setComputerSector}
+          onOpenUserProfile={() => setIsUserProfileModalOpen(true)}
+          onLogout={handleLogout}
+          appVersion="1.4.29"
+        />
+      )}
 
       {isAuthenticated && loggedInUser && (
         <>
@@ -2581,6 +3167,113 @@ const App: React.FC = () => {
             isNotesOpen={isNotesOpen}
             setIsNotesOpen={setIsNotesOpen}
           />
+          {/* Mobile Ficha Action Bar (Copiar texto, Guardar en la nube, Borrar todo) */}
+          {isClinicalRecord(currentView) && (
+            <div className="md:hidden fixed bottom-14 left-0 right-0 h-[52px] bg-white/95 backdrop-blur-md border-t border-slate-200/90 shadow-[0_-2px_10px_rgba(0,0,0,0.06)] z-[80] flex items-center justify-between px-3 gap-2 select-none pointer-events-auto">
+              {/* 1. Copiar texto (Izquierda) */}
+              <button
+                type="button"
+                onClick={handleMobileCopyText}
+                className="flex-1 h-9 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 font-bold border border-slate-300 rounded-lg text-xs flex items-center justify-center gap-1.5 shadow-2xs active:scale-95 transition-all cursor-pointer"
+                title="Copiar Anamnesis, Exploración y Actuación"
+              >
+                <Copy className="w-3.5 h-3.5 text-slate-600 shrink-0" />
+                <span className="truncate">Copiar texto</span>
+              </button>
+
+              {/* 2. Guardar en la nube (Centro) */}
+              <button
+                type="button"
+                onClick={() => setIsSaveCloudModalOpen(true)}
+                className="flex-1 h-9 bg-sky-600 hover:bg-sky-700 active:bg-sky-800 text-white font-bold rounded-lg text-xs flex items-center justify-center gap-1.5 shadow-2xs active:scale-95 transition-all cursor-pointer"
+                title="Guardar paciente en Firebase para Mis Pacientes"
+              >
+                <CloudUpload className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate">Guardar</span>
+              </button>
+
+              {/* 3. Borrar todo (Derecha) */}
+              <button
+                type="button"
+                onClick={handleMobileClearForm}
+                className="flex-1 h-9 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-bold rounded-lg text-xs flex items-center justify-center gap-1.5 shadow-2xs active:scale-95 transition-all cursor-pointer"
+                title="Borrar todo el contenido de la ficha"
+              >
+                <Trash2 className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate">Borrar todo</span>
+              </button>
+            </div>
+          )}
+
+          {/* Barra de navegación inferior constante para móvil en orientación vertical */}
+          <nav className="md:hidden fixed bottom-0 left-0 right-0 h-14 bg-white/95 backdrop-blur-md border-t border-slate-200/90 shadow-[0_-2px_12px_rgba(0,0,0,0.08)] z-[85] flex items-center justify-around px-1 select-none pointer-events-auto">
+            {/* 1. Inicio */}
+            <button
+              onClick={() => {
+                navigateTo('menu');
+                setIsMobileDrawerOpen(false);
+              }}
+              className={`flex flex-col items-center justify-center flex-1 py-1 transition-colors cursor-pointer ${currentView === 'menu' ? 'text-sky-600 font-bold' : 'text-slate-500 hover:text-slate-800'}`}
+            >
+              <Home className="w-5 h-5 mb-0.5" />
+              <span className="text-[10px] leading-tight font-medium">Inicio</span>
+            </button>
+
+            {/* 2. Fichas Clínicas (Muestra directo el listado por categoría o la ficha activa) */}
+            <button
+              onClick={() => {
+                if (activeFichaView) {
+                  navigateTo(activeFichaView);
+                } else {
+                  navigateTo('fichas');
+                }
+                setIsMobileDrawerOpen(false);
+              }}
+              className={`flex flex-col items-center justify-center flex-1 py-1 transition-colors cursor-pointer ${(currentView === 'fichas' || isClinicalRecord(currentView)) ? 'text-sky-600 font-bold' : 'text-slate-500 hover:text-slate-800'}`}
+            >
+              <ClipboardList className="w-5 h-5 mb-0.5" />
+              <span className="text-[10px] leading-tight font-medium">Fichas</span>
+            </button>
+
+            {/* 3. Chat (Pestaña individual dedicada) */}
+            <button
+              onClick={() => {
+                navigateTo('chat');
+                setIsMobileDrawerOpen(false);
+              }}
+              className={`flex flex-col items-center justify-center flex-1 py-1 transition-colors cursor-pointer relative ${currentView === 'chat' ? 'text-sky-600 font-bold' : 'text-slate-500 hover:text-slate-800'}`}
+            >
+              <div className="relative">
+                <MessageSquare className="w-5 h-5 mb-0.5" />
+                <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white"></span>
+              </div>
+              <span className="text-[10px] leading-tight font-medium">Chat</span>
+            </button>
+
+            {/* 4. Bitácora (Ícono de cuaderno - nueva función) */}
+            <button
+              onClick={() => {
+                navigateTo('bitacora');
+                setIsMobileDrawerOpen(false);
+              }}
+              className={`flex flex-col items-center justify-center flex-1 py-1 transition-colors cursor-pointer ${currentView === 'bitacora' ? 'text-sky-600 font-bold' : 'text-slate-500 hover:text-slate-800'}`}
+            >
+              <BookOpen className="w-5 h-5 mb-0.5" />
+              <span className="text-[10px] leading-tight font-medium">Bitácora</span>
+            </button>
+
+                        {/* 5. Ajustes de la App (Pantalla completa como el chat) */}
+            <button
+              onClick={() => {
+                navigateTo('ajustes');
+                setIsMobileDrawerOpen(false);
+              }}
+              className={`flex flex-col items-center justify-center flex-1 py-1 transition-colors cursor-pointer ${currentView === 'ajustes' ? 'text-sky-600 font-bold' : 'text-slate-500 hover:text-slate-800'}`}
+            >
+              <Settings className="w-5 h-5 mb-0.5" />
+              <span className="text-[10px] leading-tight font-medium">Ajustes</span>
+            </button>
+          </nav>
         </>
       )}
       <ContextMenu />

@@ -40,7 +40,9 @@ import {
   Hospital,
   Star,
   Phone,
-  Smile
+  Smile,
+  MessageSquare,
+  Menu
 } from 'lucide-react';
 import { View, Profession, User as UserType } from '../types';
 
@@ -90,6 +92,8 @@ interface SidebarProps {
   isCollapsed: boolean;
   onToggleCollapse: () => void;
   currentView?: View;
+  isMobileDrawerOpen?: boolean;
+  onCloseMobileDrawer?: () => void;
 }
 
 interface MenuItem {
@@ -193,6 +197,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   isCollapsed,
   onToggleCollapse,
   currentView,
+  isMobileDrawerOpen,
+  onCloseMobileDrawer,
 }) => {
   const [openCategories, setOpenCategories] = useState<Record<string, boolean>>({
     fichas_clinicas: true,
@@ -426,10 +432,11 @@ const Sidebar: React.FC<SidebarProps> = ({
   }, [now]);
 
   return (
-    <aside
-      className={`h-[calc(100vh/var(--app-zoom-factor,1)-48px)] max-h-[calc(100vh/var(--app-zoom-factor,1)-48px)] sticky top-[calc(48px/var(--app-zoom-factor,1))] bg-[#f8fafc] border-r border-slate-200/90 text-slate-800 shrink-0 flex flex-col select-none transition-all duration-300 ease-in-out z-40 font-sans ${isCollapsed ? 'w-16' : 'w-[260px]'
-        }`}
-    >
+    <>
+      <aside
+        className={`hidden md:flex h-[calc(100vh/var(--app-zoom-factor,1)-48px)] max-h-[calc(100vh/var(--app-zoom-factor,1)-48px)] sticky top-[calc(48px/var(--app-zoom-factor,1))] bg-[#f8fafc] border-r border-slate-200/90 text-slate-800 shrink-0 flex-col select-none transition-all duration-300 ease-in-out z-40 font-sans ${isCollapsed ? 'w-16' : 'w-[260px]'
+          }`}
+      >
 
       {/* Main Content List matching the requested screenshot layout */}
       <div className="flex-1 min-h-0 overflow-y-auto px-3 py-3 space-y-4 custom-scrollbar">
@@ -798,6 +805,270 @@ const Sidebar: React.FC<SidebarProps> = ({
       `}</style>
 
     </aside>
+      {/* Mobile Drawer (sliding from left) for smartphones / vertical orientation */}
+      {isMobileDrawerOpen && (
+        <div className="fixed inset-0 z-[100] md:hidden flex justify-start">
+          {/* Backdrop Overlay */}
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity duration-300"
+            onClick={onCloseMobileDrawer}
+          />
+
+          {/* Drawer Panel */}
+          <div className="relative w-[85%] max-w-[340px] h-full bg-[#f8fafc] text-slate-800 shadow-2xl flex flex-col z-10 animate-slideInLeft border-r border-slate-200">
+            {/* Header with User Info and Close Button */}
+            <div className="p-4 bg-white border-b border-slate-200 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="relative shrink-0">
+                  {profilePictureUrl ? (
+                    <img src={profilePictureUrl} className="w-10 h-10 rounded-full object-cover ring-2 ring-sky-500/30" alt="Avatar" />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-sky-600 text-white font-bold text-sm flex items-center justify-center uppercase">
+                      {(profileName || loggedInUser?.fullName || 'U').charAt(0)}
+                    </div>
+                  )}
+                  <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white"></span>
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-sm font-bold text-slate-900 truncate">
+                    {getPrefix(loggedInUser?.profession, profileName || loggedInUser?.fullName)}{profileName || loggedInUser?.fullName || 'Usuario'}
+                  </span>
+                  <span className="text-xs text-sky-700 font-semibold truncate">
+                    {loggedInUser?.cesfam || 'CESFAM San Juan'} {computerSector || loggedInUser?.sector ? `• ${computerSector || loggedInUser?.sector}` : ''}
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={onCloseMobileDrawer}
+                className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
+                title="Cerrar menú"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Scrollable Navigation Options */}
+            <div className="flex-1 overflow-y-auto px-3 py-3 space-y-4 custom-scrollbar">
+              {/* Direct Quick Nav */}
+              <div className="space-y-1">
+                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 pb-0.5">
+                  Navegación Rápida
+                </div>
+                <button
+                  onClick={() => {
+                    onSelectMenuItem('menu');
+                    onCloseMobileDrawer?.();
+                  }}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold text-xs tracking-tight transition-all cursor-pointer ${
+                    currentView === 'menu'
+                      ? 'bg-gradient-to-r from-sky-600 to-sky-700 text-white shadow-sm'
+                      : 'text-slate-700 hover:bg-slate-200/60'
+                  }`}
+                >
+                  <Home className="w-4 h-4 shrink-0" />
+                  <span>Inicio</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    onSelectMenuItem('chat');
+                    onCloseMobileDrawer?.();
+                  }}
+                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-bold text-xs tracking-tight transition-all cursor-pointer ${
+                    currentView === 'chat'
+                      ? 'bg-gradient-to-r from-sky-600 to-sky-700 text-white shadow-sm'
+                      : 'text-slate-700 hover:bg-slate-200/60'
+                  }`}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <MessageSquare className="w-4 h-4 shrink-0 text-sky-600" />
+                    <span>Chat y Mensajería</span>
+                  </div>
+                  <span className="text-[10px] bg-sky-100 text-sky-800 font-bold px-2 py-0.5 rounded-full">
+                    Pestaña
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    onSelectMenuItem('misPacientes');
+                    onCloseMobileDrawer?.();
+                  }}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold text-xs tracking-tight transition-all cursor-pointer ${
+                    currentView === 'misPacientes'
+                      ? 'bg-gradient-to-r from-sky-600 to-sky-700 text-white shadow-sm'
+                      : 'text-slate-700 hover:bg-slate-200/60'
+                  }`}
+                >
+                  <Users className="w-4 h-4 shrink-0" />
+                  <span>Mis Pacientes</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    onSelectMenuItem('sapu');
+                    onCloseMobileDrawer?.();
+                  }}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold text-xs tracking-tight transition-all cursor-pointer ${
+                    currentView === 'sapu'
+                      ? 'bg-gradient-to-r from-sky-600 to-sky-700 text-white shadow-sm'
+                      : 'text-slate-700 hover:bg-slate-200/60'
+                  }`}
+                >
+                  <Hospital className="w-4 h-4 shrink-0" />
+                  <span>Portal Clínico SAPU</span>
+                </button>
+              </div>
+
+              {/* Categorías y Fichas */}
+              <div className="space-y-3 pt-1">
+                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2">
+                  Secciones y Fichas
+                </div>
+                {menuCategories.map(cat => {
+                  const isOpen = openCategories[cat.id];
+                  const CatIcon = cat.icon;
+
+                  return (
+                    <div key={`drawer-cat-${cat.id}`} className="space-y-1">
+                      <button
+                        onClick={() => toggleCategory(cat.id)}
+                        className="w-full flex items-center justify-between px-3 py-2 text-left text-slate-700 font-bold text-xs tracking-tight hover:bg-slate-200/60 rounded-xl transition-colors cursor-pointer"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <CatIcon className="w-4 h-4 text-sky-600 shrink-0" />
+                          <span className="truncate">{cat.label}</span>
+                        </div>
+                        {isOpen ? (
+                          <ChevronUp className="w-4 h-4 text-slate-400 shrink-0" />
+                        ) : (
+                          <ChevronDown className="w-4 h-4 text-slate-400 shrink-0" />
+                        )}
+                      </button>
+
+                      {isOpen && (
+                        <div className="space-y-1 pl-3 pr-1">
+                          {cat.subGroups && cat.subGroups.map(sub => {
+                            const isNinoSano = sub.id === 'nino_sano';
+                            const showAll = openCategories['nino_sano_all'];
+                            const medicalTypes = ['fichaControlNinoSano1Mes', 'fichaControlNinoSano3Mes', 'fichaControlNinoSano6Anos'];
+
+                            const itemsToDisplay = isNinoSano && !showAll
+                              ? sub.items.filter(item => medicalTypes.includes(item.view || ''))
+                              : sub.items;
+
+                            return (
+                              <div key={`drawer-sub-${sub.id}`} className="space-y-1 py-1">
+                                <div className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider px-2">
+                                  {sub.label}
+                                </div>
+                                {itemsToDisplay.map(item => {
+                                  const isSelectedItem = currentView === item.view;
+                                  const ItemIcon = item.icon;
+                                  return (
+                                    <button
+                                      key={`drawer-item-${item.id}`}
+                                      onClick={() => {
+                                        if (item.view) {
+                                          onSelectMenuItem(item.view);
+                                          onCloseMobileDrawer?.();
+                                        }
+                                      }}
+                                      className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer ${
+                                        isSelectedItem
+                                          ? 'bg-sky-600 text-white font-bold shadow-xs'
+                                          : 'text-slate-600 hover:bg-slate-200/60'
+                                      }`}
+                                    >
+                                      <div className="flex items-center gap-2 min-w-0">
+                                        <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${isSelectedItem ? 'text-white' : 'text-slate-500'}`} />
+                                        <span className="truncate">{item.label}</span>
+                                      </div>
+                                    </button>
+                                  );
+                                })}
+                                {isNinoSano && (
+                                  <button
+                                    onClick={() => setOpenCategories(prev => ({ ...prev, nino_sano_all: !prev['nino_sano_all'] }))}
+                                    className="w-full text-left px-3 py-1 text-[11px] font-semibold text-sky-600 hover:text-sky-700 cursor-pointer"
+                                  >
+                                    {showAll ? '▲ Ver menos fichas' : '▼ Ver todas las edades...'}
+                                  </button>
+                                )}
+                              </div>
+                            );
+                          })}
+
+                          {cat.items && cat.items.map(item => {
+                            const isSelectedItem = currentView === item.view;
+                            const ItemIcon = item.icon;
+                            return (
+                              <button
+                                key={`drawer-item-${item.id}`}
+                                onClick={() => {
+                                  if (item.view) {
+                                    onSelectMenuItem(item.view);
+                                    onCloseMobileDrawer?.();
+                                  } else if (item.isExternalLink && item.externalLinkId) {
+                                    if (item.externalLinkId === 'drive') {
+                                      const sector = loggedInUser?.sector || computerSector || 'Verde';
+                                      const driveUrl = DRIVE_LINKS[sector] || DRIVE_LINKS['Verde'];
+                                      window.open(driveUrl, '_blank');
+                                    } else {
+                                      setActiveModalLink(item.externalLinkId as keyof typeof EXTERNAL_LINKS_DATA);
+                                    }
+                                    onCloseMobileDrawer?.();
+                                  }
+                                }}
+                                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer ${
+                                  isSelectedItem
+                                    ? 'bg-sky-600 text-white font-bold shadow-xs'
+                                    : 'text-slate-600 hover:bg-slate-200/60'
+                                }`}
+                              >
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <ItemIcon className={`w-3.5 h-3.5 shrink-0 ${isSelectedItem ? 'text-white' : 'text-slate-500'}`} />
+                                  <span className="truncate">{item.label}</span>
+                                </div>
+                                {item.isExternalLink && <ExternalLink className="w-3 h-3 text-slate-400 shrink-0" />}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Footer with Edit Profile and Logout */}
+            <div className="p-3 bg-white border-t border-slate-200 space-y-2 shrink-0">
+              <button
+                onClick={() => {
+                  onEditProfile();
+                  onCloseMobileDrawer?.();
+                }}
+                className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer"
+              >
+                <User className="w-4 h-4 text-slate-500" />
+                <span>Editar Perfil</span>
+              </button>
+              <button
+                onClick={() => {
+                  onLogout();
+                  onCloseMobileDrawer?.();
+                }}
+                className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 transition-colors cursor-pointer"
+              >
+                <LogOut className="w-4 h-4 text-red-500" />
+                <span>Cerrar Sesión</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 

@@ -22,6 +22,12 @@
   animation: colorFluctuate 4s ease infinite;
 }
 
+html, body {
+  height: 100%;
+  width: 100%;
+  overscroll-behavior-y: none;
+}
+
 body {
   font-family: 'Inter', sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -32,9 +38,11 @@ body {
 }
 
 #root {
-  min-height: 100vh;
+  height: 100%;
+  width: 100%;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 @keyframes fadeOut {
@@ -67,4 +75,303 @@ body {
 .no-scrollbar {
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.animate-slideInRight {
+  animation: slideInRight 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideInLeft {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+.animate-slideInLeft {
+  animation: slideInLeft 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@media (max-width: 767px) {
+  /* Mobile Clinical Records Layout: No double frame, single column fields directly on background */
+  .mobile-ficha-container {
+    width: 100% !important;
+    padding: 0 0 8rem 0 !important; /* Ensure 128px clearance so content is never obstructed by mobile action bar or bottom nav */
+  }
+
+  /* Remove outer card frame styling ONLY on the main form container, NOT on modals */
+  .mobile-ficha-container > div:not(.fixed),
+  .mobile-ficha-container form,
+  .mobile-ficha-container form > div:not(.fixed) {
+    background: transparent !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 0.125rem 0 !important;
+  }
+
+  /* Separate blocks cleanly with subtle borders and spacing ONLY for in-page form sections */
+  .mobile-ficha-container form section,
+  .mobile-ficha-container form [class*="bg-slate-50"]:not(.fixed *):not([role="dialog"] *),
+  .mobile-ficha-container form [class*="bg-gray-50"]:not(.fixed *):not([role="dialog"] *),
+  .mobile-ficha-container form .bg-\[\#F8FAFC\] {
+    background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important; /* Clean subtle border separating each block */
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04) !important;
+    border-radius: 0.75rem !important;
+    padding: 0.875rem !important;
+    margin-bottom: 1rem !important;
+  }
+
+  /* Section header title in form */
+  .mobile-ficha-container form section > h3,
+  .mobile-ficha-container form h3 {
+    border-bottom: 1.5px solid #0284c7 !important;
+    color: #0369a1 !important;
+    font-weight: 700 !important;
+    font-size: 1rem !important;
+    padding-bottom: 0.375rem !important;
+    margin-bottom: 0.75rem !important;
+    background: transparent !important;
+  }
+
+  /* Intensify the borderline of form text inputs, textareas and selects for clear visibility */
+  .mobile-ficha-container form input:not([type="checkbox"]):not([type="radio"]),
+  .mobile-ficha-container form select,
+  .mobile-ficha-container form textarea {
+    width: 100% !important;
+    background-color: #ffffff !important;
+    border: 1.5px solid #94a3b8 !important; /* Intensified slate-400 border */
+    border-radius: 0.5rem !important;
+    padding: 0.5rem 0.75rem !important;
+    color: #0f172a !important;
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    outline: none !important;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03) !important;
+  }
+
+  .mobile-ficha-container form input:not([type="checkbox"]):not([type="radio"]):focus,
+  .mobile-ficha-container form select:focus,
+  .mobile-ficha-container form textarea:focus {
+    border-color: #0284c7 !important;
+    box-shadow: 0 0 0 2.5px rgba(2, 132, 199, 0.25) !important;
+  }
+
+  /* In-form field labels styling */
+  .mobile-ficha-container form label:not(.fixed *):not([role="dialog"] *):not(.flex) {
+    font-weight: 600 !important;
+    color: #334155 !important;
+    font-size: 0.8125rem !important;
+    margin-bottom: 0.25rem !important;
+    display: inline-block !important;
+  }
+
+  /* Force single column for in-form grids: each field sits directly beneath the other */
+  .mobile-ficha-container form [class*="grid-cols-"]:not(.fixed *):not([role="dialog"] *),
+  .mobile-ficha-container form [class*="sm:grid-cols-"]:not(.fixed *):not([role="dialog"] *),
+  .mobile-ficha-container form [class*="md:grid-cols-"]:not(.fixed *):not([role="dialog"] *),
+  .mobile-ficha-container form [class*="lg:grid-cols-"]:not(.fixed *):not([role="dialog"] *) {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem !important;
+  }
+
+  .mobile-ficha-container form .flex-col.lg\:flex-row,
+  .mobile-ficha-container form .lg\:flex-row {
+    flex-direction: column !important;
+  }
+
+  /* Hide the desktop editable clinical summary column on mobile */
+  .mobile-ficha-container .lg\:col-span-4,
+  .mobile-ficha-container .lg\:w-2\/5,
+  .mobile-ficha-container .xl\:w-5\/12 {
+    display: none !important;
+  }
+
+  /* Expand main form column to 100% full width */
+  .mobile-ficha-container .lg\:col-span-8,
+  .mobile-ficha-container .lg\:w-3\/5,
+  .mobile-ficha-container .xl\:w-7\/12 {
+    width: 100% !important;
+    padding-right: 0 !important;
+  }
+
+  /* Hide export PDF, Drive, and internal reset/form buttons in mobile */
+  .mobile-ficha-container form button[title*="PDF" i],
+  .mobile-ficha-container form button[title*="Drive" i],
+  .mobile-ficha-container form button[title*="Restablecer" i],
+  .mobile-ficha-container form button[title*="Imprimir" i],
+  .mobile-ficha-container #btn-borrar-todo-right,
+  .mobile-ficha-container .border-slate-200.bg-white.rounded-xl.shadow-sm.mt-2 {
+    display: none !important;
+  }
+
+  /* Disable desktop sticky in mobile so summary / sidebars flow naturally without covering bottom nav */
+  .mobile-ficha-container .sticky,
+  .mobile-ficha-container [class*="sticky"] {
+    position: static !important;
+    max-height: none !important;
+    height: auto !important;
+  }
+
+  /* Hide internal return buttons ONLY in the main form on mobile */
+  .mobile-ficha-container form button.bg-slate-200:not(.fixed *):not([role="dialog"] *),
+  .mobile-ficha-container form button.bg-slate-300:not(.fixed *):not([role="dialog"] *),
+  .mobile-ficha-container form button.bg-gray-200:not(.fixed *):not([role="dialog"] *),
+  .mobile-ficha-container form button[title*="Volver" i]:not(.fixed *):not([role="dialog"] *),
+  .mobile-ficha-container form button[aria-label*="Volver" i]:not(.fixed *):not([role="dialog"] *) {
+    display: none !important;
+  }
+
+  /* ==========================================================================
+     FLOATING MODALS & TOOLS RECOVERY & MOBILE PERFECTION
+     (Barthel, Zarit, Factores de Riesgo, Calculadora de Riesgo, PHQ9, etc.)
+     ========================================================================== */
+
+  /* Modal Overlays: strictly pinned on top of the entire screen and bottom nav */
+  .mobile-ficha-container .fixed.inset-0,
+  .mobile-ficha-container [role="dialog"],
+  .fixed.inset-0 {
+    position: fixed !important;
+    top: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    z-index: 1000 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0.75rem !important;
+    background-color: rgba(15, 23, 42, 0.65) !important;
+    backdrop-filter: blur(3px) !important;
+    overflow-y: auto !important;
+  }
+
+  /* Modal Dialog Cards: solid white, crisp borders, prominent elevation */
+  .mobile-ficha-container .fixed.inset-0 > div,
+  .mobile-ficha-container [role="dialog"] > div,
+  .fixed.inset-0 > div {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45) !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 1rem !important;
+    width: 100% !important;
+    max-width: 95vw !important;
+    max-height: 85vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    margin: auto !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  /* Modal Headers */
+  .mobile-ficha-container .fixed.inset-0 header,
+  .mobile-ficha-container [role="dialog"] header,
+  .fixed.inset-0 header {
+    padding: 0.875rem 1rem !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    margin-bottom: 0 !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* Modal Body Scroll Area */
+  .mobile-ficha-container .fixed.inset-0 main,
+  .mobile-ficha-container .fixed.inset-0 > div > div.overflow-y-auto,
+  .mobile-ficha-container [role="dialog"] main,
+  .fixed.inset-0 main {
+    padding: 1rem !important;
+    margin-bottom: 0 !important;
+    overflow-y: auto !important;
+    flex-grow: 1 !important;
+    background-color: #ffffff !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Modal Footers */
+  .mobile-ficha-container .fixed.inset-0 footer,
+  .mobile-ficha-container [role="dialog"] footer,
+  .fixed.inset-0 footer {
+    padding: 0.75rem 1rem !important;
+    border-top: 1px solid #e2e8f0 !important;
+    background-color: #f8fafc !important;
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 0.5rem !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    flex-shrink: 0 !important;
+    border-radius: 0 0 1rem 1rem !important;
+  }
+
+  /* Ensure ALL buttons inside modals are completely visible and clickable */
+  .mobile-ficha-container .fixed.inset-0 button,
+  .mobile-ficha-container [role="dialog"] button,
+  .fixed.inset-0 button {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  /* Ensure labels inside modals (for checkboxes and radio buttons) use flex and don't break */
+  .mobile-ficha-container .fixed.inset-0 label,
+  .mobile-ficha-container [role="dialog"] label,
+  .fixed.inset-0 label {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    width: 100% !important;
+    margin-bottom: 0 !important;
+    cursor: pointer !important;
+    font-size: 0.875rem !important;
+  }
+
+  /* ZaritModal: 2-column grid for the 5 rating buttons on mobile so they are comfortable to tap */
+  .mobile-ficha-container .fixed.inset-0 .grid-cols-2,
+  .fixed.inset-0 .grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.375rem !important;
+  }
+
+  /* Factores de Riesgo Modal: checkbox items styling */
+  .mobile-ficha-container .fixed.inset-0 input[type="checkbox"],
+  .fixed.inset-0 input[type="checkbox"] {
+    width: 1.25rem !important;
+    height: 1.25rem !important;
+    flex-shrink: 0 !important;
+    margin-right: 0.625rem !important;
+  }
+
+  /* Floating Dropdown Menus (Planes predeterminados, Smart Atenciones, Smart Farmacos, etc.) */
+  .mobile-ficha-container .absolute.z-50,
+  .mobile-ficha-container .absolute.z-\[100\],
+  .mobile-ficha-container [class*="absolute"][class*="z-50"],
+  .mobile-ficha-container [class*="absolute"][class*="z-[100]"],
+  .mobile-ficha-container [class*="absolute"][class*="shadow-xl"],
+  .mobile-ficha-container [class*="absolute"][class*="shadow-lg"] {
+    background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.25) !important;
+    border-radius: 0.75rem !important;
+    z-index: 500 !important;
+    max-width: 95vw !important;
+  }
+
+  /* Smart textareas background highlights */
+  .mobile-ficha-container .pointer-events-none.bg-white,
+  .mobile-ficha-container .absolute.inset-0.bg-white {
+    background-color: #ffffff !important;
+    border: 1.5px solid #94a3b8 !important;
+    box-shadow: none !important;
+    border-radius: 0.5rem !important;
+  }
 }

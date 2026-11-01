@@ -1,4 +1,4 @@
-﻿import React, { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { FichaIngresoEcicepFormData, FichaControlEcicepFormData } from '../types';
 
 const phq9Questions = [
@@ -69,7 +69,7 @@ const PHQ9Modal: React.FC<PHQ9ModalProps> = ({ isOpen, onClose, formData, handle
 
     return (
         <div 
-            className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4"
+            className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[100] p-4"
             onClick={onClose}
             role="dialog"
             aria-modal="true"
