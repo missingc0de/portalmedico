@@ -399,9 +399,23 @@ const getPrestacionCategory = (view: View): 'ecicep' | 'pscv' | 'salud_mental' |
 interface SavePatientCloudModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (nombre: string, rut: string) => Promise<void>;
+  onSave: (
+    nombre: string,
+    rut: string,
+    options?: {
+      id?: string;
+      anamnesis?: string;
+      exploracion?: string;
+      actuacion?: string;
+      isOverwrite?: boolean;
+    }
+  ) => Promise<void>;
   initialNombre?: string;
   initialRut?: string;
+  initialAnamnesis?: string;
+  initialExploracion?: string;
+  initialActuacion?: string;
+  initialId?: string;
   fichaTitle: string;
 }
 
@@ -411,24 +425,34 @@ const SavePatientCloudModal: React.FC<SavePatientCloudModalProps> = ({
   onSave,
   initialNombre = '',
   initialRut = '',
+  initialAnamnesis = '',
+  initialExploracion = '',
+  initialActuacion = '',
+  initialId = '',
   fichaTitle,
 }) => {
   const [nombre, setNombre] = useState(initialNombre);
   const [rut, setRut] = useState(initialRut);
+  const [anamnesis, setAnamnesis] = useState(initialAnamnesis);
+  const [exploracion, setExploracion] = useState(initialExploracion);
+  const [actuacion, setActuacion] = useState(initialActuacion);
   const [isSaving, setIsSaving] = useState(false);
+  const [showBlocks, setShowBlocks] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       setNombre(initialNombre);
       setRut(initialRut);
+      setAnamnesis(initialAnamnesis);
+      setExploracion(initialExploracion);
+      setActuacion(initialActuacion);
       setIsSaving(false);
     }
-  }, [isOpen, initialNombre, initialRut]);
+  }, [isOpen, initialNombre, initialRut, initialAnamnesis, initialExploracion, initialActuacion]);
 
   if (!isOpen) return null;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSave = async (isOverwrite: boolean) => {
     if (!nombre.trim()) {
       alert('Por favor ingrese el nombre del paciente.');
       return;
@@ -439,7 +463,13 @@ const SavePatientCloudModal: React.FC<SavePatientCloudModalProps> = ({
     }
     setIsSaving(true);
     try {
-      await onSave(nombre.trim().toUpperCase(), rut.trim());
+      await onSave(nombre.trim().toUpperCase(), rut.trim(), {
+        id: initialId || undefined,
+        anamnesis,
+        exploracion,
+        actuacion,
+        isOverwrite,
+      });
       onClose();
     } catch (err) {
       console.error(err);
@@ -450,33 +480,33 @@ const SavePatientCloudModal: React.FC<SavePatientCloudModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
-      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden">
-        <header className="px-5 py-4 bg-gradient-to-r from-sky-600 to-sky-700 text-white flex justify-between items-center">
-          <div className="flex items-center gap-2.5">
-            <CloudUpload className="w-5 h-5 text-sky-100" />
-            <div>
-              <h3 className="text-base font-bold tracking-tight">Guardar en la Nube</h3>
-              <p className="text-[11px] text-sky-100/90 font-medium">{fichaTitle}</p>
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center p-3 bg-black/60 backdrop-blur-xs animate-fadeIn">
+      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg max-h-[92vh] flex flex-col overflow-hidden">
+        <header className="px-5 py-3.5 bg-gradient-to-r from-sky-600 to-sky-700 text-white flex justify-between items-center shrink-0">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <CloudUpload className="w-5 h-5 text-sky-100 shrink-0" />
+            <div className="min-w-0">
+              <h3 className="text-sm font-bold tracking-tight truncate">Guardar Registro Clínico en Firebase</h3>
+              <p className="text-[11px] text-sky-100/90 font-medium truncate">{fichaTitle}</p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 hover:bg-white/20 rounded-lg text-white transition-colors cursor-pointer"
+            className="p-1.5 hover:bg-white/20 rounded-lg text-white transition-colors cursor-pointer shrink-0 ml-2"
           >
             <X className="w-5 h-5" />
           </button>
         </header>
 
-        <form onSubmit={handleSubmit} className="p-5 flex flex-col gap-4">
-          <p className="text-xs text-slate-600 leading-relaxed">
-            Se creará un registro de este paciente en <strong>"Mis pacientes"</strong> y se guardará en <strong>Firebase</strong> para consultarlo luego desde cualquier dispositivo.
+        <div className="p-4 sm:p-5 flex-1 overflow-y-auto space-y-3.5 text-xs custom-scrollbar">
+          <p className="text-slate-600 leading-relaxed text-[11px]">
+            Se generará un registro con su propio <strong>ID único</strong> y sus tres bloques clínicos en <strong>"Mis Pacientes"</strong>, sincronizado en tiempo real con Firebase para consultarlo desde PC y móvil.
           </p>
 
           <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-              Nombre y Apellidos del Paciente
+            <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+              Nombre y Apellidos del Paciente *
             </label>
             <input
               type="text"
@@ -485,13 +515,13 @@ const SavePatientCloudModal: React.FC<SavePatientCloudModalProps> = ({
               value={nombre}
               onChange={e => setNombre(e.target.value.toUpperCase())}
               placeholder="EJ: MARÍA TERESA SOTO LÓPEZ"
-              className="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white font-medium text-slate-800 uppercase transition-all"
+              className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white font-bold text-slate-800 uppercase transition-all"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-              RUT del Paciente
+            <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+              RUT del Paciente *
             </label>
             <input
               type="text"
@@ -499,29 +529,99 @@ const SavePatientCloudModal: React.FC<SavePatientCloudModalProps> = ({
               value={rut}
               onChange={e => setRut(e.target.value)}
               placeholder="EJ: 12.345.678-9"
-              className="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white font-medium text-slate-800 transition-all"
+              className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white font-bold text-slate-800 transition-all"
             />
           </div>
 
-          <div className="flex justify-end gap-2.5 pt-2 border-t border-slate-100">
+          {/* Toggle para ver/editar los 3 bloques */}
+          <div className="pt-1">
             <button
               type="button"
-              onClick={onClose}
-              disabled={isSaving}
-              className="px-4 py-2.5 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
+              onClick={() => setShowBlocks(!showBlocks)}
+              className="text-[11px] font-bold text-sky-700 hover:text-sky-800 flex items-center gap-1 cursor-pointer select-none"
             >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={isSaving}
-              className="px-5 py-2.5 text-xs font-bold text-white bg-sky-600 hover:bg-sky-700 active:scale-95 rounded-lg shadow-sm transition-all cursor-pointer flex items-center gap-1.5"
-            >
-              <CloudUpload className="w-4 h-4" />
-              <span>{isSaving ? 'Guardando...' : 'Guardar en Firebase'}</span>
+              <span>{showBlocks ? '▼ Ocultar bloques clínicos (Anamnesis, Exploración, Actuación)' : '▶ Ver / Editar bloques clínicos antes de guardar'}</span>
             </button>
           </div>
-        </form>
+
+          {showBlocks && (
+            <div className="space-y-3 pt-1 border-t border-slate-200">
+              {/* Bloque 1 */}
+              <div>
+                <label className="block text-[10px] font-bold text-sky-800 uppercase tracking-wider mb-1">
+                  1. ANAMNESIS
+                </label>
+                <textarea
+                  value={anamnesis}
+                  onChange={e => setAnamnesis(e.target.value)}
+                  rows={3}
+                  className="w-full p-2.5 text-[11px] font-mono bg-white border border-slate-300 rounded-lg outline-none focus:ring-1 focus:ring-sky-500"
+                />
+              </div>
+
+              {/* Bloque 2 */}
+              <div>
+                <label className="block text-[10px] font-bold text-emerald-800 uppercase tracking-wider mb-1">
+                  2. EXPLORACIÓN
+                </label>
+                <textarea
+                  value={exploracion}
+                  onChange={e => setExploracion(e.target.value)}
+                  rows={3}
+                  className="w-full p-2.5 text-[11px] font-mono bg-white border border-slate-300 rounded-lg outline-none focus:ring-1 focus:ring-emerald-500"
+                />
+              </div>
+
+              {/* Bloque 3 */}
+              <div>
+                <label className="block text-[10px] font-bold text-indigo-800 uppercase tracking-wider mb-1">
+                  3. ACTUACIÓN
+                </label>
+                <textarea
+                  value={actuacion}
+                  onChange={e => setActuacion(e.target.value)}
+                  rows={3}
+                  className="w-full p-2.5 text-[11px] font-mono bg-white border border-slate-300 rounded-lg outline-none focus:ring-1 focus:ring-indigo-500"
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
+        <footer className="p-3.5 sm:p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-2 shrink-0 flex-wrap">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={isSaving}
+            className="px-3.5 py-2 text-xs font-bold text-slate-600 bg-white hover:bg-slate-100 border border-slate-300 rounded-lg transition-colors cursor-pointer"
+          >
+            Cancelar
+          </button>
+
+          <div className="flex items-center gap-2">
+            {initialId && (
+              <button
+                type="button"
+                onClick={() => handleSave(true)}
+                disabled={isSaving}
+                className="px-3.5 py-2 text-xs font-bold text-white bg-slate-700 hover:bg-slate-800 rounded-lg shadow-2xs transition-all cursor-pointer flex items-center gap-1.5"
+                title="Sobreescribe el registro existente manteniendo su ID"
+              >
+                <span>Sobreescribir</span>
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={() => handleSave(false)}
+              disabled={isSaving}
+              className="px-4 py-2 text-xs font-bold text-white bg-sky-600 hover:bg-sky-700 active:scale-95 rounded-lg shadow-2xs transition-all cursor-pointer flex items-center gap-1.5"
+            >
+              <CloudUpload className="w-4 h-4" />
+              <span>{isSaving ? 'Guardando...' : initialId ? 'Guardar como Nuevo' : 'Guardar Registro'}</span>
+            </button>
+          </div>
+        </footer>
       </div>
     </div>
   );
@@ -529,7 +629,14 @@ const SavePatientCloudModal: React.FC<SavePatientCloudModalProps> = ({
 const App: React.FC = () => {
   const [activeFichaView, setActiveFichaView] = useState<View | null>(null);
   const [isSaveCloudModalOpen, setIsSaveCloudModalOpen] = useState(false);
-  const [initialPatientData, setInitialPatientData] = useState<{ nombre: string; rut: string }>({ nombre: '', rut: '' });
+  const [initialPatientData, setInitialPatientData] = useState<{
+    nombre: string;
+    rut: string;
+    anamnesis?: string;
+    exploracion?: string;
+    actuacion?: string;
+    existingId?: string;
+  }>({ nombre: '', rut: '' });
   const [currentView, setCurrentView] = useState<View>('login');
   const [animationState, setAnimationState] = useState<'idle' | 'fading-out' | 'invisible' | 'fading-in'>('idle');
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -2259,6 +2366,69 @@ const App: React.FC = () => {
     return lines.join('\n');
   }, []);
 
+  const extractFichaThreeBlocks = useCallback((): { anamnesis: string; exploracion: string; actuacion: string } => {
+    const container = document.querySelector('.mobile-ficha-container') || document.querySelector('main') || document.body;
+    if (!container) return { anamnesis: '', exploracion: '', actuacion: '' };
+
+    // Explicit IDs or aria-labels
+    const anamnesisEl = container.querySelector('textarea[aria-label*="Anamnesis" i], #anamnesisText, textarea[name="anamnesis"]') as HTMLTextAreaElement | null;
+    const exploracionEl = container.querySelector('textarea[aria-label*="Exploraci" i], #exploracionText, textarea[name="exploracion"]') as HTMLTextAreaElement | null;
+    const actuacionEl = container.querySelector('textarea[aria-label*="Actuaci" i], #actuacionText, textarea[name="actuacion"]') as HTMLTextAreaElement | null;
+
+    if (anamnesisEl && exploracionEl && actuacionEl) {
+      return {
+        anamnesis: anamnesisEl.value.trim(),
+        exploracion: exploracionEl.value.trim(),
+        actuacion: actuacionEl.value.trim(),
+      };
+    }
+
+    // Try summary column
+    let summaryCol = container.querySelector('.lg\\:col-span-4, .lg\\:w-2\\/5, .xl\\:w-5\\/12') as HTMLElement | null;
+    if (!summaryCol) {
+      const headings = Array.from(container.querySelectorAll('h3, h4'));
+      const resumenH3 = headings.find(h => (h.textContent || '').includes('Resumen'));
+      if (resumenH3) {
+        summaryCol = resumenH3.closest('div.bg-white, div.rounded-xl, div.p-2\\.5') as HTMLElement;
+      }
+    }
+
+    if (summaryCol) {
+      const textareas = Array.from(summaryCol.querySelectorAll('textarea')) as HTMLTextAreaElement[];
+      if (textareas.length >= 3) {
+        return {
+          anamnesis: textareas[0]?.value?.trim() || "",
+          exploracion: textareas[1]?.value?.trim() || "",
+          actuacion: textareas[2]?.value?.trim() || "",
+        };
+      }
+    }
+
+    const allTextareas = Array.from(container.querySelectorAll('textarea')) as HTMLTextAreaElement[];
+    if (allTextareas.length >= 3) {
+      const lastThree = allTextareas.slice(-3);
+      return {
+        anamnesis: lastThree[0]?.value?.trim() || "",
+        exploracion: lastThree[1]?.value?.trim() || "",
+        actuacion: lastThree[2]?.value?.trim() || "",
+      };
+    }
+
+    const combined = getCombinedFichaText();
+    if (combined.includes('ANAMNESIS:') || combined.includes('EXPLORACIÓN:') || combined.includes('ACTUACIÓN:')) {
+      const p1 = combined.indexOf('ANAMNESIS:');
+      const p2 = combined.indexOf('EXPLORACIÓN:');
+      const p3 = combined.indexOf('ACTUACIÓN:');
+      return {
+        anamnesis: p1 !== -1 ? (p2 !== -1 ? combined.slice(p1 + 10, p2).trim() : combined.slice(p1 + 10).trim()) : '',
+        exploracion: p2 !== -1 ? (p3 !== -1 ? combined.slice(p2 + 12, p3).trim() : combined.slice(p2 + 12).trim()) : '',
+        actuacion: p3 !== -1 ? combined.slice(p3 + 10).trim() : '',
+      };
+    }
+
+    return { anamnesis: combined, exploracion: '', actuacion: '' };
+  }, [getCombinedFichaText]);
+
   const handleMobileCopyText = useCallback(() => {
     const text = getCombinedFichaText();
     if (text) {
@@ -2269,11 +2439,37 @@ const App: React.FC = () => {
     }
   }, [getCombinedFichaText]);
 
-  const handleSaveToCloud = useCallback(async (nombre: string, rut: string) => {
+  const handleSaveToCloud = useCallback(async (
+    nombre: string,
+    rut: string,
+    options?: {
+      id?: string;
+      anamnesis?: string;
+      exploracion?: string;
+      actuacion?: string;
+      isOverwrite?: boolean;
+    }
+  ) => {
     const cleanRut = rut.trim();
     const uppercaseNombre = nombre.trim().toUpperCase();
     const fichaTitle = getFichaTitle(currentView);
-    const fullText = getCombinedFichaText();
+
+    let anamnesis = options?.anamnesis;
+    let exploracion = options?.exploracion;
+    let actuacion = options?.actuacion;
+
+    if (anamnesis === undefined || exploracion === undefined || actuacion === undefined) {
+      const extracted = extractFichaThreeBlocks();
+      if (anamnesis === undefined) anamnesis = extracted.anamnesis;
+      if (exploracion === undefined) exploracion = extracted.exploracion;
+      if (actuacion === undefined) actuacion = extracted.actuacion;
+    }
+
+    const fullText = [
+      anamnesis ? `ANAMNESIS:\n${anamnesis}` : '',
+      exploracion ? `EXPLORACIÓN:\n${exploracion}` : '',
+      actuacion ? `ACTUACIÓN:\n${actuacion}` : ''
+    ].filter(Boolean).join('\n\n') || getCombinedFichaText();
 
     let snapshot: any = null;
     try {
@@ -2283,50 +2479,60 @@ const App: React.FC = () => {
     } catch (e) {}
 
     if (!snapshot) {
-      snapshot = { fullText, date: getChileYMD(), view: currentView };
+      snapshot = { fullText, anamnesis, exploracion, actuacion, date: getChileYMD(), view: currentView };
+    } else {
+      snapshot.anamnesis = anamnesis;
+      snapshot.exploracion = exploracion;
+      snapshot.actuacion = actuacion;
     }
 
     const category = getPrestacionCategory(currentView);
+    const fechaCreacion = getChileDateTime();
+    const targetId = (options?.isOverwrite && options?.id)
+      ? options.id 
+      : (options?.id && !options?.isOverwrite ? undefined : options?.id);
 
     const savedPatient = patientStore.savePatient({
+      id: targetId,
       rut: cleanRut,
       nombre: uppercaseNombre,
-      fechaUltimaAtencion: getChileDDMMYYYY(),
+      fechaCreacion: fechaCreacion,
+      fechaUltimaAtencion: fechaCreacion,
+      tipoFicha: fichaTitle,
       ultimaPrestacion: fichaTitle,
+      anamnesis,
+      exploracion,
+      actuacion,
       anamnesisGeneral: fullText,
+      formDataSnapshot: snapshot,
       prestacionCategory: category,
     });
 
-    const addResult = patientStore.addFichaToPatient(
-      cleanRut,
-      fichaTitle,
-      snapshot,
-      getChileDDMMYYYY(),
-      category
-    );
+    await patientStore.uploadToCloud(savedPatient);
 
-    if (addResult?.patient) {
-      await patientStore.uploadToCloud(addResult.patient);
-    } else {
-      await patientStore.uploadToCloud(savedPatient);
-    }
-
-    alert(`¡Paciente "${uppercaseNombre}" (RUT: ${cleanRut}) guardado exitosamente en la nube (Firebase)!\nPuede ser consultado en "Mis pacientes" desde cualquier dispositivo.`);
-  }, [currentView, getCombinedFichaText]);
+    alert(`¡Registro guardado exitosamente en Firebase!\n\nID: ${savedPatient.id}\nPaciente: ${uppercaseNombre}\nRUT: ${cleanRut}\nFecha: ${savedPatient.fechaCreacion}\n\nVisible en "Mis Pacientes" para versión de Escritorio y Móvil.`);
+  }, [currentView, extractFichaThreeBlocks, getCombinedFichaText]);
 
   const handleOpenSaveCloudModal = useCallback(() => {
     let preNombre = '';
     let preRut = '';
-    const container = document.querySelector('.mobile-ficha-container');
+    const container = document.querySelector('.mobile-ficha-container') || document.querySelector('main');
     if (container) {
       const rutInput = container.querySelector('input[name*="rut" i], input[id*="rut" i], input[placeholder*="rut" i]') as HTMLInputElement;
       const nombreInput = container.querySelector('input[name*="nombre" i], input[id*="nombre" i], input[placeholder*="nombre" i], input[name*="paciente" i]') as HTMLInputElement;
       if (rutInput && rutInput.value) preRut = rutInput.value.trim();
       if (nombreInput && nombreInput.value) preNombre = nombreInput.value.trim();
     }
-    setInitialPatientData({ nombre: preNombre, rut: preRut });
+    const { anamnesis, exploracion, actuacion } = extractFichaThreeBlocks();
+    setInitialPatientData({
+      nombre: preNombre,
+      rut: preRut,
+      anamnesis,
+      exploracion,
+      actuacion,
+    });
     setIsSaveCloudModalOpen(true);
-  }, []);
+  }, [extractFichaThreeBlocks]);
 
   const handleMobileClearForm = useCallback(() => {
     if (!window.confirm('¿Estás seguro de que deseas borrar todo el contenido de la ficha? Esta acción no se puede deshacer.')) {
@@ -3081,6 +3287,18 @@ const App: React.FC = () => {
                 </svg>
               </button>
 
+              {/* Botón Guardar en Nube (Escritorio) */}
+              {isClinicalRecord(currentView) && (
+                <button
+                  type="button"
+                  onClick={handleOpenSaveCloudModal}
+                  title="Guardar Registro en Firebase para Mis Pacientes"
+                  className="px-3 h-8 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white rounded-lg text-xs font-bold shadow-xs transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ml-1"
+                >
+                  <CloudUpload className="w-4 h-4" />
+                  <span>Guardar</span>
+                </button>
+              )}
             </>
           )}
           </div>
@@ -3561,13 +3779,17 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {/* Modal para guardar paciente en la nube desde móvil */}
+      {/* Modal para guardar paciente en la nube desde móvil y escritorio */}
       <SavePatientCloudModal
         isOpen={isSaveCloudModalOpen}
         onClose={() => setIsSaveCloudModalOpen(false)}
         onSave={handleSaveToCloud}
         initialNombre={initialPatientData.nombre}
         initialRut={initialPatientData.rut}
+        initialAnamnesis={initialPatientData.anamnesis}
+        initialExploracion={initialPatientData.exploracion}
+        initialActuacion={initialPatientData.actuacion}
+        initialId={initialPatientData.existingId}
         fichaTitle={getFichaTitle(currentView)}
       />
     </div>

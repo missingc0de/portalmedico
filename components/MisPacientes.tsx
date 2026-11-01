@@ -6,29 +6,28 @@ import {
   ArrowUpDown,
   Filter,
   FileText,
-  MoreHorizontal,
   ChevronLeft,
   ChevronRight,
-  UserPlus,
   Trash2,
   CheckCircle2,
   Clock,
   Eye,
   X,
   Save,
-  Phone,
   User as UserIcon,
   AlertTriangle,
-  ShieldAlert,
-  Edit,
   FilePlus,
   Cloud,
-  Check
+  Check,
+  Copy,
+  PlusCircle,
+  RefreshCw,
+  ExternalLink,
+  Fingerprint
 } from 'lucide-react';
 import { View, User } from '../types';
-import { patientStore, PatientRecord, SavedFichaEntry } from '../services/patientStore';
-import SmartAntecedentesTextarea from './SmartAntecedentesTextarea';
-import SmartFarmacosTextarea from './SmartFarmacosTextarea';
+import { patientStore, PatientRecord } from '../services/patientStore';
+import { getChileDateTime } from '../services/dateService';
 
 export const PatientAvatarIcon: React.FC<{ className?: string }> = ({ className = "w-7 h-7" }) => (
   <div className={`relative inline-flex items-center justify-center shrink-0 ${className}`}>
@@ -48,48 +47,36 @@ interface MisPacientesProps {
   loggedInUser: User;
 }
 
-const MisPacientes: React.FC<MisPacientesProps> = ({ onSelectMenuItem, loggedInUser }) => {
-  const [patients, setPatients] = useState<PatientRecord[]>([]);
+const MisPacientes: React.FC<MisPacientesProps> = ({ onSelectMenuItem }) => {
+  const [records, setRecords] = useState<PatientRecord[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDateFilter, setSelectedDateFilter] = useState('All');
   const [selectedPrestacionFilter, setSelectedPrestacionFilter] = useState('All');
-  const [selectedPatients, setSelectedPatients] = useState<Record<string, boolean>>({});
   const [currentPage, setCurrentPage] = useState(1);
-  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+  const itemsPerPage = 10;
 
-  // Modal State
-  const [isPatientModalOpen, setIsPatientModalOpen] = useState(false);
-  const [editingPatient, setEditingPatient] = useState<Partial<PatientRecord>>({
+  // Modal: Registro Individual (Visualizador y Editor de 3 bloques)
+  const [isRecordModalOpen, setIsRecordModalOpen] = useState(false);
+  const [isCreatingNew, setIsCreatingNew] = useState(false);
+  const [editingRecord, setEditingRecord] = useState<PatientRecord>({
+    id: '',
     rut: '',
     nombre: '',
-    edad: '',
-    sexo: 'Masculino',
-    telefono: '+56 9 ',
-    sector: 'Verde',
-    antecedentesPersonales: '',
-    morbilidad: '',
-    farmacos: '',
-    alergias: '',
-    cirugias: '',
-    hospitalizaciones: '',
-    adherenciaTratamiento: 'Sí',
-    estratificacion: 'G1',
-    duplaProfesional: '',
-    actividadFisicaHabito: '',
-    animo_estadoAnimo: '',
-    espiritualidad: ''
+    fechaCreacion: '',
+    tipoFicha: 'Ficha Clínica',
+    anamnesis: '',
+    exploracion: '',
+    actuacion: '',
   });
 
-  const [deleteConfirmRut, setDeleteConfirmRut] = useState<string | null>(null);
-  const [patientModalTab, setPatientModalTab] = useState<'datos' | 'fichas'>('datos');
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
-  // Modal Crear Nueva Ficha
-  const [isNewFichaModalOpen, setIsNewFichaModalOpen] = useState(false);
-  const [selectedPatientForFicha, setSelectedPatientForFicha] = useState<string>('');
+  // Modal: Crear Nueva Ficha Clínica (catálogo de fichas para abrir una en blanco)
+  const [isNewFichaCatalogOpen, setIsNewFichaCatalogOpen] = useState(false);
   const [selectedFichaView, setSelectedFichaView] = useState<View>('fichaIngresoEcicep');
   const [fichaSearchQuery, setFichaSearchQuery] = useState('');
 
-  // Available Clinical Records for selection
   const CLINICAL_FICHAS_GROUPS: { group: string; fichas: { label: string; view: View; desc?: string }[] }[] = useMemo(() => [
     {
       group: 'ECICEP',
@@ -101,350 +88,249 @@ const MisPacientes: React.FC<MisPacientesProps> = ({ onSelectMenuItem, loggedInU
       ]
     },
     {
-      group: 'Controles Crónicos y Especialidades',
+      group: 'PADDS & Cardiovascular',
       fichas: [
-        { label: 'Control Crónico (PSCV)', view: 'fichaControlPscv', desc: 'Programa de Salud Cardiovascular' },
-        { label: 'Control Salud Mental', view: 'fichaControlSm', desc: 'Seguimiento y control de salud mental' },
-        { label: 'Ingreso Salud Mental', view: 'fichaIngresoSm', desc: 'Ingreso al programa de salud mental' },
-        { label: 'Consulta PASMI', view: 'fichaConsultaPasmi', desc: 'Programa de atención en salud mental infantil' },
-        { label: 'Control IRA / ERA', view: 'fichaControlSalaEra', desc: 'Salas respiratorias adultos y niños' },
-        { label: 'Control Sala IRA (Infantil)', view: 'fichaControlSalaIra', desc: 'Infecciones respiratorias agudas infantil' },
-        { label: 'Control Hipotiroidismo', view: 'fichaControlHipotiroidismo', desc: 'Seguimiento de patología tiroidea' },
-        { label: 'Control Epilepsia', view: 'fichaControlEpilepsia', desc: 'Atención y control de epilepsia' },
-        { label: 'Control Artrosis', view: 'fichaControlArtrosis', desc: 'Programa de artrosis leve y moderada' },
-        { label: 'Fondo de Ojo', view: 'fichaFondoOjo', desc: 'Tamizaje retinopatía diabética' },
-        { label: 'Ingreso Demencias', view: 'ingresoDemencias', desc: 'Ingreso integral plan nacional demencias' },
-        { label: 'Control Demencias', view: 'fichaControlDemencias', desc: 'Seguimiento y control plan demencias' },
-        { label: 'Equipo de cabecera', view: 'fichaVisitaDomiciliaria', desc: 'Atención de equipo de cabecera en domicilio' },
-        { label: 'Ingreso PADDS', view: 'fichaIngresoPadds', desc: 'Ingreso al programa PADDS' },
-        { label: 'Control PADDS', view: 'fichaControlPadds', desc: 'Control de seguimiento del programa PADDS' },
+        { label: 'Ingreso PADDS', view: 'fichaIngresoPadds', desc: 'Ingreso Programa Atención Domiciliaria Dependientes Severos' },
+        { label: 'Control PADDS', view: 'fichaControlPadds', desc: 'Control y seguimiento PADDS' },
+        { label: 'Control PSCV (Crónicos)', view: 'fichaControlPscv', desc: 'Control programa salud cardiovascular' },
+        { label: 'Control Adulto Mayor', view: 'fichaControlAdultoMayor', desc: 'Control integral adulto y persona mayor' },
       ]
     },
     {
-      group: 'Programa Infantil - Niño Sano',
+      group: 'Ciclo Vital & Especialidades',
       fichas: [
-        { label: 'Control Díada / Recién Nacido', view: 'fichaControlNinoSanoRN' },
-        { label: 'Control Niño Sano 1° Mes', view: 'fichaControlNinoSano1Mes' },
-        { label: 'Control Niño Sano 2 Meses', view: 'fichaControlNinoSano2Meses' },
-        { label: 'Control Niño Sano 3° Mes', view: 'fichaControlNinoSano3Mes' },
-        { label: 'Control Niño Sano 4 Meses', view: 'fichaControlNinoSano4Meses' },
-        { label: 'Consulta Nutricional 5 Meses', view: 'consultaNutricional5Meses' },
-        { label: 'Control Niño Sano 6 Meses', view: 'fichaControlNinoSano6Meses' },
-        { label: 'Control Niño Sano 8 Meses', view: 'fichaControlNinoSano8Meses' },
-        { label: 'Control Niño Sano 12 Meses', view: 'fichaControlNinoSano12Meses' },
-        { label: 'Control Niño Sano 18 Meses', view: 'fichaControlNinoSano18Meses' },
-        { label: 'Control Niño Sano 2 Años', view: 'fichaControlNinoSano2Anos' },
-        { label: 'Control Niño Sano 3 Años', view: 'fichaControlNinoSano3Anos' },
-        { label: 'Consulta Nutricional 3 Años 6 M.', view: 'consultaNutricional3Anos6Meses' },
-        { label: 'Control Niño Sano 4 Años', view: 'fichaControlNinoSano4Anos' },
-        { label: 'Control Niño Sano 5 Años', view: 'fichaControlNinoSano5Anos' },
-        { label: 'Control Niño Sano 6 Años', view: 'fichaControlNinoSano6Anos' },
-        { label: 'Control Niño Sano 7 Años', view: 'fichaControlNinoSano7Anos' },
-        { label: 'Control Niño Sano 8 Años', view: 'fichaControlNinoSano8Anos' },
-        { label: 'Control Niño Sano 9 Años', view: 'fichaControlNinoSano9Anos' },
+        { label: 'Control Niño Sano (1 Mes)', view: 'fichaControlNinoSano1Mes', desc: 'Evaluación integral infantil 1 mes' },
+        { label: 'Control Niño Sano (3 Meses)', view: 'fichaControlNinoSano3Meses', desc: 'Evaluación integral infantil 3 meses' },
+        { label: 'Salud Mental (Ingreso)', view: 'fichaIngresoSm', desc: 'Ingreso integral salud mental' },
+        { label: 'Ingreso Demencias', view: 'fichaIngresoDemencias', desc: 'Evaluación integral sospecha o diagnóstico de demencia' },
+        { label: 'Visita Domiciliaria (VDI)', view: 'fichaVisitaDomiciliaria', desc: 'Visita domiciliaria integral' },
       ]
     },
     {
-      group: 'Atención y Documentos Médicos',
+      group: 'Documentos & Gestión',
       fichas: [
         { label: 'Receta Médica', view: 'recetaMedica', desc: 'Emisión de recetas y prescripción de fármacos' },
         { label: 'Certificado Médico', view: 'certificadoMedico', desc: 'Certificado de reposo y constatación de salud' },
-        { label: 'Orden de Laboratorio', view: 'ordenLaboratorio', desc: 'Solicitud exámenes de laboratorio clínico' },
-        { label: 'Orden de Imágenes / Radiografías', view: 'ordenExamenRadiologico', desc: 'Solicitud de exámenes de radiología y ecografía' },
         { label: 'Ficha de Morbilidad', view: 'fichaMorbilidad', desc: 'Atención médica aguda de morbilidad' },
-        { label: 'Ficha de Consultoría', view: 'fichaConsultoria', desc: 'Interconsulta o consultoría médica' },
       ]
     }
   ], []);
 
-  const handleStartNewFicha = () => {
-    let targetPatient: PatientRecord | undefined = undefined;
-    if (selectedPatientForFicha) {
-      targetPatient = patients.find(p => p.rut === selectedPatientForFicha);
-    }
-    setIsNewFichaModalOpen(false);
-    onSelectMenuItem(selectedFichaView, targetPatient);
-  };
-
+  // Sync with patientStore
   useEffect(() => {
-    setPatients(patientStore.getPatients());
+    setRecords(patientStore.getPatients());
     const unsub = patientStore.subscribe((updated) => {
-      setPatients(updated);
+      setRecords(updated);
     });
     return unsub;
   }, []);
 
-  const itemsPerPage = 10;
-
   // Filter logic
-  const filteredPatients = useMemo(() => {
-    return patients.filter(patient => {
+  const filteredRecords = useMemo(() => {
+    return records.filter(record => {
+      const q = searchTerm.toLowerCase();
       const matchesSearch =
-        patient.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        patient.rut.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (patient.telefono && patient.telefono.includes(searchTerm)) ||
-        (patient.ultimaPrestacion && patient.ultimaPrestacion.toLowerCase().includes(searchTerm.toLowerCase()));
+        (record.nombre && record.nombre.toLowerCase().includes(q)) ||
+        (record.rut && record.rut.toLowerCase().includes(q)) ||
+        (record.id && record.id.toLowerCase().includes(q)) ||
+        (record.tipoFicha && record.tipoFicha.toLowerCase().includes(q)) ||
+        (record.anamnesis && record.anamnesis.toLowerCase().includes(q));
 
       const matchesPrestacion =
-        selectedPrestacionFilter === 'All' || patient.prestacionCategory === selectedPrestacionFilter;
+        selectedPrestacionFilter === 'All' ||
+        record.prestacionCategory === selectedPrestacionFilter ||
+        (record.tipoFicha && record.tipoFicha.toLowerCase().includes(selectedPrestacionFilter.toLowerCase()));
 
       return matchesSearch && matchesPrestacion;
     });
-  }, [patients, searchTerm, selectedPrestacionFilter]);
+  }, [records, searchTerm, selectedPrestacionFilter]);
 
-  const totalPages = Math.ceil(filteredPatients.length / itemsPerPage) || 1;
-  const paginatedPatients = useMemo(() => {
+  const totalPages = Math.ceil(filteredRecords.length / itemsPerPage) || 1;
+  const paginatedRecords = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
-    return filteredPatients.slice(start, start + itemsPerPage);
-  }, [filteredPatients, currentPage]);
+    return filteredRecords.slice(start, start + itemsPerPage);
+  }, [filteredRecords, currentPage]);
 
-  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.checked) {
-      const allSelected: Record<string, boolean> = {};
-      paginatedPatients.forEach(p => { allSelected[p.id] = true; });
-      setSelectedPatients(allSelected);
-    } else {
-      setSelectedPatients({});
+  const copyToClipboard = (text: string, label: string) => {
+    if (!text) {
+      alert(`No hay contenido en ${label} para copiar.`);
+      return;
     }
+    navigator.clipboard.writeText(text);
+    setCopiedField(label);
+    setTimeout(() => setCopiedField(null), 2000);
   };
 
-  const toggleSelectPatient = (id: string) => {
-    setSelectedPatients(prev => ({ ...prev, [id]: !prev[id] }));
+  const handleOpenRecord = (record: PatientRecord) => {
+    setIsCreatingNew(false);
+    setEditingRecord({
+      ...record,
+      anamnesis: record.anamnesis || '',
+      exploracion: record.exploracion || '',
+      actuacion: record.actuacion || '',
+      tipoFicha: record.tipoFicha || record.ultimaPrestacion || 'Ficha Clínica',
+      fechaCreacion: record.fechaCreacion || record.fechaUltimaAtencion || getChileDateTime(),
+    });
+    setIsRecordModalOpen(true);
   };
 
-  const isAllSelected = paginatedPatients.length > 0 && paginatedPatients.every(p => selectedPatients[p.id]);
-
-  const handleDeletePatient = (rut: string) => {
-    patientStore.deletePatient(rut);
-    setDeleteConfirmRut(null);
+  const handleOpenNewRecordModal = () => {
+    const newId = `REG-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+    const now = getChileDateTime();
+    setIsCreatingNew(true);
+    setEditingRecord({
+      id: newId,
+      rut: '',
+      nombre: '',
+      fechaCreacion: now,
+      tipoFicha: 'Ficha Clínica',
+      anamnesis: '',
+      exploracion: '',
+      actuacion: '',
+    });
+    setIsRecordModalOpen(true);
   };
 
-  const handleSaveModalPatient = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingPatient.rut || !editingPatient.nombre) {
-      alert('Por favor ingrese RUT y Nombre del paciente.');
+  // 1. SOBREESCRIBIR / GUARDAR CAMBIOS (keeps the same ID)
+  const handleSaveOverwrite = async () => {
+    if (!editingRecord.nombre.trim()) {
+      alert('Por favor ingrese el nombre del paciente.');
+      return;
+    }
+    if (!editingRecord.rut.trim()) {
+      alert('Por favor ingrese el RUT del paciente.');
       return;
     }
 
-    patientStore.savePatient({
-      ...editingPatient,
-      rut: editingPatient.rut.trim(),
-      nombre: editingPatient.nombre.toUpperCase().trim(),
-      edad: editingPatient.edad || '',
-      telefono: editingPatient.telefono || '+56 9 8765 4321',
-      sexo: editingPatient.sexo || 'Masculino',
-      fechaUltimaAtencion: editingPatient.fechaUltimaAtencion || 'Sin atenciones',
-      ultimaPrestacion: editingPatient.ultimaPrestacion || 'No registra',
-      prestacionCategory: editingPatient.prestacionCategory || 'none',
-      estratificacion: editingPatient.estratificacion || 'G0'
-    } as any);
-
-    setIsPatientModalOpen(false);
-  };
-
-  const handleOpenEditModal = (patient: PatientRecord) => {
-    setEditingPatient(patient);
-    setPatientModalTab('datos');
-    setIsPatientModalOpen(true);
-  };
-
-  const handleOpenNewModal = () => {
-    setEditingPatient({
-      rut: '',
-      nombre: '',
-      edad: '',
-      sexo: 'Masculino',
-      telefono: '+56 9 ',
-      sector: 'Verde',
-      antecedentesPersonales: '',
-      morbilidad: '',
-      farmacos: '',
-      alergias: '',
-      cirugias: '',
-      hospitalizaciones: '',
-      adherenciaTratamiento: 'Sí',
-      estratificacion: 'G0',
-      duplaProfesional: '',
-      actividadFisicaHabito: '',
-      animo_estadoAnimo: '',
-      espiritualidad: ''
+    const saved = patientStore.savePatient({
+      ...editingRecord,
+      id: editingRecord.id, // Mismo ID para sobreescribir
+      nombre: editingRecord.nombre.toUpperCase().trim(),
+      rut: editingRecord.rut.trim(),
+      fechaCreacion: editingRecord.fechaCreacion || getChileDateTime(),
+      tipoFicha: editingRecord.tipoFicha || 'Ficha Clínica',
+      anamnesis: editingRecord.anamnesis || '',
+      exploracion: editingRecord.exploracion || '',
+      actuacion: editingRecord.actuacion || '',
     });
-    setIsPatientModalOpen(true);
+
+    await patientStore.uploadToCloud(saved);
+    alert(`¡Registro "${saved.id}" actualizado y sobreescrito exitosamente!\nLos cambios han sido sincronizados en la nube.`);
+    setIsRecordModalOpen(false);
   };
 
-  const renderEstratificacionBadge = (estratificacion?: string) => {
-    const val = (estratificacion || 'G0').toUpperCase();
-    switch (val) {
-      case 'G3':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-red-50 text-red-700 border border-red-200">
-            <ShieldAlert className="w-3 h-3 text-red-600" />
-            G3
-          </span>
-        );
-      case 'G2':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-amber-50 text-amber-700 border border-amber-200">
-            G2
-          </span>
-        );
-      case 'G1':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
-            G1
-          </span>
-        );
-      case 'G0':
-      default:
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200">
-            G0
-          </span>
-        );
+  // 2. CREAR UNO DIFERENTE / GUARDAR COMO NUEVO (generates a new unique ID)
+  const handleSaveAsNew = async () => {
+    if (!editingRecord.nombre.trim()) {
+      alert('Por favor ingrese el nombre del paciente.');
+      return;
+    }
+    if (!editingRecord.rut.trim()) {
+      alert('Por favor ingrese el RUT del paciente.');
+      return;
+    }
+
+    const newId = `REG-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+    const newDate = getChileDateTime();
+
+    const saved = patientStore.savePatient({
+      ...editingRecord,
+      id: newId, // NUEVO ID INDEPENDIENTE
+      fechaCreacion: newDate,
+      fechaUltimaAtencion: newDate,
+      nombre: editingRecord.nombre.toUpperCase().trim(),
+      rut: editingRecord.rut.trim(),
+      tipoFicha: editingRecord.tipoFicha || 'Ficha Clínica',
+      anamnesis: editingRecord.anamnesis || '',
+      exploracion: editingRecord.exploracion || '',
+      actuacion: editingRecord.actuacion || '',
+    });
+
+    await patientStore.uploadToCloud(saved);
+    setEditingRecord(saved);
+    alert(`¡Nuevo registro creado exitosamente!\n\nID Asignado: ${newId}\nFecha: ${newDate}\nPaciente: ${saved.nombre}\nRUT: ${saved.rut}`);
+  };
+
+  const handleDeleteRecord = (id: string) => {
+    patientStore.deletePatient(id);
+    setDeleteConfirmId(null);
+    if (isRecordModalOpen && editingRecord.id === id) {
+      setIsRecordModalOpen(false);
     }
   };
 
-  const renderPrestacionBadge = (patient: PatientRecord) => {
-    const label = patient.ultimaPrestacion;
-    if (!label || label === 'No registra') {
-      return (
-        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-500 border border-slate-200">
-          No registra
-        </span>
-      );
-    }
-
-    switch (patient.prestacionCategory) {
-      case 'ecicep':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/70">
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            {label}
-          </span>
-        );
-      case 'pscv':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200/70">
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            {label}
-          </span>
-        );
-      case 'salud_mental':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200/70">
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            {label}
-          </span>
-        );
-      case 'respiratorio':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200/70">
-            <Clock className="w-3.5 h-3.5" />
-            {label}
-          </span>
-        );
-      case 'vdi':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200/70">
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            {label}
-          </span>
-        );
-      case 'preingreso':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-teal-50 text-teal-700 border border-teal-200/70">
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            {label}
-          </span>
-        );
-      default:
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200/70">
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            {label}
-          </span>
-        );
-    }
+  const handleCopyFullRecord = () => {
+    const parts = [
+      `REGISTRO CLÍNICO: ${editingRecord.tipoFicha || 'Ficha Clínica'}`,
+      `PACIENTE: ${editingRecord.nombre}`,
+      `RUT: ${editingRecord.rut}`,
+      `FECHA: ${editingRecord.fechaCreacion || getChileDateTime()}`,
+      `ID REGISTRO: ${editingRecord.id}`,
+      '',
+      `1. ANAMNESIS:\n${editingRecord.anamnesis || '(Sin registro)'}`,
+      '',
+      `2. EXPLORACIÓN:\n${editingRecord.exploracion || '(Sin registro)'}`,
+      '',
+      `3. ACTUACIÓN:\n${editingRecord.actuacion || '(Sin registro)'}`
+    ];
+    copyToClipboard(parts.join('\n'), 'Registro Completo');
   };
 
   return (
-    <div className="w-full space-y-4 p-4 sm:p-5 animate-fadeIn">
-      {/* Header Banner - Exact padding & borders matching Ingreso ECICEP (p-4 sm:p-5, rounded-xl border border-slate-200) */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white rounded-xl border border-slate-200 p-4 sm:p-5 shadow-sm">
+    <div className="w-full space-y-4 p-3 sm:p-5 animate-fadeIn">
+      {/* Header Banner */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white rounded-xl border border-slate-200 p-4 sm:p-5 shadow-xs">
         <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-xl font-bold text-slate-800 tracking-tight">Mis Pacientes</h1>
-            <span className="px-3 py-0.5 rounded-full text-xs font-bold bg-sky-100 text-sky-800 border border-sky-200">
-              {filteredPatients.length} registrados
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <h1 className="text-lg sm:text-xl font-bold text-slate-800 tracking-tight">Mis Pacientes</h1>
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-100 text-sky-800 border border-sky-200">
+              {filteredRecords.length} registros
             </span>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80 shadow-2xs" title="Sincronizado en tiempo real con la base de datos en la nube">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80" title="Sincronizado en tiempo real con Firebase Cloud">
               <Cloud className="w-3.5 h-3.5 text-emerald-600 animate-pulse" />
-              <span>Base de Datos Online</span>
+              <span>Nube Firebase Online</span>
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Registro centralizado y compartido en la nube. Consulta, crea y transfiere fichas clínicas desde cualquier equipo.
+            Cada registro clínico cuenta con su propio ID independiente, fecha de creación y sus tres bloques de Anamnesis, Exploración y Actuación.
           </p>
         </div>
-        <div className="flex items-center gap-3 flex-wrap">
+
+        <div className="flex items-center gap-2.5 flex-wrap">
           <button
-            onClick={handleOpenNewModal}
-            className="flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-sky-600 to-sky-700 hover:from-sky-700 hover:to-sky-800 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-xs transition-all cursor-pointer"
+            onClick={handleOpenNewRecordModal}
+            className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-sky-600 to-sky-700 hover:from-sky-700 hover:to-sky-800 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-xs transition-all cursor-pointer"
           >
-            <UserPlus className="w-4 h-4" />
-            <span>NUEVO PACIENTE</span>
+            <PlusCircle className="w-4 h-4" />
+            <span>NUEVO REGISTRO</span>
           </button>
 
           <button
-            onClick={() => {
-              setSelectedPatientForFicha('');
-              setIsNewFichaModalOpen(true);
-            }}
-            className="flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-xs transition-all cursor-pointer"
+            onClick={() => setIsNewFichaCatalogOpen(true)}
+            className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-xs transition-all cursor-pointer"
           >
             <FilePlus className="w-4 h-4" />
-            <span>CREAR NUEVA FICHA</span>
+            <span>ABRIR FICHA EN BLANCO</span>
           </button>
         </div>
       </div>
 
-      {/* Main Table Grid - Exact border & padding limits matching Ingreso ECICEP */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col w-full">
-        
-        {/* Filter Bar Top */}
-        <div className="p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-slate-200 bg-white">
-          
-          {/* Search Input */}
-          <div className="relative w-full sm:w-72">
+      {/* Main Container */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden flex flex-col w-full">
+        {/* Search & Filters */}
+        <div className="p-3 sm:p-4 flex flex-col sm:flex-row items-center justify-between gap-3 border-b border-slate-200 bg-white">
+          <div className="relative w-full sm:w-80">
             <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
-              placeholder="Buscar paciente, RUT o teléfono..."
+              placeholder="Buscar por paciente, RUT o ID de registro..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition-all placeholder:text-slate-400"
             />
           </div>
 
-          {/* Filters Right */}
-          <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end flex-wrap">
-            {/* Fecha Filter */}
-            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-600">
-              <span className="text-slate-400">Fecha:</span>
-              <select
-                value={selectedDateFilter}
-                onChange={(e) => setSelectedDateFilter(e.target.value)}
-                className="bg-transparent font-semibold text-slate-800 outline-none cursor-pointer"
-              >
-                <option value="All">Todas</option>
-                <option value="today">Hoy</option>
-                <option value="week">Esta semana</option>
-                <option value="month">Este mes</option>
-              </select>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-            </div>
-
-            {/* Prestación Filter */}
+          <div className="flex items-center gap-2 w-full sm:w-auto justify-end flex-wrap">
             <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-600">
               <span className="text-slate-400">Prestación:</span>
               <select
@@ -454,228 +340,107 @@ const MisPacientes: React.FC<MisPacientesProps> = ({ onSelectMenuItem, loggedInU
               >
                 <option value="All">Todas</option>
                 <option value="ecicep">ECICEP</option>
-                <option value="pscv">Control PSCV</option>
+                <option value="pscv">Cardiovascular / PADDS</option>
                 <option value="salud_mental">Salud Mental</option>
                 <option value="respiratorio">Respiratorio</option>
-                <option value="vdi">Visita Domiciliaria</option>
-                <option value="preingreso">Preingreso ECICEP</option>
+                <option value="vdi">VDI</option>
+                <option value="nino_sano">Niño Sano</option>
               </select>
               <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
             </div>
-
-            {/* Sort Button */}
-            <button
-              title="Ordenar lista"
-              className="p-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-slate-500 transition-colors cursor-pointer"
-            >
-              <ArrowUpDown className="w-4 h-4" />
-            </button>
-
-            {/* Filter Icon Button */}
-            <button
-              title="Filtrar avanzado"
-              className="p-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-slate-500 transition-colors cursor-pointer"
-            >
-              <Filter className="w-4 h-4" />
-            </button>
           </div>
         </div>
 
-        {/* Clinical Grid Table with Slate Header & Column Dividers */}
-        <div className="overflow-x-auto w-full">
-          <table className="w-full text-left border-collapse min-w-[820px]">
+        {/* 1. DESKTOP VIEW: Clinical Table */}
+        <div className="hidden md:block overflow-x-auto w-full">
+          <table className="w-full text-left border-collapse min-w-[760px]">
             <thead>
               <tr className="bg-slate-100/90 border-b border-slate-200 text-xs font-bold text-slate-700">
-                <th className="py-3 px-3 w-10 text-center border-r border-slate-200">
-                  <input
-                    type="checkbox"
-                    checked={isAllSelected}
-                    onChange={handleSelectAll}
-                    className="w-4 h-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500 cursor-pointer"
-                  />
-                </th>
-                <th className="py-3 px-4 border-r border-slate-200 font-bold text-slate-700">Paciente</th>
-                <th className="py-3 px-3 border-r border-slate-200 font-bold text-slate-700">RUT</th>
-                <th className="py-3 px-3 border-r border-slate-200 font-bold text-slate-700">Edad</th>
-                <th className="py-3 px-3 border-r border-slate-200 font-bold text-slate-700 text-center">Estratificación</th>
-                <th className="py-3 px-4 border-r border-slate-200 font-bold text-slate-700">Última prestación</th>
-                <th className="py-3 px-4 border-r border-slate-200 font-bold text-slate-700">Fecha de atención</th>
-                <th className="py-3 px-4 font-bold text-slate-700 text-right pr-6">Acciones</th>
+                <th className="py-3 px-3 w-36 border-r border-slate-200">ID Registro</th>
+                <th className="py-3 px-4 border-r border-slate-200">Paciente</th>
+                <th className="py-3 px-3 w-32 border-r border-slate-200">RUT</th>
+                <th className="py-3 px-4 border-r border-slate-200">Tipo de Ficha / Registro</th>
+                <th className="py-3 px-4 border-r border-slate-200">Fecha de Creación</th>
+                <th className="py-3 px-4 text-right pr-6 w-36">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-xs font-sans">
-              {paginatedPatients.length > 0 ? (
-                paginatedPatients.map((patient, idx) => {
-                  const isSelected = !!selectedPatients[patient.id];
-                  const uppercaseName = patient.nombre.toUpperCase();
-                  const phoneFormatted = patient.telefono || '+56 9 8765 4321';
-                  const ageDisplay = patient.edad ? `${patient.edad} años` : 'S/I';
+              {paginatedRecords.length > 0 ? (
+                paginatedRecords.map((record, idx) => {
                   const isEven = idx % 2 === 0;
-
                   return (
                     <tr
-                      key={patient.id}
-                      className={`transition-colors border-b border-slate-100 ${
-                        isSelected ? 'bg-sky-50/60' : isEven ? 'bg-white' : 'bg-slate-50/40'
-                      } hover:bg-sky-50/40`}
+                      key={record.id}
+                      onClick={() => handleOpenRecord(record)}
+                      className={`transition-colors cursor-pointer border-b border-slate-100 ${
+                        isEven ? 'bg-white' : 'bg-slate-50/40'
+                      } hover:bg-sky-50/50`}
                     >
-                      {/* Checkbox */}
-                      <td className="py-3 px-3 text-center border-r border-slate-200/80">
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => toggleSelectPatient(patient.id)}
-                          className="w-4 h-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500 cursor-pointer"
-                        />
+                      {/* ID Registro */}
+                      <td className="py-3 px-3 border-r border-slate-200/80 whitespace-nowrap">
+                        <span className="font-mono font-bold text-[11px] text-sky-700 bg-sky-50 px-2 py-0.5 rounded border border-sky-200">
+                          {record.id || 'S/ID'}
+                        </span>
                       </td>
 
-                      {/* Paciente (with clickable avatar icon to open saved fichas collection) */}
-                      <td className="py-3 px-4 whitespace-nowrap border-r border-slate-200/80">
+                      {/* Paciente */}
+                      <td className="py-3 px-4 border-r border-slate-200/80 whitespace-nowrap">
                         <div className="flex items-center gap-2.5">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setEditingPatient(patient);
-                              setPatientModalTab('fichas');
-                              setIsPatientModalOpen(true);
-                            }}
-                            title="Ver colección de fichas guardadas"
-                            className="cursor-pointer hover:scale-105 transition-transform"
-                          >
-                            <PatientAvatarIcon className="w-7 h-7" />
-                          </button>
-                          <div className="flex flex-col min-w-0">
-                            <span className="font-bold text-slate-800 text-sm tracking-tight font-sans leading-snug">
-                              {uppercaseName}
-                            </span>
-                            <span className="text-[11px] font-medium text-slate-500 flex items-center gap-1">
-                              <Phone className="w-3 h-3 text-slate-400" />
-                              {phoneFormatted}
-                            </span>
-                          </div>
+                          <PatientAvatarIcon className="w-6 h-6" />
+                          <span className="font-bold text-slate-800 text-xs tracking-tight font-sans">
+                            {record.nombre || 'PACIENTE SIN NOMBRE'}
+                          </span>
                         </div>
                       </td>
 
                       {/* RUT */}
-                      <td className="py-3 px-3 font-bold text-slate-800 whitespace-nowrap border-r border-slate-200/80">
-                        {patient.rut}
+                      <td className="py-3 px-3 font-bold text-slate-700 whitespace-nowrap border-r border-slate-200/80">
+                        {record.rut || 'Sin RUT'}
                       </td>
 
-                      {/* Edad */}
-                      <td className="py-3 px-3 font-bold text-slate-800 whitespace-nowrap border-r border-slate-200/80">
-                        {ageDisplay}
-                      </td>
-
-                      {/* Estratificación Column (G0, G1, G2, G3) */}
-                      <td className="py-3 px-3 text-center border-r border-slate-200/80">
-                        {renderEstratificacionBadge(patient.estratificacion)}
-                      </td>
-
-                      {/* Última prestación (Default: "No registra") */}
+                      {/* Tipo de Ficha */}
                       <td className="py-3 px-4 whitespace-nowrap border-r border-slate-200/80">
-                        {renderPrestacionBadge(patient)}
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          <CheckCircle2 className="w-3 h-3" />
+                          {record.tipoFicha || record.ultimaPrestacion || 'Ficha Clínica'}
+                        </span>
                       </td>
 
-                      {/* Fecha de última atención */}
-                      <td className="py-3 px-4 font-semibold text-slate-700 whitespace-nowrap border-r border-slate-200/80">
-                        {patient.fechaUltimaAtencion || 'Sin atenciones'}
+                      {/* Fecha de Creación */}
+                      <td className="py-3 px-4 font-semibold text-slate-600 whitespace-nowrap border-r border-slate-200/80">
+                        <div className="flex items-center gap-1.5">
+                          <Clock className="w-3.5 h-3.5 text-slate-400" />
+                          <span>{record.fechaCreacion || record.fechaUltimaAtencion || 'Sin fecha'}</span>
+                        </div>
                       </td>
 
                       {/* Acciones */}
-                      <td className="py-3 px-4 text-right pr-6 whitespace-nowrap relative">
+                      <td className="py-3 px-4 text-right pr-6 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-1.5">
-                          {/* Open Ficha Icon Button */}
                           <button
-                            onClick={() => {
-                              onSelectMenuItem(patient.viewTarget || 'fichaIngresoEcicep', patient);
-                            }}
-                            title="Abrir ficha clínica de atención con datos cargados"
-                            className="p-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-sky-50 hover:text-sky-600 hover:border-sky-300 transition-all cursor-pointer"
+                            onClick={() => handleOpenRecord(record)}
+                            title="Abrir y ver los 3 bloques de este registro"
+                            className="p-1.5 rounded-lg border border-sky-200 text-sky-700 hover:bg-sky-100 transition-all cursor-pointer flex items-center gap-1 text-[11px] font-bold"
                           >
-                            <FileText className="w-4 h-4" />
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>Ver Registro</span>
                           </button>
-
-                          {/* Edit Patient Data Modal */}
                           <button
-                            onClick={() => handleOpenEditModal(patient)}
-                            title="Editar registro del paciente"
-                            className="p-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-sky-50 hover:text-sky-600 hover:border-sky-300 transition-all cursor-pointer"
+                            onClick={() => setDeleteConfirmId(record.id)}
+                            title="Eliminar este registro"
+                            className="p-1.5 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 transition-all cursor-pointer"
                           >
-                            <UserIcon className="w-4 h-4" />
-                          </button>
-
-                          {/* Trash Delete Patient Button */}
-                          <button
-                            onClick={() => setDeleteConfirmRut(patient.rut)}
-                            title="Eliminar paciente del registro"
-                            className="p-1.5 rounded-lg border border-red-200 text-red-400 hover:bg-red-50 hover:text-red-600 hover:border-red-300 transition-all cursor-pointer"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-
-                          {/* Options Menu Button */}
-                          <button
-                            onClick={() => setActiveMenuId(activeMenuId === patient.id ? null : patient.id)}
-                            title="Más opciones"
-                            className="p-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-100 transition-all cursor-pointer"
-                          >
-                            <MoreHorizontal className="w-4 h-4" />
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
-
-                        {/* Dropdown Options */}
-                        {activeMenuId === patient.id && (
-                          <div className="absolute right-6 top-11 z-50 bg-white border border-slate-200 rounded-xl shadow-xl p-1.5 w-48 text-left animate-fadeIn">
-                            <button
-                              onClick={() => {
-                                setActiveMenuId(null);
-                                onSelectMenuItem('fichaIngresoEcicep', patient);
-                              }}
-                              className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-sky-50 hover:text-sky-700 rounded-lg transition-colors cursor-pointer"
-                            >
-                              <Eye className="w-3.5 h-3.5 text-sky-600" />
-                              <span>Ingreso ECICEP</span>
-                            </button>
-                            <button
-                              onClick={() => {
-                                setActiveMenuId(null);
-                                onSelectMenuItem('fichaControlEcicepNuevo', patient);
-                              }}
-                              className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-sky-50 hover:text-sky-700 rounded-lg transition-colors cursor-pointer"
-                            >
-                              <Eye className="w-3.5 h-3.5 text-sky-600" />
-                              <span>Control ECICEP</span>
-                            </button>
-                            <button
-                              onClick={() => {
-                                setActiveMenuId(null);
-                                onSelectMenuItem('fichaControlPscv', patient);
-                              }}
-                              className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-sky-50 hover:text-sky-700 rounded-lg transition-colors cursor-pointer"
-                            >
-                              <Eye className="w-3.5 h-3.5 text-sky-600" />
-                              <span>Control Crónico</span>
-                            </button>
-                            <button
-                              onClick={() => {
-                                setActiveMenuId(null);
-                                onSelectMenuItem('recetaMedica', patient);
-                              }}
-                              className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-sky-50 hover:text-sky-700 rounded-lg transition-colors cursor-pointer"
-                            >
-                              <FileText className="w-3.5 h-3.5 text-emerald-600" />
-                              <span>Generar Receta</span>
-                            </button>
-                          </div>
-                        )}
                       </td>
                     </tr>
                   );
                 })
               ) : (
                 <tr>
-                  <td colSpan={8} className="py-8 text-center text-slate-400 font-medium">
-                    No se encontraron pacientes que coincidan con la búsqueda.
+                  <td colSpan={6} className="py-12 text-center text-slate-400 font-medium">
+                    No se encontraron registros clínicos guardados.
                   </td>
                 </tr>
               )}
@@ -683,10 +448,74 @@ const MisPacientes: React.FC<MisPacientesProps> = ({ onSelectMenuItem, loggedInU
           </table>
         </div>
 
-        {/* Footer Pagination Bar matching photo prompt */}
-        <div className="p-4 sm:p-5 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-medium text-slate-500 bg-white">
-          
-          {/* Pagination buttons */}
+        {/* 2. MOBILE VIEW: Responsive Cards (One below the other, edge-to-edge) */}
+        <div className="md:hidden divide-y divide-slate-100 w-full">
+          {paginatedRecords.length > 0 ? (
+            paginatedRecords.map((record) => (
+              <div
+                key={record.id}
+                onClick={() => handleOpenRecord(record)}
+                className="p-3.5 bg-white hover:bg-sky-50/40 active:bg-sky-100/50 transition-colors cursor-pointer flex flex-col gap-2.5"
+              >
+                {/* Header row */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <PatientAvatarIcon className="w-6 h-6 shrink-0" />
+                    <span className="font-bold text-slate-900 text-sm truncate uppercase">
+                      {record.nombre || 'PACIENTE SIN NOMBRE'}
+                    </span>
+                  </div>
+                  <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-sky-50 text-sky-700 border border-sky-200 shrink-0">
+                    {record.id}
+                  </span>
+                </div>
+
+                {/* Info row */}
+                <div className="flex items-center justify-between text-xs text-slate-600 gap-2 flex-wrap">
+                  <div>
+                    <span className="text-slate-400 text-[11px]">RUT: </span>
+                    <strong className="text-slate-800">{record.rut}</strong>
+                  </div>
+                  <div className="flex items-center gap-1 text-[11px] text-slate-500">
+                    <Clock className="w-3 h-3 text-slate-400" />
+                    <span>{record.fechaCreacion || 'Sin fecha'}</span>
+                  </div>
+                </div>
+
+                {/* Badge row */}
+                <div className="flex items-center justify-between gap-2">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 truncate">
+                    <CheckCircle2 className="w-3 h-3 shrink-0" />
+                    <span className="truncate">{record.tipoFicha || 'Ficha Clínica'}</span>
+                  </span>
+
+                  <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      onClick={() => handleOpenRecord(record)}
+                      className="px-3 py-1 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-xs font-bold shadow-2xs flex items-center gap-1"
+                    >
+                      <Eye className="w-3 h-3" />
+                      <span>Abrir</span>
+                    </button>
+                    <button
+                      onClick={() => setDeleteConfirmId(record.id)}
+                      className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg border border-red-200"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="py-12 text-center text-slate-400 text-xs font-medium">
+              No se encontraron registros clínicos guardados.
+            </div>
+          )}
+        </div>
+
+        {/* Pagination Bar */}
+        <div className="p-3 sm:p-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-medium text-slate-500 bg-white">
           <div className="flex items-center gap-1.5">
             <button
               onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
@@ -696,25 +525,9 @@ const MisPacientes: React.FC<MisPacientesProps> = ({ onSelectMenuItem, loggedInU
               <ChevronLeft className="w-4 h-4" />
               <span>Anterior</span>
             </button>
-
-            {[...Array(totalPages)].map((_, i) => {
-              const page = i + 1;
-              const isCurrent = page === currentPage;
-              return (
-                <button
-                  key={page}
-                  onClick={() => setCurrentPage(page)}
-                  className={`w-8 h-8 rounded-xl font-bold transition-all cursor-pointer ${
-                    isCurrent
-                      ? 'bg-slate-900 text-white shadow-xs'
-                      : 'border border-slate-200 text-slate-600 hover:bg-slate-50'
-                  }`}
-                >
-                  {page}
-                </button>
-              );
-            })}
-
+            <span className="px-2 text-slate-700 font-bold">
+              {currentPage} / {totalPages}
+            </span>
             <button
               onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
@@ -724,35 +537,264 @@ const MisPacientes: React.FC<MisPacientesProps> = ({ onSelectMenuItem, loggedInU
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
-
-          {/* Entries summary */}
-          <div className="text-slate-400 font-medium">
-            Mostrando <span className="font-bold text-slate-700">1-{paginatedPatients.length}</span> de <span className="font-bold text-slate-700">{filteredPatients.length}</span> pacientes
+          <div className="text-slate-400 font-medium text-center sm:text-right">
+            Mostrando <strong className="text-slate-700">{filteredRecords.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0}-{Math.min(currentPage * itemsPerPage, filteredRecords.length)}</strong> de <strong className="text-slate-700">{filteredRecords.length}</strong> registros
           </div>
         </div>
-
       </div>
 
-      {/* Delete Confirmation Modal (PORTAL A NIVEL DE PANTALLA COMPLETA) */}
-      {deleteConfirmRut && typeof document !== 'undefined' && createPortal(
-        <div className="fixed inset-0 z-[99999] bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl p-6 max-w-md w-full shadow-2xl border border-slate-200 animate-fadeIn">
+      {/* ========================================================================= */}
+      {/* MODAL REGISTRO INDIVIDUAL: TRES BLOQUES DE ANAMNESIS, EXPLORACIÓN Y ACTUACIÓN */}
+      {/* ========================================================================= */}
+      {isRecordModalOpen && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[99999] bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 animate-fadeIn">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-4xl max-h-[96vh] flex flex-col overflow-hidden animate-scaleIn">
+            
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 border-b border-slate-200 bg-gradient-to-r from-sky-50 via-cyan-50 to-white shrink-0">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-600 to-sky-700 text-white flex items-center justify-center shadow-xs shrink-0">
+                  <Fingerprint className="w-5 h-5" />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h2 className="text-sm sm:text-base font-bold text-slate-900 truncate">
+                      {isCreatingNew ? 'Nuevo Registro Clínico' : 'Registro Clínico Individual'}
+                    </h2>
+                    <span className="font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-sky-100 text-sky-800 border border-sky-300">
+                      ID: {editingRecord.id}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 truncate flex items-center gap-1.5 mt-0.5">
+                    <Clock className="w-3 h-3 text-slate-400" />
+                    <span>Fecha Creación: <strong>{editingRecord.fechaCreacion || 'Ahora'}</strong></span>
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsRecordModalOpen(false)}
+                className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer shrink-0 ml-2"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Identificación del Paciente (Campos Editables) */}
+            <div className="px-4 sm:px-6 py-3 bg-slate-50 border-b border-slate-200 grid grid-cols-1 sm:grid-cols-3 gap-3 shrink-0">
+              <div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                  Nombre Completo del Paciente *
+                </label>
+                <input
+                  type="text"
+                  value={editingRecord.nombre}
+                  onChange={(e) => setEditingRecord(prev => ({ ...prev, nombre: e.target.value.toUpperCase() }))}
+                  placeholder="EJ: JUAN PÉREZ GONZÁLEZ"
+                  className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-bold text-slate-800 uppercase outline-none focus:ring-2 focus:ring-sky-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                  RUT del Paciente *
+                </label>
+                <input
+                  type="text"
+                  value={editingRecord.rut}
+                  onChange={(e) => setEditingRecord(prev => ({ ...prev, rut: e.target.value }))}
+                  placeholder="EJ: 12.345.678-9"
+                  className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-sky-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                  Tipo de Registro / Ficha
+                </label>
+                <input
+                  type="text"
+                  value={editingRecord.tipoFicha || ''}
+                  onChange={(e) => setEditingRecord(prev => ({ ...prev, tipoFicha: e.target.value }))}
+                  placeholder="EJ: Ingreso ECICEP / Control PADDS"
+                  className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-sky-500"
+                />
+              </div>
+            </div>
+
+            {/* Content: Los Tres Bloques Clínicos */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 custom-scrollbar">
+              
+              {/* BLOQUE 1: ANAMNESIS */}
+              <div className="bg-white border-2 border-sky-200/80 rounded-xl overflow-hidden shadow-xs">
+                <div className="bg-sky-50/80 px-4 py-2 border-b border-sky-200 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-sky-600"></span>
+                    <h3 className="text-xs font-black text-sky-900 uppercase tracking-wider">
+                      1. ANAMNESIS
+                    </h3>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => copyToClipboard(editingRecord.anamnesis || '', 'Anamnesis')}
+                    className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold rounded-md bg-white border border-sky-300 text-sky-700 hover:bg-sky-100 transition-colors cursor-pointer shadow-2xs"
+                  >
+                    {copiedField === 'Anamnesis' ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                    <span>{copiedField === 'Anamnesis' ? '¡Copiado!' : 'COPIAR ANAMNESIS'}</span>
+                  </button>
+                </div>
+                <textarea
+                  value={editingRecord.anamnesis || ''}
+                  onChange={(e) => setEditingRecord(prev => ({ ...prev, anamnesis: e.target.value }))}
+                  placeholder="Ingrese el texto registrado para Anamnesis..."
+                  rows={4}
+                  className="w-full p-3 text-xs font-mono text-slate-800 bg-white outline-none resize-y leading-relaxed focus:bg-sky-50/20 transition-colors"
+                />
+              </div>
+
+              {/* BLOQUE 2: EXPLORACIÓN */}
+              <div className="bg-white border-2 border-emerald-200/80 rounded-xl overflow-hidden shadow-xs">
+                <div className="bg-emerald-50/80 px-4 py-2 border-b border-emerald-200 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-600"></span>
+                    <h3 className="text-xs font-black text-emerald-900 uppercase tracking-wider">
+                      2. EXPLORACIÓN
+                    </h3>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => copyToClipboard(editingRecord.exploracion || '', 'Exploración')}
+                    className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold rounded-md bg-white border border-emerald-300 text-emerald-700 hover:bg-emerald-100 transition-colors cursor-pointer shadow-2xs"
+                  >
+                    {copiedField === 'Exploración' ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                    <span>{copiedField === 'Exploración' ? '¡Copiado!' : 'COPIAR EXPLORACIÓN'}</span>
+                  </button>
+                </div>
+                <textarea
+                  value={editingRecord.exploracion || ''}
+                  onChange={(e) => setEditingRecord(prev => ({ ...prev, exploracion: e.target.value }))}
+                  placeholder="Ingrese el texto registrado para Exploración física y exámenes..."
+                  rows={4}
+                  className="w-full p-3 text-xs font-mono text-slate-800 bg-white outline-none resize-y leading-relaxed focus:bg-emerald-50/20 transition-colors"
+                />
+              </div>
+
+              {/* BLOQUE 3: ACTUACIÓN */}
+              <div className="bg-white border-2 border-indigo-200/80 rounded-xl overflow-hidden shadow-xs">
+                <div className="bg-indigo-50/80 px-4 py-2 border-b border-indigo-200 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-indigo-600"></span>
+                    <h3 className="text-xs font-black text-indigo-900 uppercase tracking-wider">
+                      3. ACTUACIÓN
+                    </h3>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => copyToClipboard(editingRecord.actuacion || '', 'Actuación')}
+                    className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold rounded-md bg-white border border-indigo-300 text-indigo-700 hover:bg-indigo-100 transition-colors cursor-pointer shadow-2xs"
+                  >
+                    {copiedField === 'Actuación' ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                    <span>{copiedField === 'Actuación' ? '¡Copiado!' : 'COPIAR ACTUACIÓN'}</span>
+                  </button>
+                </div>
+                <textarea
+                  value={editingRecord.actuacion || ''}
+                  onChange={(e) => setEditingRecord(prev => ({ ...prev, actuacion: e.target.value }))}
+                  placeholder="Ingrese el texto registrado para Actuación, indicaciones y plan terapéutico..."
+                  rows={4}
+                  className="w-full p-3 text-xs font-mono text-slate-800 bg-white outline-none resize-y leading-relaxed focus:bg-indigo-50/20 transition-colors"
+                />
+              </div>
+
+              {/* Botón rápido para copiar los 3 bloques juntos */}
+              <div className="flex justify-center pt-1">
+                <button
+                  type="button"
+                  onClick={handleCopyFullRecord}
+                  className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-colors cursor-pointer shadow-2xs"
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                  <span>Copiar Todo el Registro (3 Bloques)</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Footer Actions: SOBREESCRIBIR / CREAR UNO DIFERENTE / ELIMINAR */}
+            <div className="px-4 sm:px-6 py-3.5 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 shrink-0">
+              
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setDeleteConfirmId(editingRecord.id)}
+                  className="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 border border-red-200 rounded-xl transition-colors cursor-pointer"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Eliminar</span>
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2 flex-wrap justify-end">
+                <button
+                  type="button"
+                  onClick={() => setIsRecordModalOpen(false)}
+                  className="px-4 py-2 text-xs font-bold text-slate-600 bg-white hover:bg-slate-100 border border-slate-300 rounded-xl transition-colors cursor-pointer"
+                >
+                  Cerrar
+                </button>
+
+                {/* BOTÓN: CREAR UNO DIFERENTE / GUARDAR COMO NUEVO */}
+                <button
+                  type="button"
+                  onClick={handleSaveAsNew}
+                  className="flex items-center justify-center gap-1.5 px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-xs transition-all cursor-pointer"
+                  title="Crea una copia de este registro con un nuevo ID independiente"
+                >
+                  <PlusCircle className="w-3.5 h-3.5" />
+                  <span>Guardar como Nuevo</span>
+                </button>
+
+                {/* BOTÓN: SOBREESCRIBIR / GUARDAR CAMBIOS */}
+                <button
+                  type="button"
+                  onClick={handleSaveOverwrite}
+                  className="flex items-center justify-center gap-1.5 px-5 py-2 bg-gradient-to-r from-sky-600 to-sky-700 hover:from-sky-700 hover:to-sky-800 text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-xs transition-all cursor-pointer"
+                  title="Sobreescribe este registro manteniendo su mismo ID"
+                >
+                  <Save className="w-3.5 h-3.5" />
+                  <span>Sobreescribir Registro</span>
+                </button>
+              </div>
+
+            </div>
+
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* ========================================================================= */}
+      {/* DELETE CONFIRMATION MODAL */}
+      {/* ========================================================================= */}
+      {deleteConfirmId && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[100000] bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl p-5 sm:p-6 max-w-md w-full shadow-2xl border border-slate-200 animate-fadeIn">
             <div className="flex items-center gap-3 text-red-600 mb-3">
-              <AlertTriangle className="w-6 h-6" />
-              <h3 className="text-lg font-bold">¿Eliminar paciente?</h3>
+              <AlertTriangle className="w-6 h-6 shrink-0" />
+              <h3 className="text-base font-bold text-slate-900">¿Eliminar registro clínico?</h3>
             </div>
             <p className="text-xs text-slate-600 mb-6 leading-relaxed">
-              ¿Está seguro que desea eliminar del registro al paciente con RUT <strong className="text-slate-900">{deleteConfirmRut}</strong>? Esta acción borrará la conservación de datos de este paciente.
+              ¿Está seguro de que desea eliminar este registro con ID <strong className="text-slate-900 font-mono">{deleteConfirmId}</strong>? Esta acción borrará la información de la base de datos en la nube y local.
             </p>
-            <div className="flex justify-end gap-3">
+            <div className="flex justify-end gap-2.5">
               <button
-                onClick={() => setDeleteConfirmRut(null)}
+                onClick={() => setDeleteConfirmId(null)}
                 className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-colors cursor-pointer"
               >
                 Cancelar
               </button>
               <button
-                onClick={() => handleDeletePatient(deleteConfirmRut)}
+                onClick={() => handleDeleteRecord(deleteConfirmId)}
                 className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer"
               >
                 Sí, Eliminar
@@ -763,505 +805,107 @@ const MisPacientes: React.FC<MisPacientesProps> = ({ onSelectMenuItem, loggedInU
         document.body
       )}
 
-      {/* MODAL: REGISTRO / NUEVO PACIENTE (PORTAL A NIVEL DE PANTALLA COMPLETA) */}
-      {isPatientModalOpen && typeof document !== 'undefined' && createPortal(
-        <div className="fixed inset-0 z-[99999] bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-scaleIn">
-            {/* Modal Header matching Crear Nueva Ficha Clínica */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-gradient-to-r from-sky-50 via-cyan-50 to-white shrink-0">
+      {/* ========================================================================= */}
+      {/* MODAL CREAR NUEVA FICHA CLÍNICA (CATÁLOGO) */}
+      {/* ========================================================================= */}
+      {isNewFichaCatalogOpen && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[99999] bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-fadeIn">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-scaleIn">
+            
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-gradient-to-r from-emerald-50 via-teal-50 to-white shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-600 to-sky-700 text-white flex items-center justify-center shadow-sm">
-                  <UserPlus className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-slate-800">
-                    {editingPatient.rut ? 'Ficha de Paciente Registrado' : 'Registrar Nuevo Paciente'}
-                  </h3>
-                  <p className="text-xs text-slate-500">
-                    {editingPatient.rut 
-                      ? 'Edita antecedentes y consulta las atenciones clínicas del paciente' 
-                      : 'Crea un paciente en la base de datos online para usarlo en cualquier ficha clínica'}
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsPatientModalOpen(false)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-white border border-transparent hover:border-slate-200 transition-all cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Tabs */}
-            {editingPatient.rut && (
-              <div className="flex border-b border-slate-200 bg-slate-50 px-6 gap-2 shrink-0 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setPatientModalTab('datos')}
-                  className={`px-4 py-2 text-xs font-bold rounded-t-xl transition-all cursor-pointer ${
-                    patientModalTab === 'datos'
-                      ? 'bg-white border-t border-x border-slate-200 text-sky-700 shadow-2xs'
-                      : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100/70'
-                  }`}
-                >
-                  Datos y Antecedentes
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPatientModalTab('fichas')}
-                  className={`px-4 py-2 text-xs font-bold rounded-t-xl transition-all flex items-center gap-1.5 cursor-pointer ${
-                    patientModalTab === 'fichas'
-                      ? 'bg-white border-t border-x border-slate-200 text-sky-700 shadow-2xs'
-                      : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100/70'
-                  }`}
-                >
-                  <FileText className="w-3.5 h-3.5 text-sky-600" />
-                  <span>Fichas Guardadas</span>
-                  {(editingPatient.fichasClinicas?.length ?? 0) > 0 && (
-                    <span className="px-1.5 py-0.2 text-[9px] font-black bg-sky-100 text-sky-700 rounded-full">
-                      {editingPatient.fichasClinicas!.length}
-                    </span>
-                  )}
-                </button>
-              </div>
-            )}
-
-            {/* Tab: Datos del Paciente (original form) OR Tab: Fichas Guardadas */}
-            {patientModalTab === 'datos' || !editingPatient.rut ? (
-            <form onSubmit={handleSaveModalPatient} className="flex-1 overflow-y-auto p-6 flex flex-col justify-between text-xs space-y-6 custom-scrollbar">
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 flex-1 items-start">
-                
-                {/* Columna Izquierda: Datos Personales & Estado */}
-                <div className="bg-slate-50/80 p-5 rounded-2xl border border-slate-200 space-y-4 shadow-2xs">
-                  <div className="flex items-center gap-2 border-b border-slate-200/80 pb-2">
-                    <div className="w-2 h-2 rounded-full bg-sky-600"></div>
-                    <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Identificación y Ubicación</h3>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-2.5">
-                    <div>
-                      <label className="block text-[11px] font-medium text-slate-700 mb-0.5">RUT *</label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="12.345.678-9"
-                        value={editingPatient.rut || ''}
-                        onChange={(e) => setEditingPatient(prev => ({ ...prev, rut: e.target.value }))}
-                        className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 font-bold outline-none focus:ring-2 focus:ring-sky-500"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-[11px] font-medium text-slate-700 mb-0.5">Edad</label>
-                      <input
-                        type="text"
-                        placeholder="Ej: 64"
-                        value={editingPatient.edad || ''}
-                        onChange={(e) => setEditingPatient(prev => ({ ...prev, edad: e.target.value.replace(/\D/g, '') }))}
-                        className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 font-semibold outline-none focus:ring-2 focus:ring-sky-500"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-medium text-slate-700 mb-0.5">Nombre Completo *</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="NOMBRE COMPLETO"
-                      value={editingPatient.nombre || ''}
-                      onChange={(e) => setEditingPatient(prev => ({ ...prev, nombre: e.target.value.toUpperCase() }))}
-                      className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 font-extrabold uppercase outline-none focus:ring-2 focus:ring-sky-500"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2.5">
-                    <div>
-                      <label className="block text-[11px] font-medium text-slate-700 mb-0.5">Teléfono</label>
-                      <input
-                        type="text"
-                        placeholder="+56 9 8765 4321"
-                        value={editingPatient.telefono || ''}
-                        onChange={(e) => setEditingPatient(prev => ({ ...prev, telefono: e.target.value }))}
-                        className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 font-semibold outline-none focus:ring-2 focus:ring-sky-500"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-[11px] font-medium text-slate-700 mb-0.5">Sexo</label>
-                      <select
-                        value={editingPatient.sexo || 'Masculino'}
-                        onChange={(e) => setEditingPatient(prev => ({ ...prev, sexo: e.target.value as any }))}
-                        className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 outline-none focus:ring-2 focus:ring-sky-500"
-                      >
-                        <option value="Masculino">Masculino</option>
-                        <option value="Femenino">Femenino</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2.5">
-                    <div>
-                      <label className="block text-[11px] font-medium text-slate-700 mb-0.5">Estratificación ECICEP</label>
-                      <select
-                        value={editingPatient.estratificacion || 'G0'}
-                        onChange={(e) => setEditingPatient(prev => ({ ...prev, estratificacion: e.target.value }))}
-                        className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 font-semibold outline-none focus:ring-2 focus:ring-sky-500"
-                      >
-                        <option value="G0">G0 - Sin riesgo</option>
-                        <option value="G1">G1 - Riesgo Bajo</option>
-                        <option value="G2">G2 - Riesgo Moderado</option>
-                        <option value="G3">G3 - Riesgo Alto</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-[11px] font-medium text-slate-700 mb-0.5">Adherencia Tratamiento</label>
-                      <select
-                        value={editingPatient.adherenciaTratamiento || 'Sí'}
-                        onChange={(e) => setEditingPatient(prev => ({ ...prev, adherenciaTratamiento: e.target.value }))}
-                        className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 outline-none focus:ring-2 focus:ring-sky-500"
-                      >
-                        <option value="Sí">Sí</option>
-                        <option value="No">No</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-medium text-slate-700 mb-0.5">Alergias Conocidas</label>
-                    <input
-                      type="text"
-                      placeholder="Alergias o 'Niega'..."
-                      value={editingPatient.alergias || ''}
-                      onChange={(e) => setEditingPatient(prev => ({ ...prev, alergias: e.target.value }))}
-                      className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 outline-none focus:ring-2 focus:ring-sky-500"
-                    />
-                  </div>
-                </div>
-
-                {/* Columna Derecha: Smart Antecedentes & Smart Fármacos */}
-                <div className="bg-slate-50/80 p-5 rounded-2xl border border-slate-200 space-y-4 shadow-2xs">
-                  <div className="flex items-center gap-2 border-b border-slate-200/80 pb-2">
-                    <div className="w-2 h-2 rounded-full bg-cyan-600"></div>
-                    <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Antecedentes Clínicos y Fármacos</h3>
-                  </div>
-                  
-                  <SmartAntecedentesTextarea
-                    label="Antecedentes Personales / Morbilidad"
-                    id="modal_antecedentesPersonales"
-                    name="modal_antecedentesPersonales"
-                    value={editingPatient.antecedentesPersonales || ''}
-                    onChange={(val) => setEditingPatient(prev => ({ ...prev, antecedentesPersonales: val, morbilidad: val }))}
-                    rows={3}
-                    placeholder="Escriba antecedente o morbilidad..."
-                  />
-
-                  <SmartFarmacosTextarea
-                    label="Fármacos en Uso"
-                    id="modal_farmacos"
-                    name="modal_farmacos"
-                    value={editingPatient.farmacos || ''}
-                    onChange={(val) => setEditingPatient(prev => ({ ...prev, farmacos: val }))}
-                    rows={4}
-                    placeholder="Escriba medicamento o marca comercial..."
-                  />
-                </div>
-              </div>
-
-              {/* Modal Footer matching Crear Nueva Ficha */}
-              <div className="flex items-center justify-between pt-4 border-t border-slate-200 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setIsPatientModalOpen(false)}
-                  className="px-4 py-2 border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-semibold rounded-xl transition-all cursor-pointer"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-sky-600 to-sky-700 hover:from-sky-700 hover:to-sky-800 text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-xs transition-all cursor-pointer"
-                >
-                  <Save className="w-4 h-4" />
-                  <span>Guardar en Base de Datos</span>
-                </button>
-              </div>
-            </form>
-            ) : (
-            /* FICHAS GUARDADAS TAB */
-            <div className="flex-1 overflow-y-auto p-4 sm:p-5 text-xs">
-              {(editingPatient.fichasClinicas?.length ?? 0) === 0 ? (
-                <div className="flex flex-col items-center justify-center h-48 text-slate-400 gap-3">
-                  <svg viewBox="0 0 24 24" fill="currentColor" className="w-12 h-12 text-slate-200">
-                    <path d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7l-4-4zM12 19a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm3-10H6V5h9v4z"/>
-                  </svg>
-                  <p className="font-semibold text-sm">No hay fichas guardadas</p>
-                  <p className="text-[11px] text-center max-w-xs">Cuando guarde una ficha clínica desde Ingreso ECICEP u otras fichas, aparecerán aquí.</p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <p className="text-[11px] text-slate-500 mb-3 font-medium">Fichas guardadas para <strong className="text-slate-800">{editingPatient.nombre}</strong> — ordenadas de más reciente a más antigua:</p>
-                  {editingPatient.fichasClinicas!.map((ficha: SavedFichaEntry, idx: number) => (
-                    <div key={ficha.id} className="bg-white border border-slate-200 rounded-xl p-4 hover:border-sky-300 hover:shadow-sm transition-all">
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-xl bg-sky-50 border border-sky-200 flex items-center justify-center shrink-0">
-                            <svg viewBox="0 0 24 24" fill="currentColor" className="w-4.5 h-4.5 text-sky-500">
-                              <path d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7l-4-4zM12 19a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm3-10H6V5h9v4z"/>
-                            </svg>
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <span className="font-bold text-slate-900 text-xs">{ficha.nombreNominal}</span>
-                              {idx === 0 && (
-                                <span className="px-1.5 py-0.5 text-[9px] font-black bg-emerald-100 text-emerald-700 rounded-full uppercase tracking-wider">
-                                  Más reciente
-                                </span>
-                              )}
-                            </div>
-                            <span className="text-[11px] text-slate-500">Guardada el: {ficha.fecha}</span>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-semibold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
-                            #{editingPatient.fichasClinicas!.length - idx}
-                          </span>
-
-                          {/* Botón Editar Ficha (Lápiz) */}
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setIsPatientModalOpen(false);
-                              onSelectMenuItem(editingPatient.viewTarget || 'fichaIngresoEcicep', {
-                                ...editingPatient,
-                                ...ficha.formDataSnapshot
-                              } as PatientRecord);
-                            }}
-                            title="Editar esta ficha clínica"
-                            className="p-1.5 rounded-lg border border-slate-200 text-sky-600 hover:bg-sky-50 hover:border-sky-300 transition-all cursor-pointer"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
-
-                          {/* Botón Borrar Ficha (Basurero) */}
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (window.confirm(`¿Está seguro de eliminar la ficha "${ficha.nombreNominal}" del paciente?`)) {
-                                const updated = patientStore.deleteFichaFromPatient(editingPatient.rut!, ficha.id);
-                                if (updated) {
-                                  setEditingPatient(updated);
-                                }
-                              }
-                            }}
-                            title="Eliminar esta ficha clínica"
-                            className="p-1.5 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 hover:border-red-300 transition-all cursor-pointer"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Preview of key fields from the ficha snapshot */}
-                      {ficha.formDataSnapshot && (
-                        <div className="mt-3 pt-3 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1.5">
-                          {([
-                            { label: 'Estratificación', key: 'estratificacion' },
-                            { label: 'Edad', key: 'edad' },
-                            { label: 'Peso', key: 'peso' },
-                            { label: 'Talla', key: 'talla' },
-                            { label: 'IMC', key: 'imc' },
-                            { label: 'PA', key: 'pa' },
-                          ] as {label: string, key: string}[]).filter(f => ficha.formDataSnapshot[f.key]).map(f => (
-                            <div key={f.key}>
-                              <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">{f.label}</span>
-                              <p className="text-[11px] font-semibold text-slate-800 truncate">{String(ficha.formDataSnapshot[f.key])}</p>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <div className="flex justify-end pt-4 border-t border-slate-200 mt-4">
-                <button
-                  type="button"
-                  onClick={() => setIsPatientModalOpen(false)}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-colors cursor-pointer"
-                >
-                  Cerrar
-                </button>
-              </div>
-            </div>
-            )}
-          </div>
-        </div>,
-        document.body
-      )}
-
-      {/* MODAL: CREAR NUEVA FICHA CLÍNICA (PORTAL A NIVEL DE PANTALLA COMPLETA) */}
-      {isNewFichaModalOpen && typeof document !== 'undefined' && createPortal(
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-scaleIn">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-gradient-to-r from-emerald-50 via-teal-50 to-white">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-sm">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-700 text-white flex items-center justify-center shadow-xs">
                   <FilePlus className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-slate-800">Crear Nueva Ficha Clínica</h3>
-                  <p className="text-xs text-slate-500">Selecciona el paciente y el tipo de ficha para iniciar la atención</p>
+                  <h3 className="text-base font-bold text-slate-900">Crear Nueva Ficha Clínica</h3>
+                  <p className="text-xs text-slate-500">Seleccione el formulario clínico a abrir</p>
                 </div>
               </div>
               <button
-                type="button"
-                onClick={() => setIsNewFichaModalOpen(false)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-white border border-transparent hover:border-slate-200 transition-all cursor-pointer"
+                onClick={() => setIsNewFichaCatalogOpen(false)}
+                className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Modal Body */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-5 custom-scrollbar">
-              {/* 1. Seleccionar Paciente */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">
-                  1. Paciente a atender <span className="text-slate-400 font-normal lowercase">(opcional - precarga antecedentes del registro online)</span>
-                </label>
-                <select
-                  value={selectedPatientForFicha}
-                  onChange={(e) => setSelectedPatientForFicha(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all cursor-pointer"
-                >
-                  <option value="">-- Sin paciente seleccionado (Iniciar ficha en blanco) --</option>
-                  {patients.map(p => (
-                    <option key={p.rut} value={p.rut}>
-                      {p.nombre} ({p.rut}) {p.edad ? `- ${p.edad} años` : ''} {p.sector ? `[Sector ${p.sector}]` : ''}
-                    </option>
-                  ))}
-                </select>
-                {selectedPatientForFicha && (
-                  <p className="text-[11px] text-emerald-700 mt-1.5 font-medium flex items-center gap-1.5">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                    Los antecedentes médicos, alergias, fármacos y datos personales de este paciente se cargarán automáticamente en la ficha.
-                  </p>
-                )}
-              </div>
-
-              {/* 2. Seleccionar Tipo de Ficha */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide">
-                    2. Selecciona la Ficha Clínica o Documento
-                  </label>
-                  <span className="text-[11px] text-slate-400 font-medium">Buscador rápido:</span>
-                </div>
-
-                <div className="relative mb-3">
-                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input
-                    type="text"
-                    placeholder="Filtrar fichas (ej: ECICEP, Niño sano, Crónico, Receta, Salud mental)..."
-                    value={fichaSearchQuery}
-                    onChange={(e) => setFichaSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
-                  />
-                  {fichaSearchQuery && (
-                    <button
-                      onClick={() => setFichaSearchQuery('')}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-                </div>
-
-                {/* Groups */}
-                <div className="space-y-4 max-h-[320px] overflow-y-auto pr-1">
-                  {CLINICAL_FICHAS_GROUPS.map((group) => {
-                    const filteredFichas = group.fichas.filter(f =>
-                      f.label.toLowerCase().includes(fichaSearchQuery.toLowerCase()) ||
-                      (f.desc && f.desc.toLowerCase().includes(fichaSearchQuery.toLowerCase()))
-                    );
-
-                    if (filteredFichas.length === 0) return null;
-
-                    return (
-                      <div key={group.group} className="border border-slate-200 rounded-xl overflow-hidden">
-                        <div className="bg-slate-100 px-3.5 py-1.5 text-[11px] font-bold text-slate-700 uppercase tracking-wider">
-                          {group.group}
-                        </div>
-                        <div className="divide-y divide-slate-100 bg-white">
-                          {filteredFichas.map((ficha) => {
-                            const isSelected = selectedFichaView === ficha.view;
-                            return (
-                              <button
-                                key={ficha.view}
-                                type="button"
-                                onClick={() => setSelectedFichaView(ficha.view)}
-                                className={`w-full flex items-center justify-between px-3.5 py-2.5 text-left text-xs transition-colors cursor-pointer ${
-                                  isSelected
-                                    ? 'bg-emerald-50 text-emerald-900 font-bold border-l-4 border-l-emerald-600'
-                                    : 'hover:bg-slate-50 text-slate-700'
-                                }`}
-                              >
-                                <div>
-                                  <div className="flex items-center gap-2">
-                                    <span>{ficha.label}</span>
-                                    {isSelected && (
-                                      <span className="px-1.5 py-0.2 bg-emerald-600 text-white text-[9px] rounded-full uppercase">
-                                        Seleccionada
-                                      </span>
-                                    )}
-                                  </div>
-                                  {ficha.desc && (
-                                    <p className="text-[10px] text-slate-400 font-normal mt-0.5">{ficha.desc}</p>
-                                  )}
-                                </div>
-                                <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
-                                  isSelected ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-slate-300'
-                                }`}>
-                                  {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
-                                </div>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+            <div className="p-4 border-b border-slate-200 bg-slate-50 shrink-0">
+              <div className="relative">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Buscar tipo de ficha o prestación..."
+                  value={fichaSearchQuery}
+                  onChange={(e) => setFichaSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500"
+                />
               </div>
             </div>
 
-            {/* Modal Footer */}
-            <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200 bg-slate-50">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 custom-scrollbar">
+              {CLINICAL_FICHAS_GROUPS.map((grp) => {
+                const filtered = grp.fichas.filter(f =>
+                  f.label.toLowerCase().includes(fichaSearchQuery.toLowerCase()) ||
+                  (f.desc && f.desc.toLowerCase().includes(fichaSearchQuery.toLowerCase()))
+                );
+                if (filtered.length === 0) return null;
+
+                return (
+                  <div key={grp.group} className="space-y-2">
+                    <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                      {grp.group}
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {filtered.map(f => {
+                        const isSelected = selectedFichaView === f.view;
+                        return (
+                          <div
+                            key={f.view}
+                            onClick={() => setSelectedFichaView(f.view)}
+                            className={`p-3 rounded-xl border text-xs cursor-pointer transition-all flex flex-col justify-between gap-1 ${
+                              isSelected
+                                ? 'bg-emerald-50/80 border-emerald-500 text-emerald-950 ring-1 ring-emerald-500 shadow-2xs'
+                                : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50'
+                            }`}
+                          >
+                            <span className="font-bold text-slate-900">{f.label}</span>
+                            {f.desc && <span className="text-[11px] text-slate-500 leading-snug">{f.desc}</span>}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="px-6 py-3.5 bg-slate-50 border-t border-slate-200 flex justify-end gap-2.5 shrink-0">
               <button
                 type="button"
-                onClick={() => setIsNewFichaModalOpen(false)}
-                className="px-4 py-2 border border-slate-300 text-slate-700 hover:bg-white text-xs font-semibold rounded-xl transition-all cursor-pointer"
+                onClick={() => setIsNewFichaCatalogOpen(false)}
+                className="px-4 py-2 text-xs font-bold text-slate-600 bg-white hover:bg-slate-100 border border-slate-300 rounded-xl transition-colors cursor-pointer"
               >
                 Cancelar
               </button>
               <button
                 type="button"
-                onClick={handleStartNewFicha}
-                className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-xs transition-all cursor-pointer"
+                onClick={() => {
+                  setIsNewFichaCatalogOpen(false);
+                  onSelectMenuItem(selectedFichaView);
+                }}
+                className="px-5 py-2 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-1.5"
               >
-                <FilePlus className="w-4 h-4" />
-                <span>Abrir Ficha Clínica</span>
+                <span>Abrir Ficha Seleccionada</span>
+                <ExternalLink className="w-3.5 h-3.5" />
               </button>
             </div>
+
           </div>
         </div>,
         document.body
       )}
+
     </div>
   );
 };

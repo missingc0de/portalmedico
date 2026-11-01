@@ -1,4 +1,4 @@
-import { getChileDDMMYYYY } from './dateService';
+import { getChileDDMMYYYY, getChileDateTime } from './dateService';
 import { db } from './firebase';
 import { collection, doc, setDoc, deleteDoc, onSnapshot, getDocs } from 'firebase/firestore';
 
@@ -15,9 +15,17 @@ export interface PatientRecord {
   id: string;
   rut: string;
   nombre: string; // Stored & displayed in UPPERCASE
-  edad: string;
-  sexo: 'Masculino' | 'Femenino' | '';
-  telefono: string; // e.g., "+56 9 8765 4321"
+  fechaCreacion?: string;
+  tipoFicha?: string;
+  
+  // TRES BLOQUES CLÍNICOS
+  anamnesis?: string;
+  exploracion?: string;
+  actuacion?: string;
+
+  edad?: string;
+  sexo?: 'Masculino' | 'Femenino' | '';
+  telefono?: string; // e.g., "+56 9 8765 4321"
   sector?: 'Verde' | 'Amarillo' | 'Naranjo';
   fechaUltimaAtencion?: string;
   ultimaPrestacion?: string;
@@ -25,6 +33,7 @@ export interface PatientRecord {
 
   // Array of individually stored clinical records nominated by control number
   fichasClinicas?: SavedFichaEntry[];
+  formDataSnapshot?: any;
 
   // Shared Clinical Fields across forms
   anamnesisGeneral?: string;
@@ -153,15 +162,48 @@ const initCloudListener = () => {
       const cloudList: PatientRecord[] = [];
       snapshot.forEach((docSnap) => {
         const data = docSnap.data() as PatientRecord;
-        if (data && data.rut) {
-          cloudList.push(data);
+        if (data && (data.rut || data.nombre)) {
+          const id = data.id || docSnap.id;
+
+          let anamnesis = data.anamnesis || '';
+          let exploracion = data.exploracion || '';
+          let actuacion = data.actuacion || '';
+
+          if (!anamnesis && !exploracion && !actuacion && data.anamnesisGeneral) {
+            const raw = data.anamnesisGeneral;
+            if (raw.includes('ANAMNESIS:') || raw.includes('EXPLORACIÓN:') || raw.includes('ACTUACIÓN:')) {
+              const p1 = raw.indexOf('ANAMNESIS:');
+              const p2 = raw.indexOf('EXPLORACIÓN:');
+              const p3 = raw.indexOf('ACTUACIÓN:');
+              if (p1 !== -1 && p2 !== -1 && p3 !== -1) {
+                anamnesis = raw.slice(p1 + 10, p2).trim();
+                exploracion = raw.slice(p2 + 12, p3).trim();
+                actuacion = raw.slice(p3 + 10).trim();
+              } else {
+                anamnesis = raw;
+              }
+            } else {
+              anamnesis = raw;
+            }
+          }
+
+          cloudList.push({
+            ...data,
+            id,
+            nombre: data.nombre ? data.nombre.toUpperCase().trim() : 'PACIENTE SIN NOMBRE',
+            rut: (data.rut || '').trim(),
+            fechaCreacion: data.fechaCreacion || data.fechaUltimaAtencion || 'Sin fecha',
+            tipoFicha: data.tipoFicha || data.ultimaPrestacion || 'Ficha Clínica',
+            anamnesis,
+            exploracion,
+            actuacion,
+          });
         }
       });
 
-      // Sort by latest attention or ID
-      cloudList.sort((a, b) => (b.id || '').localeCompare(a.id || ''));
+      // Sort by creation date or ID descending
+      cloudList.sort((a, b) => (b.fechaCreacion || b.id || '').localeCompare(a.fechaCreacion || a.id || ''));
 
-      // If cloud has documents, update cache and localStorage
       if (cloudList.length > 0) {
         memoryPatientsCache = cloudList;
         try {
@@ -170,14 +212,6 @@ const initCloudListener = () => {
           console.error('Error saving patients backup to localStorage:', e);
         }
         patientStore._notify(cloudList);
-      } else {
-        // If cloud is empty but local has data, upload local data to cloud
-        const local = patientStore.getLocalBackup();
-        if (local.length > 0) {
-          local.forEach(p => {
-            patientStore.uploadToCloud(p).catch(err => console.error('Error syncing local patient to cloud:', err));
-          });
-        }
       }
     }, (error) => {
       console.warn("Firestore patient listener warning (using local fallback):", error);
@@ -213,52 +247,67 @@ export const patientStore = {
     return local;
   },
 
-  async uploadToCloud(patient: PatientRecord): Promise<void> {
+  async uploadToCloud(record: PatientRecord): Promise<void> {
     try {
-      const docId = sanitizeRutForDocId(patient.rut);
+      const docId = record.id;
       const docRef = doc(db, PATIENTS_COLLECTION, docId);
-      const cleanData = sanitizeForFirestore(patient);
+      const cleanData = sanitizeForFirestore(record);
       await setDoc(docRef, cleanData, { merge: true });
     } catch (e) {
-      console.error('Error uploading patient to Firestore:', e);
+      console.error('Error uploading patient record to Firestore:', e);
     }
   },
 
   savePatient(data: Partial<PatientRecord> & { rut: string; nombre?: string }): PatientRecord {
     initCloudListener();
     const list = [...this.getPatients()];
-    const cleanRut = data.rut.trim();
-    const uppercaseNombre = data.nombre ? data.nombre.toUpperCase().trim() : '';
+    const cleanRut = (data.rut || '').trim();
+    const uppercaseNombre = data.nombre ? data.nombre.toUpperCase().trim() : 'PACIENTE SIN NOMBRE';
+    const recordId = data.id || `REG-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+    const fechaCreacion = data.fechaCreacion || data.fechaUltimaAtencion || getChileDateTime();
 
-    const existingIdx = list.findIndex(p => p.rut.toLowerCase() === cleanRut.toLowerCase());
+    const existingIdx = list.findIndex(p => p.id === recordId);
 
-    let updatedPatient: PatientRecord;
+    let updatedRecord: PatientRecord;
 
     if (existingIdx >= 0) {
       const existing = list[existingIdx];
-      updatedPatient = {
+      updatedRecord = {
         ...existing,
         ...data,
-        rut: cleanRut,
+        id: recordId,
+        rut: cleanRut || existing.rut,
         nombre: uppercaseNombre || existing.nombre,
+        fechaCreacion: existing.fechaCreacion || fechaCreacion,
+        fechaUltimaAtencion: fechaCreacion,
+        tipoFicha: data.tipoFicha || existing.tipoFicha || data.ultimaPrestacion || existing.ultimaPrestacion || 'Ficha Clínica',
+        ultimaPrestacion: data.tipoFicha || existing.tipoFicha || data.ultimaPrestacion || existing.ultimaPrestacion || 'Ficha Clínica',
+        anamnesis: data.anamnesis !== undefined ? data.anamnesis : (existing.anamnesis ?? ''),
+        exploracion: data.exploracion !== undefined ? data.exploracion : (existing.exploracion ?? ''),
+        actuacion: data.actuacion !== undefined ? data.actuacion : (existing.actuacion ?? ''),
       };
-      list[existingIdx] = updatedPatient;
+      list[existingIdx] = updatedRecord;
     } else {
-      updatedPatient = {
-        id: `PAT-${String(Date.now()).slice(-4)}`,
+      updatedRecord = {
+        id: recordId,
         rut: cleanRut,
-        nombre: uppercaseNombre || 'PACIENTE SIN NOMBRE',
+        nombre: uppercaseNombre,
+        fechaCreacion: fechaCreacion,
+        fechaUltimaAtencion: fechaCreacion,
+        tipoFicha: data.tipoFicha || data.ultimaPrestacion || 'Ficha Clínica',
+        ultimaPrestacion: data.tipoFicha || data.ultimaPrestacion || 'Ficha Clínica',
+        anamnesis: data.anamnesis ?? '',
+        exploracion: data.exploracion ?? '',
+        actuacion: data.actuacion ?? '',
         edad: data.edad || '',
-        sexo: data.sexo || '',
-        telefono: data.telefono || '+56 9 8765 4321',
-        fechaUltimaAtencion: data.fechaUltimaAtencion || 'Sin atenciones',
-        ultimaPrestacion: data.ultimaPrestacion || 'No registra',
-        prestacionCategory: data.prestacionCategory || 'none',
+        sexo: data.sexo || 'Masculino',
+        telefono: data.telefono || '+56 9 ',
         sector: data.sector || 'Verde',
+        prestacionCategory: data.prestacionCategory || 'none',
         estratificacion: data.estratificacion || 'G0',
         ...data
       };
-      list.unshift(updatedPatient);
+      list.unshift(updatedRecord);
     }
 
     memoryPatientsCache = list;
@@ -272,9 +321,9 @@ export const patientStore = {
     this._notify(list);
 
     // Save to Firestore Online Cloud
-    this.uploadToCloud(updatedPatient);
+    this.uploadToCloud(updatedRecord);
 
-    return updatedPatient;
+    return updatedRecord;
   },
 
   addFichaToPatient(
@@ -284,73 +333,55 @@ export const patientStore = {
     fecha?: string,
     prestacionCategory?: any
   ): { patient: PatientRecord; fichaEntry: SavedFichaEntry } | undefined {
-    const patient = this.findPatientByRut(rut);
-    if (!patient) return undefined;
+    const existing = this.findPatientByRut(rut);
+    const nombre = existing?.nombre || 'PACIENTE';
+    const fechaCreacion = fecha || getChileDateTime();
+    const newId = `REG-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
 
-    const existingFichas = patient.fichasClinicas || [];
-    const cleanTipo = tipoFicha.trim().toLowerCase();
+    let anamnesis = formDataSnapshot?.anamnesis || formDataSnapshot?.anamnesisGeneral || '';
+    let exploracion = formDataSnapshot?.exploracion || '';
+    let actuacion = formDataSnapshot?.actuacion || '';
 
-    // Define forms that can only be saved ONCE per patient (unique instance).
-    const isSingleInstance = (
-      cleanTipo.includes('ingreso ecicep') ||
-      cleanTipo.includes('preingreso ecicep') ||
-      cleanTipo.includes('control niño sano 1 mes') ||
-      cleanTipo.includes('control niño sano 3 mes') ||
-      cleanTipo.includes('control niño sano 6 años')
-    );
-
-    let updatedFichas: SavedFichaEntry[];
-    let targetFichaEntry: SavedFichaEntry;
-
-    const todayStr = fecha || getChileDDMMYYYY();
-
-    if (isSingleInstance) {
-      const existingIdx = existingFichas.findIndex(f => f.tipoFicha.trim().toLowerCase() === cleanTipo);
-
-      if (existingIdx >= 0) {
-        const existingEntry = existingFichas[existingIdx];
-        targetFichaEntry = {
-          ...existingEntry,
-          fecha: todayStr,
-          formDataSnapshot
-        };
-        updatedFichas = [...existingFichas];
-        updatedFichas[existingIdx] = targetFichaEntry;
-      } else {
-        targetFichaEntry = {
-          id: `FCH-${Date.now()}`,
-          tipoFicha,
-          nombreNominal: tipoFicha,
-          fecha: todayStr,
-          formDataSnapshot
-        };
-        updatedFichas = [targetFichaEntry, ...existingFichas];
+    if (!anamnesis && !exploracion && !actuacion && formDataSnapshot?.anamnesisGeneral) {
+      const raw = formDataSnapshot.anamnesisGeneral;
+      if (raw.includes('ANAMNESIS:') || raw.includes('EXPLORACIÓN:') || raw.includes('ACTUACIÓN:')) {
+        const p1 = raw.indexOf('ANAMNESIS:');
+        const p2 = raw.indexOf('EXPLORACIÓN:');
+        const p3 = raw.indexOf('ACTUACIÓN:');
+        if (p1 !== -1 && p2 !== -1 && p3 !== -1) {
+          anamnesis = raw.slice(p1 + 10, p2).trim();
+          exploracion = raw.slice(p2 + 12, p3).trim();
+          actuacion = raw.slice(p3 + 10).trim();
+        } else {
+          anamnesis = raw;
+        }
       }
-    } else {
-      const priorControlsOfSameType = existingFichas.filter(f => f.tipoFicha.trim().toLowerCase() === cleanTipo);
-      const numeroControl = priorControlsOfSameType.length + 1;
-      const nombreNominal = `${tipoFicha} #${numeroControl}`;
-
-      targetFichaEntry = {
-        id: `FCH-${Date.now()}`,
-        tipoFicha,
-        numeroControl,
-        nombreNominal,
-        fecha: todayStr,
-        formDataSnapshot
-      };
-      updatedFichas = [targetFichaEntry, ...existingFichas];
     }
 
-    const updatedPatient = this.savePatient({
-      ...patient,
-      fichasClinicas: updatedFichas,
-      fechaUltimaAtencion: todayStr,
-      ultimaPrestacion: targetFichaEntry.nombreNominal,
-      prestacionCategory: prestacionCategory || patient.prestacionCategory || 'ecicep'
+    const newRecord = this.savePatient({
+      id: newId,
+      rut: rut.trim(),
+      nombre: nombre.toUpperCase().trim(),
+      fechaCreacion: fechaCreacion,
+      fechaUltimaAtencion: fechaCreacion,
+      tipoFicha: tipoFicha.trim(),
+      ultimaPrestacion: tipoFicha.trim(),
+      prestacionCategory: prestacionCategory || existing?.prestacionCategory || 'none',
+      anamnesis,
+      exploracion,
+      actuacion,
+      formDataSnapshot,
     });
 
-    return { patient: updatedPatient, fichaEntry: targetFichaEntry };
+    const fichaEntry: SavedFichaEntry = {
+      id: newId,
+      tipoFicha: tipoFicha.trim(),
+      nombreNominal: tipoFicha.trim(),
+      fecha: fechaCreacion,
+      formDataSnapshot,
+    };
+
+    return { patient: newRecord, fichaEntry };
   },
 
   deleteFichaFromPatient(rut: string, fichaId: string): PatientRecord | undefined {
@@ -370,10 +401,10 @@ export const patientStore = {
     return updatedPatient;
   },
 
-  deletePatient(rut: string): void {
+  deletePatient(idOrRut: string): void {
     initCloudListener();
-    const cleanRut = rut.trim().toLowerCase();
-    const list = this.getPatients().filter(p => p.rut.toLowerCase() !== cleanRut);
+    const clean = idOrRut.trim();
+    const list = this.getPatients().filter(p => p.id !== clean && p.rut.toLowerCase() !== clean.toLowerCase());
     memoryPatientsCache = list;
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
@@ -384,9 +415,12 @@ export const patientStore = {
 
     // Delete from Firestore Online Cloud
     try {
-      const docId = sanitizeRutForDocId(rut);
-      const docRef = doc(db, PATIENTS_COLLECTION, docId);
+      const docRef = doc(db, PATIENTS_COLLECTION, clean);
       deleteDoc(docRef).catch(err => console.error("Error deleting doc in Firestore:", err));
+      if (clean.includes('-') || clean.length < 15) {
+        const legacyDocRef = doc(db, PATIENTS_COLLECTION, sanitizeRutForDocId(clean));
+        deleteDoc(legacyDocRef).catch(() => {});
+      }
     } catch (e) {
       console.error("Error calling deleteDoc:", e);
     }

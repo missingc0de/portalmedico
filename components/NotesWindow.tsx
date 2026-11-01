@@ -152,7 +152,16 @@ export const NotesWindow: React.FC<NotesWindowProps> = ({ isOpen, onClose, usern
   const [showMenu, setShowMenu] = useState<string | null>(null);
   const [editingTitleId, setEditingTitleId] = useState<string | null>(null);
   const [editingTitleVal, setEditingTitleVal] = useState('');
-  const [confirmDelete, setConfirmDelete] = useState<{ id: string; title: string } | null>(null);
+  const [isMobile, setIsMobile] = useState<boolean>(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
+  const [mobileView, setMobileView] = useState<'list' | 'editor'>('list');
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
@@ -208,10 +217,7 @@ export const NotesWindow: React.FC<NotesWindowProps> = ({ isOpen, onClose, usern
           const cloudList: Note[] = cloudData.notes || [];
           const cloudUpdatedAt: number = cloudData.updatedAt || 0;
 
-          // Compute max updatedAt of local notes
           const localMaxUpdated = localList.reduce((max, n) => Math.max(max, n.updatedAt || 0), 0);
-
-          // If cloud notes exist and cloud is newer, OR local is just the default single empty welcome note and cloud is not empty
           const isLocalDefault = localList.length === 1 && localList[0].title === 'Sin título' && localList[0].content === '';
 
           if (cloudList.length > 0 && (cloudUpdatedAt > localMaxUpdated || isLocalDefault)) {
@@ -221,14 +227,12 @@ export const NotesWindow: React.FC<NotesWindowProps> = ({ isOpen, onClose, usern
               setActiveNoteId(cloudList[0].id);
             }
           } else if (localList.length > 0 && localMaxUpdated > cloudUpdatedAt) {
-            // Local is newer, upload local notes to cloud
             await setDoc(doc(db, 'notes_backup', username), {
               notes: localList,
               updatedAt: localMaxUpdated
             }, { merge: true });
           }
         } else {
-          // No cloud notes found, let's back up the current local ones
           if (localList.length > 0) {
             const localMaxUpdated = localList.reduce((max, n) => Math.max(max, n.updatedAt || 0), 0);
             await setDoc(doc(db, 'notes_backup', username), {
@@ -243,16 +247,49 @@ export const NotesWindow: React.FC<NotesWindowProps> = ({ isOpen, onClose, usern
     };
 
     fetchCloudNotes();
-  }, [username]);
+  }, [username, persist]);
 
   const activeNote = notes.find(n => n.id === activeNoteId) ?? null;
+
+  // ── Formatting Toolbar Action ──────────────────────────────────────────────────
+  const applyFormatting = (prefix: string, suffix: string = '') => {
+    const textarea = textareaRef.current;
+    if (!textarea || !activeNote) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const oldText = activeNote.content;
+    const selectedText = oldText.substring(start, end);
+
+    let newText = '';
+    let newCursorPos = start + prefix.length;
+
+    if (selectedText) {
+      newText = oldText.substring(0, start) + prefix + selectedText + suffix + oldText.substring(end);
+      newCursorPos = end + prefix.length + suffix.length;
+    } else {
+      newText = oldText.substring(0, start) + prefix + suffix + oldText.substring(end);
+      newCursorPos = start + prefix.length;
+    }
+
+    updateContent(newText);
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(newCursorPos, newCursorPos);
+    }, 20);
+  };
 
   // ── CRUD ──────────────────────────────────────────────────────────────────────
   const createNote = () => {
     const n: Note = { id: generateId(), title: 'Sin título', content: '', createdAt: Date.now(), updatedAt: Date.now() };
     const list = [n, ...notes];
-    setNotes(list); setActiveNoteId(n.id); persist(list);
-    setTimeout(() => textareaRef.current?.focus(), 60);
+    setNotes(list);
+    setActiveNoteId(n.id);
+    if (isMobile) {
+      setMobileView('editor');
+    }
+    persist(list);
+    setTimeout(() => textareaRef.current?.focus(), 80);
   };
 
   // Pide confirmación antes de borrar
@@ -267,11 +304,19 @@ export const NotesWindow: React.FC<NotesWindowProps> = ({ isOpen, onClose, usern
     setConfirmDelete(null);
     if (notes.length === 1) {
       const reset = { ...notes[0], title: 'Sin título', content: '', updatedAt: Date.now() };
-      const list = [reset]; setNotes(list); persist(list); return;
+      const list = [reset];
+      setNotes(list);
+      persist(list);
+      if (isMobile) setMobileView('list');
+      return;
     }
     const list = notes.filter(n => n.id !== id);
-    setNotes(list); persist(list);
-    if (activeNoteId === id) setActiveNoteId(list[0].id);
+    setNotes(list);
+    persist(list);
+    if (activeNoteId === id) {
+      setActiveNoteId(list[0]?.id || null);
+      if (isMobile) setMobileView('list');
+    }
   };
 
   const updateContent = (content: string) => {
@@ -288,7 +333,8 @@ export const NotesWindow: React.FC<NotesWindowProps> = ({ isOpen, onClose, usern
     const trimmed = title.trim() || 'Sin título';
     setNotes(prev => {
       const list = prev.map(n => n.id === id ? { ...n, title: trimmed, updatedAt: Date.now() } : n);
-      persist(list); return list;
+      persist(list);
+      return list;
     });
     setEditingTitleId(null);
   };
@@ -300,7 +346,8 @@ export const NotesWindow: React.FC<NotesWindowProps> = ({ isOpen, onClose, usern
   useEffect(() => {
     if (!showMenu) return;
     const h = () => setShowMenu(null);
-    window.addEventListener('click', h); return () => window.removeEventListener('click', h);
+    window.addEventListener('click', h);
+    return () => window.removeEventListener('click', h);
   }, [showMenu]);
 
   if (!isOpen) return null;
@@ -309,7 +356,95 @@ export const NotesWindow: React.FC<NotesWindowProps> = ({ isOpen, onClose, usern
   const charCount = activeNote?.content.length ?? 0;
   const lineCount = activeNote ? activeNote.content.split('\n').length : 1;
 
-  // ── Icono botón en titlebar ───────────────────────────────────────────────────
+  // ── Format Toolbar Component ──────────────────────────────────────────────────
+  const FormatToolbar = () => (
+    <div className="flex items-center gap-1 px-3 py-1.5 bg-slate-100 border-b border-slate-200 overflow-x-auto shrink-0 select-none custom-scrollbar">
+      <button
+        type="button"
+        onClick={() => applyFormatting('**', '**')}
+        title="Negrita"
+        className="px-2 py-1 text-xs font-bold text-slate-700 hover:bg-slate-200 active:bg-slate-300 rounded transition-colors cursor-pointer"
+      >
+        B
+      </button>
+      <button
+        type="button"
+        onClick={() => applyFormatting('*', '*')}
+        title="Cursiva"
+        className="px-2 py-1 text-xs italic font-serif text-slate-700 hover:bg-slate-200 active:bg-slate-300 rounded transition-colors cursor-pointer"
+      >
+        I
+      </button>
+      <button
+        type="button"
+        onClick={() => applyFormatting('<u>', '</u>')}
+        title="Subrayado"
+        className="px-2 py-1 text-xs underline text-slate-700 hover:bg-slate-200 active:bg-slate-300 rounded transition-colors cursor-pointer"
+      >
+        U
+      </button>
+      <button
+        type="button"
+        onClick={() => applyFormatting('~~', '~~')}
+        title="Tachado"
+        className="px-2 py-1 text-xs line-through text-slate-700 hover:bg-slate-200 active:bg-slate-300 rounded transition-colors cursor-pointer"
+      >
+        S
+      </button>
+      <div className="w-px h-4 bg-slate-300 mx-0.5 shrink-0" />
+      <button
+        type="button"
+        onClick={() => applyFormatting('# ')}
+        title="Título Principal"
+        className="px-2 py-1 text-xs font-black text-slate-700 hover:bg-slate-200 active:bg-slate-300 rounded transition-colors cursor-pointer shrink-0"
+      >
+        H1
+      </button>
+      <button
+        type="button"
+        onClick={() => applyFormatting('## ')}
+        title="Subtítulo"
+        className="px-2 py-1 text-xs font-bold text-slate-700 hover:bg-slate-200 active:bg-slate-300 rounded transition-colors cursor-pointer shrink-0"
+      >
+        H2
+      </button>
+      <div className="w-px h-4 bg-slate-300 mx-0.5 shrink-0" />
+      <button
+        type="button"
+        onClick={() => applyFormatting('• ')}
+        title="Viñetas"
+        className="px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-200 active:bg-slate-300 rounded transition-colors cursor-pointer shrink-0"
+      >
+        • Lista
+      </button>
+      <button
+        type="button"
+        onClick={() => applyFormatting('1. ')}
+        title="Lista numerada"
+        className="px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-200 active:bg-slate-300 rounded transition-colors cursor-pointer shrink-0"
+      >
+        1. Lista
+      </button>
+      <button
+        type="button"
+        onClick={() => applyFormatting('- [ ] ')}
+        title="Casilla de verificación / Tarea"
+        className="px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-200 active:bg-slate-300 rounded transition-colors cursor-pointer shrink-0"
+      >
+        ☑ Tarea
+      </button>
+      <button
+        type="button"
+        onClick={() => applyFormatting('> ')}
+        title="Cita / Destacado"
+        className="px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-200 active:bg-slate-300 rounded transition-colors cursor-pointer shrink-0"
+      >
+        ❝ Cita
+      </button>
+    </div>
+  );
+
+  // ── Icono botón en titlebar desktop ───────────────────────────────────────────
   const TitleBarBtn = ({
     onClick, title: ttl, children, danger = false,
   }: { onClick: () => void; title: string; children: React.ReactNode; danger?: boolean }) => (
@@ -348,6 +483,174 @@ export const NotesWindow: React.FC<NotesWindowProps> = ({ isOpen, onClose, usern
     ],
   };
 
+  // ── MODO MÓVIL: Full viewport edge-to-edge sin bordes con notas individuales apiladas ──
+  if (isMobile) {
+    return (
+      <div className="fixed inset-0 z-[10000] w-full h-[100dvh] max-h-[100dvh] bg-slate-50 flex flex-col font-sans select-none overflow-hidden animate-fadeIn">
+        {/* Confirm dialog overlay */}
+        {confirmDelete && (
+          <ConfirmDialog
+            message={`¿Seguro que quieres eliminar "${confirmDelete.title || 'Sin título'}"? Esta acción es irreversible.`}
+            onConfirm={confirmDeleteNote}
+            onCancel={() => setConfirmDelete(null)}
+          />
+        )}
+
+        {mobileView === 'list' ? (
+          <>
+            {/* Header Móvil Lista */}
+            <div className="px-4 py-3 bg-white border-b border-slate-200 flex items-center justify-between shadow-2xs shrink-0">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-sky-100 text-sky-700 flex items-center justify-center">
+                  <NotepadIcon sz={18} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm text-slate-800 leading-tight">Bloc de Notas</h3>
+                  <span className="text-[11px] text-slate-400 font-medium">{notes.length} notas individuales</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={createNote}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-sky-600 hover:bg-sky-700 active:scale-95 text-white text-xs font-bold rounded-xl shadow-2xs transition-all cursor-pointer"
+                >
+                  <PlusIcon sz={14} />
+                  <span>Nueva nota</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+                  title="Cerrar"
+                >
+                  <CloseX sz={16} />
+                </button>
+              </div>
+            </div>
+
+            {/* Lista de notas individuales: una debajo de la otra */}
+            <div className="flex-1 overflow-y-auto p-3 space-y-2.5 pb-24 custom-scrollbar">
+              {notes.length === 0 ? (
+                <div className="text-center py-20 px-4 text-slate-400">
+                  <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 mx-auto flex items-center justify-center mb-3">
+                    <NotepadIcon sz={24} />
+                  </div>
+                  <p className="font-bold text-slate-700 text-sm">No tienes notas creadas aún</p>
+                  <p className="text-xs text-slate-400 mt-1">Toca "+ Nueva nota" arriba para comenzar a escribir.</p>
+                </div>
+              ) : (
+                notes.map(note => (
+                  <div
+                    key={note.id}
+                    onClick={() => {
+                      setActiveNoteId(note.id);
+                      setMobileView('editor');
+                    }}
+                    className="bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-2xs hover:border-sky-300 transition-all cursor-pointer flex flex-col gap-1.5 active:bg-slate-50"
+                  >
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-bold text-sm text-slate-800 truncate pr-2">
+                        {note.title || 'Sin título'}
+                      </h4>
+                      <span className="text-[10px] text-slate-400 font-medium shrink-0">
+                        {formatDate(note.updatedAt)}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed font-sans">
+                      {note.content.trim() || '(Nota vacía)'}
+                    </p>
+                    <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-[11px] mt-0.5">
+                      <span className="text-sky-600 font-bold flex items-center gap-1">
+                        Escribir / Formato →
+                      </span>
+                      <button
+                        type="button"
+                        onClick={(e) => requestDelete(note.id, note.title, e)}
+                        className="p-1 text-slate-400 hover:text-red-500 rounded transition-colors"
+                        title="Eliminar nota"
+                      >
+                        <TrashIcon sz={13} />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Header Móvil Editor */}
+            <div className="px-3 py-2 bg-white border-b border-slate-200 flex items-center justify-between gap-2 shadow-2xs shrink-0">
+              <button
+                type="button"
+                onClick={() => setMobileView('list')}
+                className="flex items-center gap-1 text-xs font-bold text-sky-600 hover:text-sky-700 px-2.5 py-1.5 rounded-lg hover:bg-sky-50 transition-colors cursor-pointer shrink-0"
+              >
+                <span>← Notas</span>
+              </button>
+
+              <input
+                type="text"
+                value={activeNote?.title || ''}
+                onChange={(e) => {
+                  if (activeNote) {
+                    commitTitleEdit(activeNote.id, e.target.value);
+                  }
+                }}
+                placeholder="Título de la nota..."
+                className="flex-1 min-w-0 px-2.5 py-1 text-sm font-bold text-slate-800 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:bg-white focus:ring-2 focus:ring-sky-500 transition-all"
+              />
+
+              <div className="flex items-center gap-1 shrink-0">
+                {activeNote && (
+                  <button
+                    type="button"
+                    onClick={(e) => requestDelete(activeNote.id, activeNote.title, e)}
+                    className="p-1.5 text-slate-400 hover:text-red-600 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+                    title="Eliminar nota"
+                  >
+                    <TrashIcon sz={15} />
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+                  title="Cerrar"
+                >
+                  <CloseX sz={16} />
+                </button>
+              </div>
+            </div>
+
+            {/* Editor de formato de texto incluido dentro */}
+            <FormatToolbar />
+
+            {/* Área de texto sin bordes */}
+            <div className="flex-1 flex flex-col min-h-0 bg-white">
+              <textarea
+                ref={textareaRef}
+                value={activeNote?.content || ''}
+                onChange={(e) => updateContent(e.target.value)}
+                className="flex-1 w-full p-4 resize-none outline-none font-sans text-sm leading-relaxed text-slate-800 bg-white"
+                placeholder="Escribe tu nota aquí..."
+                spellCheck={false}
+              />
+            </div>
+
+            {/* Barra de estado móvil */}
+            <div className="px-3 py-1.5 bg-slate-100 border-t border-slate-200 flex items-center justify-between text-[11px] text-slate-500 shrink-0">
+              <span>{charCount} car. • {wordCount} palabras</span>
+              <span className="text-emerald-600 font-semibold flex items-center gap-1">✓ Guardado</span>
+            </div>
+          </>
+        )}
+      </div>
+    );
+  }
+
+  // ── MODO ESCRITORIO (Ventana Flotante Clásica) ──────────────────────────────────
   return (
     <div
       className="z-[65] flex flex-col"
@@ -365,7 +668,7 @@ export const NotesWindow: React.FC<NotesWindowProps> = ({ isOpen, onClose, usern
         fontFamily: "'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif",
       }}
     >
-      {/* ── Confirm dialog overlay ─────────────────────────────────────────── */}
+      {/* Confirm dialog overlay */}
       {confirmDelete && (
         <ConfirmDialog
           message={`¿Seguro que quieres eliminar "${confirmDelete.title || 'Sin título'}"? Esta acción es irreversible.`}
@@ -374,7 +677,7 @@ export const NotesWindow: React.FC<NotesWindowProps> = ({ isOpen, onClose, usern
         />
       )}
 
-      {/* ── Title bar ─────────────────────────────────────────────────────────── */}
+      {/* Title bar */}
       <div className="flex items-center justify-between shrink-0"
         style={{ height: 34, background: N.titleBar, borderBottom: `1px solid ${N.border}` }}>
 
@@ -404,7 +707,7 @@ export const NotesWindow: React.FC<NotesWindowProps> = ({ isOpen, onClose, usern
         </div>
       </div>
 
-      {/* ── Menu bar ──────────────────────────────────────────────────────────── */}
+      {/* Menu bar */}
       <div className="flex items-center px-2 shrink-0 relative"
         style={{ height: 28, background: N.menuBar, borderBottom: `1px solid ${N.border}`, gap: 2 }}>
         {Object.entries(menus).map(([name, items]) => (
@@ -447,34 +750,10 @@ export const NotesWindow: React.FC<NotesWindowProps> = ({ isOpen, onClose, usern
             )}
           </div>
         ))}
-
-        {/* Decorative right toolbar (like Notepad photo) */}
-        <div className="ml-auto flex items-center gap-1.5">
-          <div className="flex items-center gap-1 px-2 rounded border"
-            style={{ color: N.textMuted, borderColor: N.border, height: 20, fontSize: 11 }}>
-            <span style={{ fontWeight: 600 }}>H1</span>
-            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-            </svg>
-          </div>
-          <button className="flex items-center gap-0.5 px-1.5 rounded border"
-            style={{ color: N.textMuted, borderColor: N.border, height: 20, background: 'transparent', cursor: 'pointer', border: `1px solid ${N.border}` }}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M5 4a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1zm0 4a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1zm0 4a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1zm0 4a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1z" clipRule="evenodd" />
-            </svg>
-          </button>
-          <button className="flex items-center justify-center rounded"
-            style={{ width: 20, height: 20, color: N.textMuted, background: 'transparent', border: 'none', cursor: 'pointer' }}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 20 20" fill="currentColor">
-              <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z" />
-            </svg>
-          </button>
-        </div>
       </div>
 
-      {/* ── Body ──────────────────────────────────────────────────────────────── */}
+      {/* Body */}
       <div className="flex flex-1 min-h-0">
-
         {/* Sidebar */}
         {showSidebar && (
           <div className="flex flex-col shrink-0 overflow-hidden"
@@ -568,8 +847,9 @@ export const NotesWindow: React.FC<NotesWindowProps> = ({ isOpen, onClose, usern
           </div>
         )}
 
-        {/* Editor */}
+        {/* Editor con barra de formato */}
         <div className="flex-1 flex flex-col min-w-0" style={{ background: N.editor }}>
+          <FormatToolbar />
           {activeNote ? (
             <textarea
               ref={textareaRef}
@@ -583,7 +863,7 @@ export const NotesWindow: React.FC<NotesWindowProps> = ({ isOpen, onClose, usern
               style={{
                 background: N.editor, color: N.textMain,
                 fontFamily: "'Cascadia Code', 'Consolas', 'Courier New', monospace",
-                fontSize: 16, lineHeight: 1.65,
+                fontSize: 15, lineHeight: 1.65,
                 caretColor: N.accent, border: 'none',
               }}
               placeholder="Empieza a escribir..."
@@ -597,7 +877,7 @@ export const NotesWindow: React.FC<NotesWindowProps> = ({ isOpen, onClose, usern
         </div>
       </div>
 
-      {/* ── Status bar ────────────────────────────────────────────────────────── */}
+      {/* Status bar */}
       <div className="flex items-center justify-between px-4 shrink-0"
         style={{ height: 24, background: 'rgba(0,0,0,0.35)', borderTop: `1px solid ${N.border}`, fontSize: 11, color: N.textMuted }}>
         <span>Ln {lineCount}, Col {(activeNote?.content.split('\n').pop()?.length ?? 0) + 1}</span>
@@ -611,3 +891,4 @@ export const NotesWindow: React.FC<NotesWindowProps> = ({ isOpen, onClose, usern
     </div>
   );
 };
+export default NotesWindow;

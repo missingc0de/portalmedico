@@ -102,3 +102,20 @@ export function getChileDDMMYYYY(d?: Date, separator: string = '/'): string {
 
   return `${day}${separator}${month}${separator}${year}`;
 }
+
+/**
+ * Returns DD/MM/YYYY HH:mm in America/Santiago timezone.
+ */
+export function getChileDateTime(d?: Date): string {
+  const targetDate = d || getChileDate();
+  const dateStr = getChileDDMMYYYY(targetDate, '/');
+  const parts = new Intl.DateTimeFormat('es-CL', {
+    timeZone: 'America/Santiago',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  }).formatToParts(targetDate);
+  const hour = parts.find(p => p.type === 'hour')?.value || String(targetDate.getHours()).padStart(2, '0');
+  const minute = parts.find(p => p.type === 'minute')?.value || String(targetDate.getMinutes()).padStart(2, '0');
+  return `${dateStr} ${hour}:${minute}`;
+}

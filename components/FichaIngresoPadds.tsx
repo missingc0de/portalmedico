@@ -2756,7 +2756,7 @@ export const FichaIngresoPadds: React.FC<FichaIngresoPaddsProps> = ({ onBackToMe
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
                         {[
                           'Silla de ruedas', 'Bastón', 'Andador', 'Cama clínica', 'Colchón antiescaras',
-                          'Grúa', 'Audífonos', 'Órtesis', 'Prótesis', 'Oxígeno',
+                          'Audífonos', 'Prótesis', 'Oxígeno',
                           'Sonda vesical', 'Gastrostomía', 'Traqueostomía', 'Otros'
                         ].map((item) => {
                           const currentList: string[] = (formData as any).padds_ayudas_tecnicas || [];
