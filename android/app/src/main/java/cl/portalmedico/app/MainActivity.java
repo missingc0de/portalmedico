@@ -3,6 +3,7 @@ package cl.portalmedico.app;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.graphics.Color;
 import android.media.AudioAttributes;
@@ -93,7 +94,7 @@ public class MainActivity extends BridgeActivity {
             msgChannel.setLightColor(Color.parseColor("#0284c7"));
 
             try {
-                Uri msgSoundUri = Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.notification);
+                Uri msgSoundUri = Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE + "://" + getPackageName() + "/raw/notification");
                 msgChannel.setSound(msgSoundUri, audioAttributes);
             } catch (Exception ignored) {}
 
@@ -115,7 +116,7 @@ public class MainActivity extends BridgeActivity {
             nudgeChannel.setLightColor(Color.parseColor("#ef4444"));
 
             try {
-                Uri nudgeSoundUri = Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.nudge);
+                Uri nudgeSoundUri = Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE + "://" + getPackageName() + "/raw/nudge");
                 nudgeChannel.setSound(nudgeSoundUri, audioAttributes);
             } catch (Exception ignored) {}
 

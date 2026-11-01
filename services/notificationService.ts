@@ -133,7 +133,7 @@ export const showChatMessageNotification = async (
             title: senderName || 'Mensaje de Chat',
             body: messageText || 'Nuevo mensaje',
             channelId: 'chat_messages_v4',
-            smallIcon: 'ic_notification',
+            smallIcon: 'ic_launcher',
             sound: 'notification.mp3',
             foreground: true
           }
@@ -214,7 +214,7 @@ export const showChatNudgeNotification = async (senderName: string) => {
             title: '¡ZUMBIDO DE ALERTA!',
             body: nudgeText,
             channelId: 'chat_nudges_v4',
-            smallIcon: 'ic_notification',
+            smallIcon: 'ic_launcher',
             sound: 'nudge.mp3',
             foreground: true
           }
