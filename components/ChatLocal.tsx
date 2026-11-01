@@ -275,7 +275,6 @@ export const ChatLocal: React.FC<ChatLocalProps> = ({
   }, []);
 
   const triggerNudge = useCallback((senderUsername: string, isGeneral: boolean = false) => {
-    showChatNudgeNotification(senderUsername);
     setIsOpen(true);
     const targetChannel = isGeneral ? 'general' : `private_${senderUsername}`;
     setActiveChannel(targetChannel);
