@@ -1152,6 +1152,8 @@ const App: React.FC = () => {
   const [viewHistory, setViewHistory] = useState<View[]>(['menu']);
   const isMobileDrawerOpenRef = useRef(isMobileDrawerOpen);
   isMobileDrawerOpenRef.current = isMobileDrawerOpen;
+  const isNotesOpenRef = useRef(isNotesOpen);
+  isNotesOpenRef.current = isNotesOpen;
   const currentViewRef = useRef(currentView);
   currentViewRef.current = currentView;
   const isUserProfileModalOpenRef = useRef(isUserProfileModalOpen);
@@ -1164,7 +1166,21 @@ const App: React.FC = () => {
   isUrgenciasModalOpenRef.current = isUrgenciasModalOpen;
   const fichasCatalogBackRef = useRef<(() => boolean) | null>(null);
 
+  useEffect(() => {
+    setIsNotesOpen(false);
+  }, [currentView]);
+
   const navigateTo = useCallback((view: View, patientData?: PatientRecord) => {
+    setIsNotesOpen(false);
+    setIsCalcOpen(false);
+    setIsDriveOpen(false);
+    setIsCertificadoWindowOpen(false);
+    setIsRecetaWindowOpen(false);
+    setIsLabWindowOpen(false);
+    setIsImagenologiaWindowOpen(false);
+    setIsGesWindowOpen(false);
+    setIsMobileDrawerOpen(false);
+
     if (patientData) {
       setActivePatient(patientData);
     }
@@ -1201,6 +1217,11 @@ const App: React.FC = () => {
   }, []);
 
   const handleBackNavigation = useCallback(() => {
+    // 0. If notes window is open -> close it
+    if (isNotesOpenRef.current) {
+      setIsNotesOpen(false);
+      return true;
+    }
     // 1. If mobile drawer is open -> close it
     if (isMobileDrawerOpenRef.current) {
       setIsMobileDrawerOpen(false);
@@ -3446,8 +3467,9 @@ const App: React.FC = () => {
             {/* 1. Inicio */}
             <button
               onClick={() => {
-                navigateTo('menu');
+                setIsNotesOpen(false);
                 setIsMobileDrawerOpen(false);
+                navigateTo('menu');
               }}
               className={`flex flex-col items-center justify-center flex-1 py-1 transition-colors cursor-pointer ${currentView === 'menu' ? 'text-sky-600 font-bold' : 'text-slate-500 hover:text-slate-800'}`}
             >
@@ -3458,12 +3480,13 @@ const App: React.FC = () => {
             {/* 2. Fichas Clínicas (Muestra directo el listado por categoría o la ficha activa) */}
             <button
               onClick={() => {
+                setIsNotesOpen(false);
+                setIsMobileDrawerOpen(false);
                 if (activeFichaView) {
                   navigateTo(activeFichaView);
                 } else {
                   navigateTo('fichas');
                 }
-                setIsMobileDrawerOpen(false);
               }}
               className={`flex flex-col items-center justify-center flex-1 py-1 transition-colors cursor-pointer ${(currentView === 'fichas' || isClinicalRecord(currentView)) ? 'text-sky-600 font-bold' : 'text-slate-500 hover:text-slate-800'}`}
             >
@@ -3474,8 +3497,9 @@ const App: React.FC = () => {
             {/* 3. Chat (Pestaña individual dedicada) */}
             <button
               onClick={() => {
-                navigateTo('chat');
+                setIsNotesOpen(false);
                 setIsMobileDrawerOpen(false);
+                navigateTo('chat');
               }}
               className={`flex flex-col items-center justify-center flex-1 py-1 transition-colors cursor-pointer relative ${currentView === 'chat' ? 'text-sky-600 font-bold' : 'text-slate-500 hover:text-slate-800'}`}
             >
@@ -3489,8 +3513,9 @@ const App: React.FC = () => {
             {/* 4. Bitácora (Ícono de cuaderno - nueva función) */}
             <button
               onClick={() => {
-                navigateTo('bitacora');
+                setIsNotesOpen(false);
                 setIsMobileDrawerOpen(false);
+                navigateTo('bitacora');
               }}
               className={`flex flex-col items-center justify-center flex-1 py-1 transition-colors cursor-pointer ${currentView === 'bitacora' ? 'text-sky-600 font-bold' : 'text-slate-500 hover:text-slate-800'}`}
             >
@@ -3498,11 +3523,12 @@ const App: React.FC = () => {
               <span className="text-[10px] leading-tight font-medium">Bitácora</span>
             </button>
 
-                        {/* 5. Ajustes de la App (Pantalla completa como el chat) */}
+            {/* 5. Ajustes de la App (Pantalla completa como el chat) */}
             <button
               onClick={() => {
-                navigateTo('ajustes');
+                setIsNotesOpen(false);
                 setIsMobileDrawerOpen(false);
+                navigateTo('ajustes');
               }}
               className={`flex flex-col items-center justify-center flex-1 py-1 transition-colors cursor-pointer ${currentView === 'ajustes' ? 'text-sky-600 font-bold' : 'text-slate-500 hover:text-slate-800'}`}
             >
