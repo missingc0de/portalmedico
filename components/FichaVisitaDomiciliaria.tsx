@@ -611,9 +611,13 @@ export default function FichaVisitaDomiciliaria({ onBackToMenu, loggedInUser }: 
 
               <button
                 type="button"
-                onClick={handleClearForm}
-                className="w-full flex items-center justify-center gap-1 px-1 py-1.5 bg-slate-600 hover:bg-slate-700 text-white font-medium text-[11px] uppercase tracking-tight rounded-lg shadow-2xs transition-all duration-150 cursor-pointer h-[32px] overflow-hidden"
-                title="Limpiar Formulario y Crear Nuevo"
+                onClick={() => {
+                  if (window.confirm("¿Seguro que desea borrar todos los datos ingresados?")) {
+                    handleClearForm();
+                  }
+                }}
+                className="w-full flex items-center justify-center gap-1 px-1 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-medium text-[11px] uppercase tracking-tight rounded-lg shadow-2xs transition-all duration-150 cursor-pointer h-[32px] overflow-hidden"
+                title="Restablecer todos los campos del formulario"
               >
                 <Trash2 className="w-3.5 h-3.5 shrink-0" />
                 <span className="truncate">BORRAR TODO</span>

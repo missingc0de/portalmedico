@@ -7,7 +7,7 @@ import { useFormLocalStorage } from '../hooks/useFormLocalStorage';
 import SmartAntecedentesTextarea from './SmartAntecedentesTextarea';
 import SmartFarmacosTextarea from './SmartFarmacosTextarea';
 import DateField from './DateField';
-import { Printer, PlusCircle } from 'lucide-react';
+import { Printer, Trash2 } from 'lucide-react';
 
 const AutoExpandingTextArea: React.FC<{
   label: string;
@@ -527,12 +527,16 @@ const FichaControlSm: React.FC<FichaControlSmProps> = ({ onBackToMenu, loggedInU
 
               <button
                 type="button"
-                onClick={handleNewDocument}
-                className="w-full flex items-center justify-center gap-1 px-1 py-1.5 bg-slate-600 hover:bg-slate-700 text-white font-medium text-[11px] uppercase tracking-tight rounded-lg shadow-2xs transition-all duration-150 cursor-pointer h-[32px] overflow-hidden"
-                title="Limpiar Formulario y Crear Nuevo"
+                onClick={() => {
+                  if (window.confirm("¿Seguro que desea borrar todos los datos ingresados?")) {
+                    handleNewDocument();
+                  }
+                }}
+                className="w-full flex items-center justify-center gap-1 px-1 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-medium text-[11px] uppercase tracking-tight rounded-lg shadow-2xs transition-all duration-150 cursor-pointer h-[32px] overflow-hidden"
+                title="Restablecer todos los campos del formulario"
               >
-                <PlusCircle className="w-3.5 h-3.5 shrink-0" />
-                <span className="truncate">NUEVO FORM</span>
+                <Trash2 className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate">BORRAR TODO</span>
               </button>
             </div>
           </div>

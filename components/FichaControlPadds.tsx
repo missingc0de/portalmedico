@@ -999,7 +999,10 @@ export const FichaControlPadds: React.FC<FichaControlPaddsProps> = ({
     actuacion += `Ciclo vital familiar: ${extractMacroTitle(formData.integralFamiliar)}\n`;
     actuacion += `Tipología familiar: ${extractMacroTitle(formData.integralTipologia)}\n`;
     actuacion += `Condiciones crónicas y problemáticas: ${formData.integralCronicas || '(No ingresado)'}\n`;
-    actuacion += `Estratificación de riesgo cardiovascular: ${formData.integralRiesgoCv || '(No seleccionado)'}\n\n`;
+    if (formData.integralRiesgoCv && formData.integralRiesgoCv !== '(No seleccionado)') {
+      actuacion += `Estratificación de riesgo cardiovascular: ${formData.integralRiesgoCv}\n`;
+    }
+    actuacion += `\n`;
 
     // PLAN DE CUIDADO INTEGRAL (PCI) Y TOMA DE DECISIONES COMPARTIDAS
     actuacion += `PLAN DE CUIDADO INTEGRAL (PCI) Y TOMA DE DECISIONES COMPARTIDAS:\n`;
