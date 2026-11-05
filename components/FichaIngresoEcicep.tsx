@@ -44,7 +44,7 @@ const empamSmartOptions: SmartAtencionOption[] = [
   },
   {
     status: 'NO VIGENTE',
-    description: 'No realizado o fuera del período de vigencia established. Se deriva.'
+    description: 'No realizado o fuera del período de vigencia establecido. Se deriva.'
   }
 ];
 
@@ -59,7 +59,7 @@ const fondoOjoSmartOptions: SmartAtencionOption[] = [
   },
   {
     status: 'NO VIGENTE',
-    description: 'Fondo de ojo no realizado o fuera del período de vigencia established. Se deriva.'
+    description: 'Fondo de ojo no realizado o fuera del período de vigencia establecido. Se deriva.'
   }
 ];
 
