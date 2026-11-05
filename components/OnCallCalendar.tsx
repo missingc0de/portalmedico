@@ -26,9 +26,9 @@ const OnCallCalendar: React.FC<OnCallCalendarProps> = ({
   compact = false
 }) => {
   const onCallData = propOnCallData || onCallScheduleData || {};
-  // Always default to October 2026 as requested
-  const october2026Default = useMemo(() => new Date(2026, 9, 1), []);
-  const [currentDisplayDate, setCurrentDisplayDate] = useState<Date>(initialDate || october2026Default);
+  // Always default to November 2026 as requested
+  const november2026Default = useMemo(() => new Date(2026, 10, 1), []);
+  const [currentDisplayDate, setCurrentDisplayDate] = useState<Date>(initialDate || november2026Default);
   const [searchQuery, setSearchQuery] = useState('');
   const [hoveredDay, setHoveredDay] = useState<number | null>(null);
   

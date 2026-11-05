@@ -487,8 +487,8 @@ export const onCallScheduleData: OnCallSchedule = {
       2: ["ROMINA LOPEZ", "SOFIA ROJAS"],
       3: ["GABRIELA CUELLO", "CAMILA ROJAS"],
       4: ["HENRY PATIÑO", "DAVID CORTES"],
-      5: ["LUCIANO RAMOS", "CECILIA YEPEZ"],
-      6: ["FRANCO MILOS", "CECILIA YEPEZ"],
+      5: ["SOFIA ROJAS", "CECILIA YEPEZ"],
+      6: ["ABBY ROJAS", "CECILIA YEPEZ"],
       // Semana 2 (Nov 9 - 13)
       9: ["SOFIA ROJAS", "ROMINA LOPEZ"],
       10: ["CAMILA ROJAS", "GABRIELA CUELLO"],
