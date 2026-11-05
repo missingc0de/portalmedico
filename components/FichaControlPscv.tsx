@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { AlertTriangle, X } from 'lucide-react';
 import { FichaControlPscvFormData, FormStatus, User, PccObjetivo } from '../types';
 import { FileText, PlusCircle, Printer } from 'lucide-react';
@@ -227,7 +227,7 @@ const tipologiaFamiliarOptions = [
   "Familia de acogida: Acogen temporalmente a niños que no pueden estar con su familia de origen."
 ];
 
-const predefinedPccPlans = [
+const predefinedPccPlans: PccObjetivo[] = [
   { objetivo: 'Perder peso.', acuerdo: 'Aumentar actividad física y ejercicios.', acciones: 'Asistir a taller de actividad física, iniciar caminata diaria, hacer ejercicios de estiramientos.', plazo: 'Próximo control, para evaluar plan.', responsables: 'Persona.', seguimiento: 'En 2 meses.' },
   { objetivo: 'Mejorar adherencia a fármacos.', acuerdo: 'Seguir pauta escrita en horario y frecuencia.', acciones: 'Seguir pauta escrita en horario y frecuencia, poner alarmas y/o armar pastillero.', plazo: 'Próximo control, para evaluar plan.', responsables: 'Persona.', seguimiento: 'En 2 meses.' },
   { objetivo: 'Retomar controles.', acuerdo: 'Asistir a citas programadas y toma de exámenes.', acciones: 'Realizar toma de exámenes como corresponde, asistir a citas programadas, asistir a próximo control, seguir pautas indicadas en consulta actual.', plazo: 'Próximo control, para evaluar plan.', responsables: 'Persona.', seguimiento: 'En 2 meses.' },
@@ -517,6 +517,57 @@ const FichaControlPscv: React.FC<FichaControlPscvProps> = ({
   const [imgError, setImgError] = useState<string | null>(null);
   const predefinedPlanRef = useRef<HTMLDivElement>(null);
 
+  const filteredPredefinedPlans = useMemo(() => {
+    if (!planSearchTerm.trim()) return predefinedPccPlans;
+    const term = planSearchTerm.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    return predefinedPccPlans.filter(p =>
+      p.acuerdo.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(term) ||
+      p.objetivo.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(term)
+    );
+  }, [planSearchTerm]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (predefinedPlanRef.current && !predefinedPlanRef.current.contains(event.target as Node)) {
+        setIsPredefinedPlanOpen(false);
+        setPlanSearchTerm('');
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleAddPccObjetivo = () => {
+    setFormData(prev => ({
+      ...prev,
+      pccObjetivos: [...(prev.pccObjetivos || []), { objetivo: '', acuerdo: '', acciones: '', plazo: 'Próximo control, para evaluar plan.', responsables: 'Persona.', seguimiento: 'En 2 meses.' }]
+    }));
+  };
+
+  const handleAddPredefinedPlan = (plan: PccObjetivo) => {
+    setFormData(prev => ({
+      ...prev,
+      pccObjetivos: [...(prev.pccObjetivos || []), { ...plan }]
+    }));
+    setIsPredefinedPlanOpen(false);
+    setPlanSearchTerm('');
+  };
+
+  const handleUpdatePccObjetivo = (index: number, field: keyof PccObjetivo, value: string) => {
+    setFormData(prev => {
+      const newObjetivos = [...(prev.pccObjetivos || [])];
+      newObjetivos[index] = { ...newObjetivos[index], [field]: value || '' };
+      return { ...prev, pccObjetivos: newObjetivos };
+    });
+  };
+
+  const handleRemovePccObjetivo = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      pccObjetivos: (prev.pccObjetivos || []).filter((_, i) => i !== index)
+    }));
+  };
+
   const [isLabLoading, setIsLabLoading] = useState(false);
   const [labError, setLabError] = useState<string | null>(null);
   const labFileRef = useRef<HTMLInputElement>(null);
@@ -750,14 +801,69 @@ const FichaControlPscv: React.FC<FichaControlPscvProps> = ({
 
     exploracion += `Examen Físico General/Segmentario:\n${formatWithDashes(formData.efGeneralSegmentario || '')}\n\n`;
 
-    actuacion += `PLAN E INDICACIONES MÉDICAS:\n`;
-    actuacion += `${formatWithDashes(formData.indicaciones || '')}\n\n`;
+    actuacion += `PLAN DE CUIDADO INTEGRAL (PCI) Y TOMA DE DECISIONES COMPARTIDAS:\n`;
+    actuacion += `PROBLEMAS VISUALIZADOS:\n`;
+    actuacion += `Persona y familia: ${formData.pccPersonaFamilia || '(No ingresado)'}\n`;
+    actuacion += `Equipo de salud: ${formData.pccEquipoSalud || '(No ingresado)'}\n\n`;
+
+    actuacion += `PRIORIZACIÓN DE PROBLEMAS:\n`;
+    actuacion += `${formData.tomaDecisionesCompartidas || '(No ingresado)'}\n\n`;
+
+    if (formData.opcionesConversadas) {
+      actuacion += `OPCIONES CONVERSADAS Y ACTIVOS COMUNITARIOS:\n${formData.opcionesConversadas}\n\n`;
+    }
+
+    actuacion += `PRIORIZACION DE OBJETIVOS, DIMENSIONES Y METAS:\n`;
+    if (formData.pccObjetivos && formData.pccObjetivos.length > 0) {
+      formData.pccObjetivos.forEach((obj, idx) => {
+        actuacion += `OBJETIVO/META #${idx + 1}: ${obj.objetivo || '(No ingresado)'}\n`;
+        actuacion += `  Acuerdo: ${obj.acuerdo || '(No ingresado)'}\n`;
+        actuacion += `  Acciones específicas: ${obj.acciones || '(No ingresado)'}\n`;
+        actuacion += `  Plazo: ${obj.plazo || '(No ingresado)'}\n`;
+        actuacion += `  Responsable: ${obj.responsables || '(No ingresado)'}\n`;
+        actuacion += `  Seguimiento: ${obj.seguimiento || '(No ingresado)'}\n\n`;
+      });
+    } else {
+      actuacion += `(Sin objetivos agregados)\n\n`;
+    }
+
+    actuacion += `¿Está de acuerdo con el plan elaborado en conjunto con el equipo?: ${formData.acuerdoPlanEquipo || '(No seleccionado)'}\n`;
+    actuacion += `¿Está de acuerdo con que lo contactemos para seguimiento?: ${formData.acuerdoContactoSeguimiento || '(No seleccionado)'}\n\n`;
+
+    actuacion += `INDICACIONES:\n`;
+    planCheckboxItemsEcicepConfig.forEach(item => {
+      if (formData[item.key] as boolean) {
+        let planItemText = item.textPrefix;
+        if (item.detailKey && formData[item.detailKey as keyof FichaControlPscvFormData]) {
+          planItemText += formData[item.detailKey as keyof FichaControlPscvFormData] as string;
+        } else if (item.detailKey && item.detailPlaceholder) {
+          planItemText += item.detailPlaceholder;
+        }
+        if (item.textSuffix) {
+          planItemText += item.textSuffix;
+        }
+        actuacion += `${planItemText}\n`;
+      }
+    });
 
     if (formData.planProximoControlDupla || formData.planProximoControlTiempo) {
-      actuacion += `PRÓXIMO CONTROL:\n`;
-      if (formData.planProximoControlDupla) actuacion += `- Con: ${formData.planProximoControlDupla}\n`;
-      if (formData.planProximoControlTiempo) actuacion += `- Tiempo estimado: ${formData.planProximoControlTiempo}\n`;
-      actuacion += `\n`;
+      let futureMonthText = '';
+      if (formData.planProximoControlTiempo) {
+        const monthsMatch = formData.planProximoControlTiempo.match(/\d+/);
+        if (monthsMatch) {
+          const numMonths = parseInt(monthsMatch[0], 10);
+          const futureDate = new Date();
+          futureDate.setMonth(futureDate.getMonth() + numMonths);
+          futureMonthText = ` (${futureDate.toLocaleString('es-CL', { month: 'long' })} ${futureDate.getFullYear()})`;
+        }
+      }
+      actuacion += `\nPRÓXIMO CONTROL:\n`;
+      actuacion += `- Próximo control con Médico + ${formData.planProximoControlDupla || '(dupla no especificada)'} en ${formData.planProximoControlTiempo || '(tiempo no especificado)'}${futureMonthText}.\n`;
+    }
+
+    if (formData.indicaciones && formData.indicaciones.trim() !== '') {
+      actuacion += `\nINDICACIONES ADICIONALES:\n`;
+      actuacion += `${formData.indicaciones.trim()}\n`;
     }
 
     return { anamnesis: anamnesis.trim(), exploracion: exploracion.trim(), actuacion: actuacion.trim() };
@@ -873,7 +979,7 @@ const FichaControlPscv: React.FC<FichaControlPscvProps> = ({
         actuacionText,
       }, loggedInUser, {
         title: titleText,
-        hasPci: false,
+        hasPci: true,
         filePrefix: 'Resumen_Control_Cronico'
       });
     } finally { 
@@ -1173,6 +1279,208 @@ const FichaControlPscv: React.FC<FichaControlPscvProps> = ({
                   onChange={handleChange as any}
                   placeholder="Examen físico general y segmentario..."
                 />
+              </div>
+            </section>
+
+            {/* PLAN DE CUIDADO INTEGRAL (PCI) */}
+            <section id="sec-pci" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-2">
+              <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-2">PLAN DE CUIDADO INTEGRAL (PCI) Y TOMA DE DECISIONES COMPARTIDAS</h3>
+
+              <div>
+                <h4 className="text-md font-bold text-slate-800 mb-1.5 uppercase text-xs tracking-wider">PROBLEMAS VISUALIZADOS</h4>
+                <div className="space-y-1.5">
+                  <AutoExpandingTextArea label="Persona y familia" id="pccPersonaFamilia" name="pccPersonaFamilia" value={formData.pccPersonaFamilia || ''} onChange={handleChange as any} />
+                  <AutoExpandingTextArea label="Equipo de salud" id="pccEquipoSalud" name="pccEquipoSalud" value={formData.pccEquipoSalud || ''} onChange={handleChange as any} />
+                </div>
+              </div>
+
+              <div>
+                <h4 className="text-md font-bold text-slate-800 mb-1.5 uppercase text-xs tracking-wider">PRIORIZACIÓN DE PROBLEMAS</h4>
+                <AutoExpandingTextArea
+                  label=""
+                  id="tomaDecisionesCompartidas"
+                  name="tomaDecisionesCompartidas"
+                  value={formData.tomaDecisionesCompartidas || ''}
+                  onChange={handleChange as any}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      const textarea = e.currentTarget;
+                      const start = textarea.selectionStart;
+                      const end = textarea.selectionEnd;
+                      const value = textarea.value;
+
+                      const lines = value.split('\n');
+                      const nextNumber = lines.length + 1;
+
+                      const newValue = value.substring(0, start) + '\n' + nextNumber + '. ' + value.substring(end);
+
+                      setFormData(prev => ({ ...prev, tomaDecisionesCompartidas: newValue }));
+
+                      setTimeout(() => {
+                        const newPos = start + String(nextNumber).length + 3;
+                        textarea.setSelectionRange(newPos, newPos);
+                      }, 0);
+                    }
+                  }}
+                  placeholder="¿Cómo lo haremos?"
+                />
+              </div>
+
+              <div>
+                <h4 className="text-md font-bold text-slate-800 mb-1.5 uppercase text-xs tracking-wider mt-2">OPCIONES CONVERSADAS (AGREGAR ACTIVOS COMUNITARIOS)</h4>
+                <AutoExpandingTextArea
+                  label=""
+                  id="opcionesConversadas"
+                  name="opcionesConversadas"
+                  value={formData.opcionesConversadas || ''}
+                  onChange={handleChange as any}
+                  placeholder="Opciones conversadas..."
+                />
+              </div>
+
+              <div>
+                <div className="flex flex-col gap-1.5 mb-1">
+                  <h4 className="text-md font-bold text-slate-800 uppercase text-xs tracking-wider">PRIORIZACION DE OBJETIVOS, DIMENSIONES Y METAS</h4>
+                  <div className="flex gap-2">
+                    <div className="relative" ref={predefinedPlanRef}>
+                      <button
+                        type="button"
+                        onClick={() => setIsPredefinedPlanOpen(!isPredefinedPlanOpen)}
+                        className="flex items-center px-4 py-2 bg-emerald-600 text-white text-xs font-bold rounded-md hover:bg-emerald-700 transition-colors shadow-sm"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+                        AGREGAR PLAN PREDETERMINADO
+                      </button>
+                      {isPredefinedPlanOpen && (
+                        <div className="absolute left-0 mt-2 w-72 bg-white border border-slate-300 rounded-lg shadow-xl z-50 overflow-hidden animate-fadeIn">
+                          <div className="p-3 bg-slate-100 border-b border-slate-200">
+                            <div className="relative">
+                              <input
+                                type="text"
+                                value={planSearchTerm}
+                                onChange={(e) => setPlanSearchTerm(e.target.value)}
+                                placeholder="Buscar plan..."
+                                className="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-md focus:ring-1 focus:ring-emerald-500 outline-none"
+                                autoFocus
+                              />
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-slate-400 absolute left-2 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                            </div>
+                          </div>
+                          <div className="max-h-64 overflow-y-auto custom-scrollbar">
+                            {filteredPredefinedPlans.length > 0 ? (
+                              filteredPredefinedPlans.map((plan, idx) => (
+                                <button
+                                  key={idx}
+                                  type="button"
+                                  onClick={() => handleAddPredefinedPlan(plan)}
+                                  className="w-full text-left px-4 py-3 text-sm text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 border-b border-slate-50 last:border-b-0 transition-colors"
+                                >
+                                  <span className="font-bold block leading-tight">{plan.acuerdo}</span>
+                                  <span className="text-[10px] text-slate-500 truncate block mt-0.5">{plan.acciones}</span>
+                                </button>
+                              ))
+                            ) : (
+                              <div className="p-4 text-center text-xs text-slate-400 italic">No se encontraron planes.</div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleAddPccObjetivo}
+                      className="flex items-center px-4 py-2.5 bg-sky-600 text-white text-xs font-bold rounded-md hover:bg-sky-700 transition-colors shadow-sm"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+                      AGREGAR OBJETIVO
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-6">
+                  {(formData.pccObjetivos || []).map((obj, index) => (
+                    <div key={index} className="p-4 bg-white border-2 border-slate-200 rounded-lg shadow-sm relative animate-fadeIn">
+                      <button
+                        type="button"
+                        onClick={() => handleRemovePccObjetivo(index)}
+                        className="absolute top-2 right-2 text-red-400 hover:text-red-600 p-1"
+                        title="Eliminar objetivo"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                      </button>
+                      <h5 className="text-sm font-bold text-sky-800 mb-4 bg-sky-50 px-2 py-1 inline-block rounded">OBJETIVO/META #{index + 1}</h5>
+                      <div className="space-y-4">
+                        <AutoExpandingTextArea
+                          label="Objetivo"
+                          id={`obj-objetivo-${index}`}
+                          name={`obj-objetivo-${index}`}
+                          value={obj.objetivo || ''}
+                          onChange={(e) => handleUpdatePccObjetivo(index, 'objetivo', e.target.value)}
+                        />
+                        <AutoExpandingTextArea
+                          label="Acuerdo"
+                          id={`obj-acuerdo-${index}`}
+                          name={`obj-acuerdo-${index}`}
+                          value={obj.acuerdo || ''}
+                          onChange={(e) => handleUpdatePccObjetivo(index, 'acuerdo', e.target.value)}
+                        />
+                        <AutoExpandingTextArea
+                          label="Acciones específicas"
+                          id={`obj-acciones-${index}`}
+                          name={`obj-acciones-${index}`}
+                          value={obj.acciones || ''}
+                          onChange={(e) => handleUpdatePccObjetivo(index, 'acciones', e.target.value)}
+                        />
+                        <AutoExpandingTextArea
+                          label="Plazo"
+                          id={`obj-plazo-${index}`}
+                          name={`obj-plazo-${index}`}
+                          value={obj.plazo || ''}
+                          onChange={(e) => handleUpdatePccObjetivo(index, 'plazo', e.target.value)}
+                        />
+                        <AutoExpandingTextArea
+                          label="Responsable/s"
+                          id={`obj-resp-${index}`}
+                          name={`obj-resp-${index}`}
+                          value={obj.responsables || ''}
+                          onChange={(e) => handleUpdatePccObjetivo(index, 'responsables', e.target.value)}
+                        />
+                        <AutoExpandingTextArea label="Seguimiento" id={`obj-seguimiento-${index}`} name={`obj-seguimiento-${index}`} value={obj.seguimiento || ''} onChange={(e) => handleUpdatePccObjetivo(index, 'seguimiento', e.target.value)} containerClassName="flex-grow min-h-full" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-6 pt-4 border-t border-slate-200">
+                {renderRadioGroup("¿Está de acuerdo con el plan elaborado en conjunto con el equipo?", "acuerdoPlanEquipo", [{ value: "Sí", label: "Sí" }, { value: "No", label: "No" }])}
+                {renderRadioGroup("¿Está de acuerdo con que lo contactemos para seguimiento?", "acuerdoContactoSeguimiento", [{ value: "Sí", label: "Sí" }, { value: "No", label: "No" }])}
+              </div>
+
+              <div className="p-3 border border-slate-200 rounded-md bg-white mb-4">
+                <h4 className="text-md font-medium text-slate-600 mb-2">Solicitudes y derivaciones adicionales:</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1">
+                  {planCheckboxItemsEcicepConfig.map(item => (
+                    <div key={item.key as string} className="mb-2 pl-2 border-l-2 border-sky-100 py-1">
+                      <div className="flex items-center">
+                        <input type="checkbox" id={item.key as string} name={item.key as string} checked={!!formData[item.key]} onChange={handleChange} className="form-checkbox h-4 w-4 text-sky-600 border-slate-300 rounded focus:ring-sky-500" />
+                        <label htmlFor={item.key as string} className="ml-2 text-sm font-medium text-slate-700">{item.label}</label>
+                      </div>
+                      {item.detailKey && (formData[item.key]) && (
+                        <FormField
+                          label=""
+                          id={item.detailKey as string}
+                          name={item.detailKey as string}
+                          value={(formData[item.detailKey as keyof FichaControlPscvFormData] as string) || ''}
+                          onChange={handleChange}
+                          placeholder={item.detailPlaceholder || 'Ingrese detalle...'}
+                          containerClassName="mt-1.5 ml-6 text-xs"
+                        />
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
             </section>
 
