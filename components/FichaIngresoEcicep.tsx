@@ -19,6 +19,7 @@ import SmartAtencionVigenteInput, { SmartAtencionOption, stripStatusBracket } fr
 import BorgScaleModal from './BorgScaleModal';
 import { useFormLocalStorage } from '../hooks/useFormLocalStorage';
 import SmartDietaTextarea from './SmartDietaTextarea';
+import PautaAlimentariaSelector from './PautaAlimentariaSelector';
 import { patientStore, PatientRecord } from '../services/patientStore';
 
 const MsnMessengerIcon: React.FC<{ className?: string }> = ({ className = "w-4 h-4" }) => (
@@ -187,6 +188,11 @@ const initialFormData: FichaIngresoEcicepFormData = {
   habitoDefecatorio: 'Catarsis conservada, deposiciones habituales, sin diarrea ni constipación.',
   actividadSexualProteccion: '',
   encuestaAlimentaria: '- PAN: \n- LÍQUIDOS: \n- LÁCTEOS: \n- INFUSIONES: \n- AZÚCAR: \n- FRUTAS: \n- ENSALADAS: \n- ARROZ/FIDEOS: \n- GOLOSINAS: \n',
+  pautaAlimentariaId: '',
+  pautaAlimentariaNombre: '',
+  pautaAlimentariaFavorecer: '',
+  pautaAlimentariaEvitar: '',
+  pautaAlimentariaRecomendaciones: '',
   estadoSueno: 'Conservado.',
   horasSueno: '',
   dificultadConciliacion: 'Niega.',
@@ -967,6 +973,11 @@ export const FichaIngresoEcicep: React.FC<FichaIngresoEcicepProps> = ({ onBackTo
         habitoDefecatorio: patient.habitoDefecatorio || prev.habitoDefecatorio,
         actividadSexualProteccion: patient.actividadSexualProteccion || prev.actividadSexualProteccion,
         encuestaAlimentaria: patient.encuestaAlimentaria || prev.encuestaAlimentaria,
+        pautaAlimentariaId: patient.pautaAlimentariaId || prev.pautaAlimentariaId,
+        pautaAlimentariaNombre: patient.pautaAlimentariaNombre || prev.pautaAlimentariaNombre,
+        pautaAlimentariaFavorecer: patient.pautaAlimentariaFavorecer || prev.pautaAlimentariaFavorecer,
+        pautaAlimentariaEvitar: patient.pautaAlimentariaEvitar || prev.pautaAlimentariaEvitar,
+        pautaAlimentariaRecomendaciones: patient.pautaAlimentariaRecomendaciones || prev.pautaAlimentariaRecomendaciones,
         empam: patient.empam || prev.empam,
         fondoOjo: patient.fondoOjo || prev.fondoOjo,
         podologo: patient.podologo || prev.podologo,
@@ -1042,6 +1053,11 @@ export const FichaIngresoEcicep: React.FC<FichaIngresoEcicepProps> = ({ onBackTo
         habitoDefecatorio: patientData.habitoDefecatorio || prev.habitoDefecatorio,
         actividadSexualProteccion: patientData.actividadSexualProteccion || prev.actividadSexualProteccion,
         encuestaAlimentaria: patientData.encuestaAlimentaria || prev.encuestaAlimentaria,
+        pautaAlimentariaId: patientData.pautaAlimentariaId || prev.pautaAlimentariaId,
+        pautaAlimentariaNombre: patientData.pautaAlimentariaNombre || prev.pautaAlimentariaNombre,
+        pautaAlimentariaFavorecer: patientData.pautaAlimentariaFavorecer || prev.pautaAlimentariaFavorecer,
+        pautaAlimentariaEvitar: patientData.pautaAlimentariaEvitar || prev.pautaAlimentariaEvitar,
+        pautaAlimentariaRecomendaciones: patientData.pautaAlimentariaRecomendaciones || prev.pautaAlimentariaRecomendaciones,
         empam: patientData.empam || prev.empam,
         fondoOjo: patientData.fondoOjo || prev.fondoOjo,
         podologo: patientData.podologo || prev.podologo,
@@ -1203,11 +1219,15 @@ export const FichaIngresoEcicep: React.FC<FichaIngresoEcicepProps> = ({ onBackTo
             setFormData(initialFormData);
           }
         },
-        imprimirResumen: () => generateEcicepResumenPdf(formData, loggedInUser),
+        imprimirResumen: () => generateEcicepResumenPdf({
+          ...formData,
+          nombre: activeImportedPatient?.nombre || patientData?.nombre || formData.nombre,
+          rut: activeImportedPatient?.rut || patientData?.rut || formData.rut,
+        }, loggedInUser),
         editarDrive: handleDriveEdit
       };
     }
-  }, [formData, loggedInUser, actionsRef]);
+  }, [formData, loggedInUser, actionsRef, activeImportedPatient, patientData]);
 
   const additionalControlsItems = [
     { key: 'incluirControlCardiovascular', label: 'Control cardiovascular' },
@@ -1975,6 +1995,11 @@ export const FichaIngresoEcicep: React.FC<FichaIngresoEcicepProps> = ({ onBackTo
             habitoDefecatorio: formData.habitoDefecatorio,
             actividadSexualProteccion: formData.actividadSexualProteccion,
             encuestaAlimentaria: formData.encuestaAlimentaria,
+            pautaAlimentariaId: formData.pautaAlimentariaId,
+            pautaAlimentariaNombre: formData.pautaAlimentariaNombre,
+            pautaAlimentariaFavorecer: formData.pautaAlimentariaFavorecer,
+            pautaAlimentariaEvitar: formData.pautaAlimentariaEvitar,
+            pautaAlimentariaRecomendaciones: formData.pautaAlimentariaRecomendaciones,
             empam: formData.empam,
             fondoOjo: formData.fondoOjo,
             podologo: formData.podologo,
@@ -2783,6 +2808,25 @@ export const FichaIngresoEcicep: React.FC<FichaIngresoEcicepProps> = ({ onBackTo
                     onChange={(val) => setFormData(prev => ({ ...prev, encuestaAlimentaria: val }))}
                     rows={10}
                   />
+
+                  {/* Menú desplegable para agregar pauta alimentaria al Resumen ECICEP */}
+                  <PautaAlimentariaSelector
+                    pautaId={formData.pautaAlimentariaId || ''}
+                    pautaNombre={formData.pautaAlimentariaNombre || ''}
+                    pautaFavorecer={formData.pautaAlimentariaFavorecer || ''}
+                    pautaEvitar={formData.pautaAlimentariaEvitar || ''}
+                    pautaRecomendaciones={formData.pautaAlimentariaRecomendaciones || ''}
+                    onChange={({ id, nombre, favorecer, evitar, recomendaciones }) => {
+                      setFormData(prev => ({
+                        ...prev,
+                        pautaAlimentariaId: id,
+                        pautaAlimentariaNombre: nombre,
+                        pautaAlimentariaFavorecer: favorecer,
+                        pautaAlimentariaEvitar: evitar,
+                        pautaAlimentariaRecomendaciones: recomendaciones,
+                      }));
+                    }}
+                  />
                 </section>
 
                 <section id="sec-animo" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-2">
@@ -3430,7 +3474,11 @@ export const FichaIngresoEcicep: React.FC<FichaIngresoEcicepProps> = ({ onBackTo
                     alert('Error: Usuario no identificado.');
                     return;
                   }
-                  generateEcicepResumenPdf(formData, loggedInUser);
+                  generateEcicepResumenPdf({
+                    ...formData,
+                    nombre: activeImportedPatient?.nombre || patientData?.nombre || formData.nombre,
+                    rut: activeImportedPatient?.rut || patientData?.rut || formData.rut,
+                  }, loggedInUser);
                 }}
                 className="w-full flex items-center justify-center gap-1 px-1 py-1.5 bg-sky-600 hover:bg-sky-700 text-white font-medium text-[11px] uppercase tracking-tight rounded-lg shadow-2xs transition-all duration-150 cursor-pointer h-[32px] overflow-hidden"
                 title="Imprimir PDF Resumen ECICEP"

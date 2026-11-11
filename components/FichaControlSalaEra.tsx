@@ -1,6 +1,6 @@
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { FichaControlSalaEraFormData, FormStatus, User } from '../types';
+import { FichaControlSalaEraFormData, FormStatus, User, PccObjetivo } from '../types';
 import FormField from './FormField';
 import CopyButton from './CopyButton';
 import MedicamentoArsenalInput from './MedicamentoArsenalInput';
@@ -13,7 +13,8 @@ import { useFormLocalStorage } from '../hooks/useFormLocalStorage';
 import SmartAntecedentesTextarea from './SmartAntecedentesTextarea';
 import SmartFarmacosTextarea from './SmartFarmacosTextarea';
 import DateField from './DateField';
-import { Printer, Trash2 } from 'lucide-react';
+import { Printer, Trash2, FileText, Plus } from 'lucide-react';
+import { predefinedPccPlansEraIra } from '../data/pccPlanesEraIra';
 
 const AutoExpandingTextArea: React.FC<{
   label: string;
@@ -166,6 +167,12 @@ const initialFormData: FichaControlSalaEraFormData = {
 - Acudir a urgencias SOS.`,
   espirometriaResultados: [],
   espirometriaInterpretacion: '',
+  pccPersonaFamilia: '',
+  pccEquipoSalud: '',
+  tomaDecisionesCompartidas: '',
+  opcionesConversadas: '',
+  pccObjetivos: [],
+  indicaciones: '',
 };
 
 interface CheckboxClarificationItem {
@@ -254,6 +261,65 @@ const FichaControlSalaEra: React.FC<FichaControlSalaEraProps> = ({ onBackToMenu,
   const spiroFileRef = useRef<HTMLInputElement>(null);
   const [proximosControles, setProximosControles] = useState<{ id: number; tiempo: string; profesional: string }[]>([{ id: Date.now(), tiempo: '3 meses', profesional: 'médico' }]);
   const [showRemActive, setShowRemActive] = useState(false);
+
+  // PCI & Toma de decisiones compartidas states
+  const [isPredefinedPlanOpen, setIsPredefinedPlanOpen] = useState(false);
+  const [planSearchTerm, setPlanSearchTerm] = useState('');
+  const predefinedPlanRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (predefinedPlanRef.current && !predefinedPlanRef.current.contains(event.target as Node)) {
+        setIsPredefinedPlanOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const filteredPredefinedPlans = React.useMemo(() => {
+    if (!planSearchTerm.trim()) return predefinedPccPlansEraIra;
+    const term = planSearchTerm.toLowerCase();
+    return predefinedPccPlansEraIra.filter(p =>
+      p.objetivo.toLowerCase().includes(term) ||
+      p.acuerdo.toLowerCase().includes(term) ||
+      p.acciones.toLowerCase().includes(term)
+    );
+  }, [planSearchTerm]);
+
+  const handleAddPccObjetivo = useCallback(() => {
+    setFormData(prev => ({
+      ...prev,
+      pccObjetivos: [
+        ...(prev.pccObjetivos || []),
+        { objetivo: '', acuerdo: '', acciones: '', plazo: 'Próximo control ERA/IRA.', responsables: 'Persona.', seguimiento: 'En 2 meses.' }
+      ]
+    }));
+  }, [setFormData]);
+
+  const handleAddPredefinedPlan = useCallback((plan: PccObjetivo) => {
+    setFormData(prev => ({
+      ...prev,
+      pccObjetivos: [...(prev.pccObjetivos || []), { ...plan }]
+    }));
+    setIsPredefinedPlanOpen(false);
+    setPlanSearchTerm('');
+  }, [setFormData]);
+
+  const handleRemovePccObjetivo = useCallback((index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      pccObjetivos: (prev.pccObjetivos || []).filter((_, i) => i !== index)
+    }));
+  }, [setFormData]);
+
+  const handleUpdatePccObjetivo = useCallback((index: number, field: keyof PccObjetivo, value: string) => {
+    setFormData(prev => {
+      const updated = [...(prev.pccObjetivos || [])];
+      updated[index] = { ...updated[index], [field]: value };
+      return { ...prev, pccObjetivos: updated };
+    });
+  }, [setFormData]);
 
   const tiempoControlOptions = ['1 mes', '2 meses', '3 meses', '4 meses', '5 meses', '6 meses', '12 meses'];
   const profesionalOptions = ['médico', 'kinesiólogo'];
@@ -440,7 +506,35 @@ const FichaControlSalaEra: React.FC<FichaControlSalaEraProps> = ({ onBackToMenu,
         }
     }
 
-    let actu = planText;
+    let pciText = '';
+    const hasPciData = formData.pccPersonaFamilia || formData.pccEquipoSalud || formData.tomaDecisionesCompartidas || formData.opcionesConversadas || ((formData.pccObjetivos || []).length > 0);
+    if (hasPciData) {
+        pciText += `PLAN DE CUIDADO INTEGRAL (PCI) Y TOMA DE DECISIONES COMPARTIDAS:\n`;
+        if (formData.pccPersonaFamilia || formData.pccEquipoSalud) {
+            pciText += `Problemas visualizados:\n`;
+            if (formData.pccPersonaFamilia) pciText += `- Persona y familia: ${formData.pccPersonaFamilia}\n`;
+            if (formData.pccEquipoSalud) pciText += `- Equipo de salud: ${formData.pccEquipoSalud}\n`;
+        }
+        if (formData.tomaDecisionesCompartidas) {
+            pciText += `Priorización de problemas: ${formData.tomaDecisionesCompartidas}\n`;
+        }
+        if (formData.opcionesConversadas) {
+            pciText += `Opciones conversadas: ${formData.opcionesConversadas}\n`;
+        }
+        if ((formData.pccObjetivos || []).length > 0) {
+            pciText += `Objetivos / Metas respiratorias acordadas:\n`;
+            (formData.pccObjetivos || []).forEach((obj, idx) => {
+                pciText += `#${idx + 1}: ${obj.objetivo || 's/i'}\n`;
+                if (obj.acuerdo) pciText += `  Acuerdo: ${obj.acuerdo}\n`;
+                if (obj.acciones) pciText += `  Acciones: ${obj.acciones}\n`;
+                if (obj.plazo) pciText += `  Plazo: ${obj.plazo}\n`;
+                if (obj.responsables) pciText += `  Responsable: ${obj.responsables}\n`;
+            });
+        }
+        pciText += `\n`;
+    }
+
+    let actu = (pciText + planText).trim();
     
     return { anamnesis: anam.trim(), exploracion: expl.trim(), actuacion: actu.trim() };
   }, [formData, loggedInUser, proximosControles, isIraAge]);
@@ -460,14 +554,17 @@ const FichaControlSalaEra: React.FC<FichaControlSalaEraProps> = ({ onBackToMenu,
     }
     setStatus(FormStatus.Generating);
     const titleText = isIraAge() ? 'RESUMEN CONTROL SALA IRA' : 'RESUMEN CONTROL SALA ERA';
+    const firstControl = proximosControles.find(c => c.tiempo) || proximosControles[0];
     try {
       await generateAtencionResumenPdf({
         ...formData,
-        indicaciones: formData.indicaciones,
+        proximoControlTiempo: firstControl?.tiempo,
+        proximoControlDupla: firstControl?.profesional,
+        indicaciones: formData.planOtros || formData.indicaciones,
         actuacionText,
       }, loggedInUser, {
         title: titleText,
-        hasPci: false,
+        hasPci: true,
         filePrefix: isIraAge() ? 'Resumen_Sala_IRA' : 'Resumen_Sala_ERA'
       });
     } finally { 
@@ -696,6 +793,205 @@ const FichaControlSalaEra: React.FC<FichaControlSalaEraProps> = ({ onBackToMenu,
                         rows={10}
                       />
                     </div>
+                </section>
+
+                {/* PLAN DE CUIDADO INTEGRAL (PCI) Y TOMA DE DECISIONES COMPARTIDAS */}
+                <section id="sec-pci-era" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-3">
+                  <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-2 flex items-center justify-between">
+                    <span>Plan de Cuidado Integral (PCI) y Toma de Decisiones Compartidas</span>
+                    <span className="text-xs font-normal text-slate-500 bg-sky-50 px-2 py-0.5 rounded border border-sky-100">
+                      Sala ERA / IRA
+                    </span>
+                  </h3>
+
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">Problemas Visualizados</h4>
+                    <div className="space-y-2">
+                      <AutoExpandingTextArea
+                        label="Persona y familia"
+                        id="pccPersonaFamilia"
+                        name="pccPersonaFamilia"
+                        value={formData.pccPersonaFamilia || ''}
+                        onChange={handleChange as any}
+                        placeholder="Problemas visualizados por el usuario o su familia..."
+                      />
+                      <AutoExpandingTextArea
+                        label="Equipo de salud"
+                        id="pccEquipoSalud"
+                        name="pccEquipoSalud"
+                        value={formData.pccEquipoSalud || ''}
+                        onChange={handleChange as any}
+                        placeholder="Problemas respiratorios y clínicos identificados por el equipo..."
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">Priorización de Problemas</h4>
+                    <AutoExpandingTextArea
+                      label=""
+                      id="tomaDecisionesCompartidas"
+                      name="tomaDecisionesCompartidas"
+                      value={formData.tomaDecisionesCompartidas || ''}
+                      onChange={handleChange as any}
+                      placeholder="Acuerdos sobre qué problema abordar en primer lugar..."
+                    />
+                  </div>
+
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">Opciones Conversadas</h4>
+                    <AutoExpandingTextArea
+                      label=""
+                      id="opcionesConversadas"
+                      name="opcionesConversadas"
+                      value={formData.opcionesConversadas || ''}
+                      onChange={handleChange as any}
+                      placeholder="Alternativas de tratamiento, medidas ambientales, talleres comunitarios conversados..."
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+                      <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        Priorización de Objetivos, Dimensiones y Metas Respiratorias
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        <div className="relative" ref={predefinedPlanRef}>
+                          <button
+                            type="button"
+                            onClick={() => setIsPredefinedPlanOpen(!isPredefinedPlanOpen)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg transition-colors shadow-2xs cursor-pointer"
+                          >
+                            <FileText className="w-3.5 h-3.5" />
+                            <span>AGREGAR PLAN RESPIRATORIO</span>
+                          </button>
+                          {isPredefinedPlanOpen && (
+                            <div className="absolute left-0 sm:right-0 sm:left-auto mt-2 w-80 sm:w-96 bg-white border border-slate-300 rounded-lg shadow-xl z-50 overflow-hidden animate-fadeIn">
+                              <div className="p-2.5 bg-slate-100 border-b border-slate-200">
+                                <input
+                                  type="text"
+                                  value={planSearchTerm}
+                                  onChange={(e) => setPlanSearchTerm(e.target.value)}
+                                  placeholder="Buscar plan respiratorio (asma, epoc, aerocámara, tabaco)..."
+                                  className="w-full px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-md focus:ring-1 focus:ring-emerald-500 outline-none"
+                                  autoFocus
+                                />
+                              </div>
+                              <div className="max-h-72 overflow-y-auto custom-scrollbar">
+                                {filteredPredefinedPlans.length > 0 ? (
+                                  filteredPredefinedPlans.map((plan, idx) => (
+                                    <button
+                                      key={idx}
+                                      type="button"
+                                      onClick={() => handleAddPredefinedPlan(plan)}
+                                      className="w-full text-left px-3.5 py-2.5 text-xs text-slate-700 hover:bg-emerald-50 hover:text-emerald-800 border-b border-slate-100 last:border-b-0 transition-colors"
+                                    >
+                                      <span className="font-bold block leading-snug">{plan.objetivo}</span>
+                                      <span className="text-[11px] text-slate-600 block mt-0.5"><strong className="text-emerald-700">Acuerdo:</strong> {plan.acuerdo}</span>
+                                      <span className="text-[10px] text-slate-500 block truncate mt-0.5">{plan.acciones}</span>
+                                    </button>
+                                  ))
+                                ) : (
+                                  <div className="p-4 text-center text-xs text-slate-400 italic">No se encontraron planes respiratorios.</div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={handleAddPccObjetivo}
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold rounded-lg transition-colors shadow-2xs cursor-pointer"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>AGREGAR OBJETIVO</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3 mt-2">
+                      {(formData.pccObjetivos || []).length === 0 ? (
+                        <div className="p-3 bg-white border border-dashed border-slate-300 rounded-lg text-center text-xs text-slate-400 italic">
+                          No hay objetivos respiratorios agregados aún. Puede añadir uno manual o seleccionar un plan predeterminado.
+                        </div>
+                      ) : (
+                        (formData.pccObjetivos || []).map((obj, index) => (
+                          <div key={index} className="p-3.5 bg-white border border-slate-200 rounded-lg shadow-xs relative space-y-2.5">
+                            <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
+                              <span className="text-xs font-bold text-sky-800 bg-sky-50 px-2 py-0.5 rounded border border-sky-100">
+                                OBJETIVO / META RESPIRATORIA #{index + 1}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => handleRemovePccObjetivo(index)}
+                                className="text-rose-500 hover:text-rose-700 p-1 rounded hover:bg-rose-50 transition-colors cursor-pointer"
+                                title="Eliminar objetivo"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                            <AutoExpandingTextArea
+                              label="Objetivo"
+                              id={`obj-objetivo-${index}`}
+                              name={`obj-objetivo-${index}`}
+                              value={obj.objetivo || ''}
+                              onChange={(e) => handleUpdatePccObjetivo(index, 'objetivo', e.target.value)}
+                              placeholder="Ej: Optimizar técnica inhalatoria..."
+                            />
+                            <AutoExpandingTextArea
+                              label="Acuerdo consensuado"
+                              id={`obj-acuerdo-${index}`}
+                              name={`obj-acuerdo-${index}`}
+                              value={obj.acuerdo || ''}
+                              onChange={(e) => handleUpdatePccObjetivo(index, 'acuerdo', e.target.value)}
+                              placeholder="Ej: Usar aerocámara diariamente..."
+                            />
+                            <AutoExpandingTextArea
+                              label="Acciones específicas"
+                              id={`obj-acciones-${index}`}
+                              name={`obj-acciones-${index}`}
+                              value={obj.acciones || ''}
+                              onChange={(e) => handleUpdatePccObjetivo(index, 'acciones', e.target.value)}
+                              placeholder="Ej: Realizar 1 disparo por vez, 10 respiraciones lentas..."
+                            />
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
+                              <div>
+                                <label className="block text-[11px] font-semibold text-slate-600 mb-1">Plazo</label>
+                                <input
+                                  type="text"
+                                  value={obj.plazo || ''}
+                                  onChange={(e) => handleUpdatePccObjetivo(index, 'plazo', e.target.value)}
+                                  placeholder="Ej: Próximo control"
+                                  className="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-300 rounded-md focus:ring-1 focus:ring-sky-500 outline-none"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-[11px] font-semibold text-slate-600 mb-1">Responsables</label>
+                                <input
+                                  type="text"
+                                  value={obj.responsables || ''}
+                                  onChange={(e) => handleUpdatePccObjetivo(index, 'responsables', e.target.value)}
+                                  placeholder="Ej: Persona / Cuidador"
+                                  className="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-300 rounded-md focus:ring-1 focus:ring-sky-500 outline-none"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-[11px] font-semibold text-slate-600 mb-1">Seguimiento</label>
+                                <input
+                                  type="text"
+                                  value={obj.seguimiento || ''}
+                                  onChange={(e) => handleUpdatePccObjetivo(index, 'seguimiento', e.target.value)}
+                                  placeholder="Ej: En 2 meses"
+                                  className="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-300 rounded-md focus:ring-1 focus:ring-sky-500 outline-none"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
                 </section>
 
                 <section id="sec-plan-era" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2">

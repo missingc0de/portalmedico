@@ -270,6 +270,8 @@ const initialFormData: FichaIngresoPaddsFormData = {
   animo_habitoSueno: 'Conservado. Refiere sueño reparador, con conciliación y mantención adecuadas, sin insomnio, hipersomnia ni despertares frecuentes.',
   animo_percepcionSalud: 'Salud, autonomía y funcionalidad conservadas.',
   animo_ideacionSuicida: 'Niega.',
+  delirios: 'Niega',
+  dolor: 'Niega',
 
   escolaridad: '',
   ocupacion: '',
@@ -906,6 +908,17 @@ const getAntecedentIcon = (label: string) => {
       <circle cx="12" cy="12" r="7" />
     </svg>
   );
+  if (label === 'Delirios') return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-slate-700 shrink-0">
+      <path d="M12 2a9 9 0 0 1 9 9c0 3.1-1.6 5.8-4 7.4V20a2 2 0 0 1-2 2h-6a2 2 0 0 1-2-2v-1.6C4.6 16.8 3 14.1 3 11a9 9 0 0 1 9-9z" />
+      <path d="M9 10h.01M15 10h.01M9.5 15a3.5 3.5 0 0 0 5 0" />
+    </svg>
+  );
+  if (label === 'Dolor') return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-slate-700 shrink-0">
+      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+    </svg>
+  );
   return null;
 };
 
@@ -1003,6 +1016,8 @@ export const FichaIngresoPadds: React.FC<FichaIngresoPaddsProps> = ({ onBackToMe
         animo_habitoSueno: patient.animo_habitoSueno || prev.animo_habitoSueno,
         animo_percepcionSalud: patient.animo_percepcionSalud || prev.animo_percepcionSalud,
         animo_ideacionSuicida: patient.animo_ideacionSuicida || prev.animo_ideacionSuicida,
+        delirios: patient.delirios || prev.delirios,
+        dolor: patient.dolor || prev.dolor,
         espiritualidad: patient.espiritualidad || prev.espiritualidad,
         escolaridad: patient.escolaridad || prev.escolaridad,
         ocupacion: patient.ocupacion || prev.ocupacion,
@@ -1078,6 +1093,8 @@ export const FichaIngresoPadds: React.FC<FichaIngresoPaddsProps> = ({ onBackToMe
         animo_habitoSueno: patientData.animo_habitoSueno || prev.animo_habitoSueno,
         animo_percepcionSalud: patientData.animo_percepcionSalud || prev.animo_percepcionSalud,
         animo_ideacionSuicida: patientData.animo_ideacionSuicida || prev.animo_ideacionSuicida,
+        delirios: patientData.delirios || prev.delirios,
+        dolor: patientData.dolor || prev.dolor,
         espiritualidad: patientData.espiritualidad || prev.espiritualidad,
         escolaridad: patientData.escolaridad || prev.escolaridad,
         ocupacion: patientData.ocupacion || prev.ocupacion,
@@ -1778,6 +1795,8 @@ export const FichaIngresoPadds: React.FC<FichaIngresoPaddsProps> = ({ onBackToMe
     anamnesis += `Hábito de Sueño (descripción): ${formData.animo_habitoSueno || '(No ingresado)'}\n`;
     anamnesis += `Percepción del estado de salud: ${formData.animo_percepcionSalud || '(No ingresado)'}\n`;
     anamnesis += `Ideación Suicida: ${formData.animo_ideacionSuicida}\n`;
+    anamnesis += `Delirios: ${formData.delirios || 'Niega'}\n`;
+    anamnesis += `Dolor: ${formData.dolor || 'Niega'}\n`;
     anamnesis += `Espiritualidad: ${formData.espiritualidad || '(No ingresado)'}\n\n`;
 
     anamnesis += `DIMENSIÓN SOCIAL, FAMILIAR Y COMUNITARIA:\n`;
@@ -2077,6 +2096,8 @@ export const FichaIngresoPadds: React.FC<FichaIngresoPaddsProps> = ({ onBackToMe
             animo_habitoSueno: formData.animo_habitoSueno,
             animo_percepcionSalud: formData.animo_percepcionSalud,
             animo_ideacionSuicida: formData.animo_ideacionSuicida,
+            delirios: formData.delirios,
+            dolor: formData.dolor,
             espiritualidad: formData.espiritualidad,
             escolaridad: formData.escolaridad,
             ocupacion: formData.ocupacion,
@@ -3212,6 +3233,10 @@ export const FichaIngresoPadds: React.FC<FichaIngresoPaddsProps> = ({ onBackToMe
                     <FormField label="Hábito de sueño" id="animo_habitoSueno" name="animo_habitoSueno" value={formData.animo_habitoSueno || ''} onChange={handleChange} isTextArea rows={2} placeholder="Describir hábito de sueño..." />
                     <FormField label="Percepción del estado de salud" id="animo_percepcionSalud" name="animo_percepcionSalud" value={formData.animo_percepcionSalud || ''} onChange={handleChange} isTextArea rows={2} placeholder="Describir percepción del estado de salud..." />
                     {renderAnimoSuicidaCheckbox()}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                      {renderAntecedentCheckbox("Delirios", "delirios", "Detalle de delirios o alteraciones sensoperceptivas...")}
+                      {renderAntecedentCheckbox("Dolor", "dolor", "Detalle de localización, tipo e intensidad del dolor...")}
+                    </div>
                     <div className="mt-2">
                       <div className="flex items-end gap-3 mb-0">
                         <div className="flex-grow">

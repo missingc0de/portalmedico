@@ -7,6 +7,7 @@ import { FormData, OrdenExamenRadiologicoFormData, CertificadoEscolarFormData, D
 import { formatRutChilean } from '../components/RutInput'; // Import the formatter
 import { labCategoriesConfig, LabTestCategory, labTestDetails } from '../data/labTestData'; // Import the configuration
 import { imagingTestDetails } from '../data/imagingTestData';
+import { getPautaById } from '../data/pautasAlimentariasData';
 
 const LOGO_LEFT_URL = '/images/img_coquimbo.png'; // CESFAM San Juan logo
 const LOGO_RIGHT_URL = '/images/img_muni.png';
@@ -1896,10 +1897,33 @@ export const generateAtencionResumenPdf = async (data: any, user: User, options?
         
         const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
         const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+        const helveticaOblique = await pdfDoc.embedFont(StandardFonts.HelveticaOblique);
         
         const pages = pdfDoc.getPages();
         const firstPage = pages[0];
         const { width, height } = firstPage.getSize();
+
+        // Pauta alimentaria check (generates second page only if defined)
+        const pautaId = data.pautaAlimentariaId;
+        const preset = pautaId ? getPautaById(pautaId) : undefined;
+        const pautaNombre = (data.pautaAlimentariaNombre || preset?.nombre || '').trim();
+        const pautaFavorecer = (data.pautaAlimentariaFavorecer || (preset ? preset.alimentosFavorecer.map((f: string) => `• ${f}`).join('\n') : '')).trim();
+        const pautaEvitar = (data.pautaAlimentariaEvitar || (preset ? preset.alimentosEvitar.map((e: string) => `• ${e}`).join('\n') : '')).trim();
+        const pautaRecomendaciones = (data.pautaAlimentariaRecomendaciones || (preset ? preset.recomendacionesGenerales.map((r: string) => `• ${r}`).join('\n') : '')).trim();
+
+        const hasPautaAlimentaria = Boolean(
+            (pautaId && pautaId.trim() !== '') ||
+            (pautaNombre && pautaNombre !== '') ||
+            (pautaFavorecer && pautaFavorecer !== '') ||
+            (pautaEvitar && pautaEvitar !== '')
+        );
+
+        let secondPage: any = null;
+        if (hasPautaAlimentaria) {
+            // Copy clean base template with institutional logos & margins for Page 2
+            const [copiedPage] = await pdfDoc.copyPages(pdfDoc, [0]);
+            secondPage = pdfDoc.addPage(copiedPage);
+        }
         
         const today = getChileDate();
         const formattedDate = getChileDDMMYYYY(today);
@@ -2049,6 +2073,180 @@ export const generateAtencionResumenPdf = async (data: any, user: User, options?
                 size: 13,
                 font: helveticaBold,
                 color: rgb(0, 0, 0),
+            });
+        }
+
+        // Render Page 2: Pauta Alimentaria (only if defined)
+        if (secondPage && hasPautaAlimentaria) {
+            const drawTextOnPage = (
+                page: any,
+                text: string,
+                x: number,
+                startY: number,
+                font: any,
+                size: number,
+                maxWidth: number,
+                color = rgb(0, 0, 0),
+                lineSpacing = 3
+            ) => {
+                if (!text || typeof text !== 'string') return startY;
+                const lines = text.split('\n');
+                let currentY = startY;
+
+                for (const rawLine of lines) {
+                    const trimmed = rawLine.trim();
+                    if (!trimmed) {
+                        currentY -= (size * 0.4);
+                        continue;
+                    }
+                    const words = trimmed.split(' ');
+                    let line = '';
+                    for (let i = 0; i < words.length; i++) {
+                        const testLine = line + words[i] + ' ';
+                        const testWidth = font.widthOfTextAtSize(testLine, size);
+                        if (testWidth > maxWidth && i > 0) {
+                            page.drawText(line.trim(), { x, y: currentY, size, font, color });
+                            line = words[i] + ' ';
+                            currentY -= (size + lineSpacing);
+                        } else {
+                            line = testLine;
+                        }
+                    }
+                    if (line.trim()) {
+                        page.drawText(line.trim(), { x, y: currentY, size, font, color });
+                        currentY -= (size + lineSpacing);
+                    }
+                    currentY -= 2;
+                }
+                return currentY;
+            };
+
+            const marginX2 = 50;
+            const availableW2 = width - (marginX2 * 2);
+            let y2 = height - 120; // 672 pt
+
+            // Page 2 Title
+            const pautaHeaderTitle = 'PAUTA ALIMENTARIA Y RECOMENDACIONES NUTRICIONALES';
+            secondPage.drawText(pautaHeaderTitle, {
+                x: width / 2 - (helveticaBold.widthOfTextAtSize(pautaHeaderTitle, 12.5) / 2),
+                y: y2,
+                size: 12.5,
+                font: helveticaBold,
+                color: rgb(0.04, 0.4, 0.61),
+            });
+            y2 -= 24;
+
+            // Diet Name Banner
+            const bannerHeight = 22;
+            secondPage.drawRectangle({
+                x: marginX2,
+                y: y2 - 4,
+                width: availableW2,
+                height: bannerHeight,
+                color: rgb(0.92, 0.95, 0.98),
+            });
+            const bannerTitle = `PAUTA INDICADA: ${pautaNombre.toUpperCase()}`;
+            secondPage.drawText(bannerTitle, {
+                x: marginX2 + 8,
+                y: y2 + 3,
+                size: 9.5,
+                font: helveticaBold,
+                color: rgb(0.04, 0.4, 0.61),
+            });
+            y2 -= (bannerHeight + 8);
+
+            // Subtitle / Objective if available
+            if (preset?.descripcion) {
+                y2 = drawTextOnPage(secondPage, preset.descripcion, marginX2 + 2, y2, helveticaOblique, 8.5, availableW2 - 4, rgb(0.32, 0.32, 0.32), 3);
+                y2 -= 6;
+            }
+
+            // Columns Setup: Side-by-Side Favorecer vs Evitar
+            const gap = 14;
+            const colW = (availableW2 - gap) / 2;
+            const col1X = marginX2;
+            const col2X = marginX2 + colW + gap;
+            const colHeaderH = 18;
+
+            // Column 1 Header (Favorecer - Green)
+            secondPage.drawRectangle({
+                x: col1X,
+                y: y2 - 4,
+                width: colW,
+                height: colHeaderH,
+                color: rgb(0.88, 0.96, 0.9),
+            });
+            secondPage.drawText('ALIMENTOS A FAVORECER / RECOMENDADOS', {
+                x: col1X + 8,
+                y: y2 + 2,
+                size: 8.5,
+                font: helveticaBold,
+                color: rgb(0.08, 0.48, 0.2),
+            });
+
+            // Column 2 Header (Evitar - Red)
+            secondPage.drawRectangle({
+                x: col2X,
+                y: y2 - 4,
+                width: colW,
+                height: colHeaderH,
+                color: rgb(0.99, 0.91, 0.91),
+            });
+            secondPage.drawText('ALIMENTOS A EVITAR / DESACONSEJADOS', {
+                x: col2X + 8,
+                y: y2 + 2,
+                size: 8.5,
+                font: helveticaBold,
+                color: rgb(0.72, 0.12, 0.12),
+            });
+
+            y2 -= (colHeaderH + 8);
+            const contentStartY = y2;
+
+            // Draw Column 1 Items
+            const endY1 = drawTextOnPage(secondPage, pautaFavorecer || '• No especificado', col1X + 4, contentStartY, helveticaFont, 8, colW - 8, rgb(0.12, 0.12, 0.12), 2.5);
+
+            // Draw Column 2 Items
+            const endY2 = drawTextOnPage(secondPage, pautaEvitar || '• No especificado', col2X + 4, contentStartY, helveticaFont, 8, colW - 8, rgb(0.12, 0.12, 0.12), 2.5);
+
+            y2 = Math.min(endY1, endY2) - 14;
+
+            // Section: Recomendaciones Generales
+            if (pautaRecomendaciones && pautaRecomendaciones.trim()) {
+                const recHeaderH = 18;
+                secondPage.drawRectangle({
+                    x: marginX2,
+                    y: y2 - 4,
+                    width: availableW2,
+                    height: recHeaderH,
+                    color: rgb(0.93, 0.95, 0.98),
+                });
+                secondPage.drawText('RECOMENDACIONES GENERALES Y CONSEJOS CLAVE', {
+                    x: marginX2 + 8,
+                    y: y2 + 2,
+                    size: 8.5,
+                    font: helveticaBold,
+                    color: rgb(0.15, 0.35, 0.55),
+                });
+                y2 -= (recHeaderH + 8);
+
+                y2 = drawTextOnPage(secondPage, pautaRecomendaciones, marginX2 + 4, y2, helveticaFont, 8, availableW2 - 8, rgb(0.12, 0.12, 0.12), 2.5);
+            }
+
+            // Footer line & text
+            const footerLine = 'Documento de educación y apoyo clínico nutricional complementario al Plan de Cuidado Integral (PCI) - CESFAM San Juan Coquimbo';
+            secondPage.drawLine({
+                start: { x: marginX2, y: 55 },
+                end: { x: marginX2 + availableW2, y: 55 },
+                thickness: 0.5,
+                color: rgb(0.8, 0.8, 0.8),
+            });
+            secondPage.drawText(footerLine, {
+                x: width / 2 - (helveticaOblique.widthOfTextAtSize(footerLine, 7.5) / 2),
+                y: 44,
+                size: 7.5,
+                font: helveticaOblique,
+                color: rgb(0.45, 0.45, 0.45),
             });
         }
 

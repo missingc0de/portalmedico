@@ -1072,6 +1072,11 @@ export interface FichaPreingresoEcicepFormData {
   adherenciaTratamientoPresentes: boolean;
   adherenciaTratamientoDetalle: string;
   encuestaAlimentaria: string;
+  pautaAlimentariaId?: string;
+  pautaAlimentariaNombre?: string;
+  pautaAlimentariaFavorecer?: string;
+  pautaAlimentariaEvitar?: string;
+  pautaAlimentariaRecomendaciones?: string;
   adhierePautaNutricional: string;
   escolaridad: string;
   ocupacion: string;
@@ -1411,6 +1416,13 @@ export interface FichaControlSalaEraFormData {
   planOtros: string;
   espirometriaResultados: any[];
   espirometriaInterpretacion: string;
+  // PCI y Toma de Decisiones Compartidas (ERA / IRA)
+  pccPersonaFamilia?: string;
+  pccEquipoSalud?: string;
+  tomaDecisionesCompartidas?: string;
+  opcionesConversadas?: string;
+  pccObjetivos?: PccObjetivo[];
+  indicaciones?: string;
 }
 
 export interface FichaControlSalaIraFormData extends FichaControlSalaEraFormData {
@@ -1501,6 +1513,11 @@ export interface FichaControlEcicepFormData {
   habitoDefecatorio: string;
   actividadSexual: string;
   encuestaAlimentaria: string;
+  pautaAlimentariaId?: string;
+  pautaAlimentariaNombre?: string;
+  pautaAlimentariaFavorecer?: string;
+  pautaAlimentariaEvitar?: string;
+  pautaAlimentariaRecomendaciones?: string;
   estadoSueno: string;
   horasSueno: string;
   dificultadConciliacionPresente: boolean;
@@ -1621,6 +1638,11 @@ export interface FichaIngresoEcicepFormData {
   habitoDefecatorio: string;
   actividadSexualProteccion: string;
   encuestaAlimentaria: string;
+  pautaAlimentariaId?: string;
+  pautaAlimentariaNombre?: string;
+  pautaAlimentariaFavorecer?: string;
+  pautaAlimentariaEvitar?: string;
+  pautaAlimentariaRecomendaciones?: string;
   estadoSueno: string;
   horasSueno: string;
   dificultadConciliacion: string;
@@ -1734,6 +1756,9 @@ export interface FichaIngresoEcicepFormData {
 
 
 export interface FichaIngresoPaddsFormData extends FichaIngresoEcicepFormData {
+  delirios?: string;
+  dolor?: string;
+
   // Piel, lesiones por presión y cuidados corporales
   padds_barthel_calculado?: string;
   padds_barthel_detalle?: string;
@@ -1802,6 +1827,10 @@ export interface FichaIngresoPaddsFormData extends FichaIngresoEcicepFormData {
 
 export interface FichaControlPaddsFormData extends FichaControlEcicepFormData {
   duplaProfesionalesTexto?: string;
+  haSufridoDelirios?: string;
+  haSufridoDeliriosAclaracion?: string;
+  haSufridoDolor?: string;
+  haSufridoDolorAclaracion?: string;
   [key: string]: any;
 }
 

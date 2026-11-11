@@ -1,4 +1,4 @@
-﻿# PowerShell Script to create the official Windows Setup Installer for PORTAL MÉDICO v1.4.29
+﻿# PowerShell Script to create the official Windows Setup Installer for PORTAL MÉDICO v1.4.30
 
 $WorkspaceDir = "c:\Users\missi\.gemini\antigravity\scratch\PORTALMEDICO_CLIENTEWEB"
 Set-Location $WorkspaceDir
@@ -25,7 +25,7 @@ $HasIcon = Test-Path $IconPath
 
 $SourceFile = Join-Path $InstallerDir "InstallerSource.cs"
 $PayloadExe = Join-Path $WorkspaceDir "dist-python\run_webview.exe"
-$OutInstallerExe = Join-Path $InstallerDir "PortalMedico_Setup_v1.4.29.exe"
+$OutInstallerExe = Join-Path $InstallerDir "PortalMedico_Setup_v1.4.30.exe"
 
 $CscPath = "C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
 $CscArgs = @("/target:winexe", "/codepage:65001", "/out:$OutInstallerExe", "/r:System.dll", "/r:System.Windows.Forms.dll", "/r:System.Drawing.dll", "/r:System.Core.dll", "/resource:$PayloadExe,PortalMedico.exe")

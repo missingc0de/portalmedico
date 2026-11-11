@@ -85,10 +85,17 @@ export interface PatientRecord {
   animo_habitoSueno?: string;
   animo_percepcionSalud?: string;
   animo_ideacionSuicida?: string;
+  delirios?: string;
+  dolor?: string;
   espiritualidad?: string;
 
   // Salud Social & Estilo de Vida
   encuestaAlimentaria?: string;
+  pautaAlimentariaId?: string;
+  pautaAlimentariaNombre?: string;
+  pautaAlimentariaFavorecer?: string;
+  pautaAlimentariaEvitar?: string;
+  pautaAlimentariaRecomendaciones?: string;
   escolaridad?: string;
   ocupacion?: string;
   antecedentesFamiliaresRelevantes?: string;

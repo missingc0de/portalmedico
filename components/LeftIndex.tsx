@@ -49,6 +49,7 @@ const SECTIONS: SectionItem[] = [
   { id: 'sec-historia-era', label: 'Sintomatología' },
   { id: 'sec-disnea-era', label: 'Escala de disnea mMRC' },
   { id: 'sec-examenes-era', label: 'Exámenes y exploración física' },
+  { id: 'sec-pci-era', label: 'Plan de Cuidado Integral (PCI)' },
   { id: 'sec-plan-era', label: 'Próximo control e indicaciones' },
 
   // Salud Mental

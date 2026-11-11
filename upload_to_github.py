@@ -31,8 +31,8 @@ def main():
     }
 
     repo = 'missingc0de/portalmedico'
-    tag = 'v1.4.29'
-    version = '1.4.29'
+    tag = 'v1.4.30'
+    version = '1.4.30'
     
     release_id = None
     upload_url_base = None
@@ -52,11 +52,10 @@ def main():
             'name': f'Portal Médico {tag}',
             'body': (
                 f"### Novedades {tag}:\n"
-                "- **Corrección del Nombre de la App:** Nombre oficial PORTAL MÉDICO normalizado con soporte UTF-8 sin caracteres corruptos en el instalador, accesos directos, registro de Windows y en la interfaz de la aplicación.\n"
-                "- **Nueva Ficha Control PADDS:** Integración completa de objetivos y planes consensuados PADDS, citación inteligente de equipo de cabecera con médico al inicio, cálculo de estratificación y modal de pacientes.\n"
-                "- **Ficha Ingreso PADDS:** Optimización de antecedentes, evaluación de escala Zarit, ayudas técnicas y precompletados clínicos.\n"
-                "- **Equipo de Cabecera:** Actualización y renombrado de ficha Visita Domiciliaria a Equipo de Cabecera en todas las vistas y reportes.\n"
-                "- **Webview Bundling:** Ejecutable e instalador oficial v1.4.29 optimizado con WebView2 para Windows."
+                "- **Pauta Alimentaria y Recomendaciones Nutricionales (ECICEP):** Nuevo menú de pautas desplegado por defecto con dietas clínicas especializadas (Enfermedad Renal Crónica, Alergia/Urticaria, Colelitiasis, APLV, Celiaquía, etc.) y generación de segunda página PDF con formato limpio.\n"
+                "- **PCI y Toma de Decisiones Compartidas en Sala ERA/IRA:** Planes consensuados, opciones conversadas y acuerdos clínicos respiratorios específicos integrados en ficha y resumen.\n"
+                "- **Ingreso y Control PADDS:** Nuevos campos de 'Delirios' y 'Dolor' con opción de 'Niega' por defecto en Ánimo de Ingreso PADDS, y evaluación de Sí/No con aclaración en Control PADDS.\n"
+                "- **Webview Bundling:** Ejecutable e instalador oficial v1.4.30 optimizado con WebView2 para Windows."
             ),
             'draft': False,
             'prerelease': False,

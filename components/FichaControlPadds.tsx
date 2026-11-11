@@ -302,6 +302,10 @@ const initialFormData: FichaControlPaddsFormData = {
   ramAclaracion: '',
   requiereEducacionFarmacos: 'No',
   requiereEducacionFarmacosAclaracion: '',
+  haSufridoDelirios: 'No',
+  haSufridoDeliriosAclaracion: '',
+  haSufridoDolor: 'No',
+  haSufridoDolorAclaracion: '',
   opcionesConversadas: '',
   planConsensuadoAnterior: '',
   objetivosAnteriores: [
@@ -858,7 +862,9 @@ export const FichaControlPadds: React.FC<FichaControlPaddsProps> = ({
     anamnesis += `¿Hubo cambios en su dinámica familiar? ${formatSiNo(formData.cambiosDinamicaFamiliar, formData.cambiosDinamicaFamiliarAclaracion)}\n`;
     anamnesis += `¿Tuvo controles extrasistema? ${formatSiNo(formData.controlesExtrasistema, formData.controlesExtrasistemaAclaracion)}\n`;
     anamnesis += `¿Sufrió RAM a medicamentos? ${formatSiNo(formData.ram, formData.ramAclaracion)}\n`;
-    anamnesis += `¿Requiere educación sobre fármacos? ${formatSiNo(formData.requiereEducacionFarmacos, formData.requiereEducacionFarmacosAclaracion)}\n\n`;
+    anamnesis += `¿Requiere educación sobre fármacos? ${formatSiNo(formData.requiereEducacionFarmacos, formData.requiereEducacionFarmacosAclaracion)}\n`;
+    anamnesis += `¿Ha sufrido delirios? ${formatSiNo(formData.haSufridoDelirios, formData.haSufridoDeliriosAclaracion)}\n`;
+    anamnesis += `¿Ha sufrido dolor? ${formatSiNo(formData.haSufridoDolor, formData.haSufridoDolorAclaracion)}\n\n`;
 
     anamnesis += `PLAN Y METAS ANTERIORES:\n`;
     if (formData.objetivosAnteriores && formData.objetivosAnteriores.length > 0) {
@@ -1670,6 +1676,18 @@ export const FichaControlPadds: React.FC<FichaControlPaddsProps> = ({
                       {renderRadioGroup("¿Requiere educación sobre fármacos?", "requiereEducacionFarmacos", [{ value: "Sí", label: "Sí" }, { value: "No", label: "No" }])}
                       {formData.requiereEducacionFarmacos === 'Sí' && (
                         <FormField label="Aclaración:" id="requiereEducacionFarmacosAclaracion" name="requiereEducacionFarmacosAclaracion" value={formData.requiereEducacionFarmacosAclaracion} onChange={handleChange as any} isTextArea rows={1} containerClassName="-mt-2 mb-4" placeholder="¿Sobre qué fármaco o tema?" />
+                      )}
+                    </div>
+                    <div>
+                      {renderRadioGroup("¿Ha sufrido delirios?", "haSufridoDelirios", [{ value: "Sí", label: "Sí" }, { value: "No", label: "No" }])}
+                      {formData.haSufridoDelirios === 'Sí' && (
+                        <FormField label="Aclaración:" id="haSufridoDeliriosAclaracion" name="haSufridoDeliriosAclaracion" value={formData.haSufridoDeliriosAclaracion} onChange={handleChange as any} isTextArea rows={1} containerClassName="-mt-2 mb-4" placeholder="¿Qué tipo de delirios y frecuencia?" />
+                      )}
+                    </div>
+                    <div>
+                      {renderRadioGroup("¿Ha sufrido dolor?", "haSufridoDolor", [{ value: "Sí", label: "Sí" }, { value: "No", label: "No" }])}
+                      {formData.haSufridoDolor === 'Sí' && (
+                        <FormField label="Aclaración:" id="haSufridoDolorAclaracion" name="haSufridoDolorAclaracion" value={formData.haSufridoDolorAclaracion} onChange={handleChange as any} isTextArea rows={1} containerClassName="-mt-2 mb-4" placeholder="Localización, intensidad y manejo actual del dolor..." />
                       )}
                     </div>
                   </div>

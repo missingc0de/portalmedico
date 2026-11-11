@@ -15,6 +15,7 @@ import UserAutocomplete from './UserAutocomplete';
 import { AlertTriangle, X, Printer, ExternalLink, Trash2, FileText, CheckSquare } from 'lucide-react';
 import SmartAtencionVigenteInput, { SmartAtencionOption } from './SmartAtencionVigenteInput';
 import SmartDietaTextarea from './SmartDietaTextarea';
+import PautaAlimentariaSelector from './PautaAlimentariaSelector';
 
 const initialIndicaciones = `- Se solicitan exámenes.
 - Se renueva su receta crónica.
@@ -280,6 +281,11 @@ const initialFormData: FichaPreingresoEcicepFormData = {
   adherenciaTratamientoPresentes: false,
   adherenciaTratamientoDetalle: '',
   encuestaAlimentaria: '- PAN: \n- LÍQUIDOS: \n- LÁCTEOS: \n- INFUSIONES: \n- AZÚCAR: \n- FRUTAS: \n- ENSALADAS: \n- ARROZ/FIDEOS: \n- GOLOSINAS: \n',
+  pautaAlimentariaId: '',
+  pautaAlimentariaNombre: '',
+  pautaAlimentariaFavorecer: '',
+  pautaAlimentariaEvitar: '',
+  pautaAlimentariaRecomendaciones: '',
   adhierePautaNutricional: '',
   escolaridad: '',
   ocupacion: '',
@@ -1641,6 +1647,24 @@ const FichaPreingresoEcicep: React.FC<FichaPreingresoEcicepProps> = ({ onBackToM
                     value={formData.encuestaAlimentaria || ''}
                     onChange={(val) => setFormData(prev => ({ ...prev, encuestaAlimentaria: val }))}
                     rows={10}
+                  />
+
+                  <PautaAlimentariaSelector
+                    pautaId={formData.pautaAlimentariaId || ''}
+                    pautaNombre={formData.pautaAlimentariaNombre || ''}
+                    pautaFavorecer={formData.pautaAlimentariaFavorecer || ''}
+                    pautaEvitar={formData.pautaAlimentariaEvitar || ''}
+                    pautaRecomendaciones={formData.pautaAlimentariaRecomendaciones || ''}
+                    onChange={({ id, nombre, favorecer, evitar, recomendaciones }) => {
+                      setFormData(prev => ({
+                        ...prev,
+                        pautaAlimentariaId: id,
+                        pautaAlimentariaNombre: nombre,
+                        pautaAlimentariaFavorecer: favorecer,
+                        pautaAlimentariaEvitar: evitar,
+                        pautaAlimentariaRecomendaciones: recomendaciones,
+                      }));
+                    }}
                   />
                 </section>
 
