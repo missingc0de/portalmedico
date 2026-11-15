@@ -2236,13 +2236,13 @@ export const FichaIngresoEcicep: React.FC<FichaIngresoEcicepProps> = ({ onBackTo
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-2.5 w-full items-start h-auto lg:h-[calc(100vh-72px)] lg:overflow-hidden relative">
           {/* Columna Central: Formulario (col-span-8) - Única columna scrolleable */}
-          <div className="lg:col-span-8 h-auto lg:h-full lg:overflow-y-auto pr-2 custom-scrollbar flex flex-col gap-4">
+          <div className="lg:col-span-8 h-auto lg:h-full lg:overflow-y-auto pr-1 custom-scrollbar flex flex-col gap-4">
                 <form onSubmit={(e) => e.preventDefault()} className="bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-sm flex flex-col gap-4 pb-16">
 
 
 
-                <section id="sec-identificacion" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-2">
-                  <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-2">Identificación</h3>
+                <section id="sec-identificacion" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2">
+                  <h3 className="text-lg font-semibold mb-1.5 text-sky-700 border-b border-sky-200 pb-1">Identificación</h3>
 
                   <div className="mt-1">
                     <label className="block text-sm font-medium text-slate-700 mb-1.5">Dupla Profesional:</label>
@@ -2617,8 +2617,8 @@ export const FichaIngresoEcicep: React.FC<FichaIngresoEcicepProps> = ({ onBackTo
                   </div>
                 </section>
 
-                <section id="sec-antecedentes" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-2">
-                  <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-2">Antecedentes Generales</h3>
+                <section id="sec-antecedentes" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2">
+                  <h3 className="text-lg font-semibold mb-1.5 text-sky-700 border-b border-sky-200 pb-1">Antecedentes Generales</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                       label="Edad"
@@ -2698,7 +2698,7 @@ export const FichaIngresoEcicep: React.FC<FichaIngresoEcicepProps> = ({ onBackTo
 
 
 
-                <section id="sec-atenciones" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-4"><h3 className="text-lg font-semibold mb-3 text-sky-700 border-b border-sky-200 pb-2">Atenciones Vigentes</h3>
+                <section id="sec-atenciones" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-4"><h3 className="text-lg font-semibold mb-1.5 text-sky-700 border-b border-sky-200 pb-1">Atenciones Vigentes</h3>
                   {[
                     { label: "EMPAM", name: "empam", placeholder: "Escribe @ para seleccionar estado (NORMAL, ALTERADO, NO VIGENTE)...", options: empamSmartOptions },
                     { label: "Fondo de ojo", name: "fondoOjo", placeholder: "Escribe @ para seleccionar estado (NORMAL, ALTERADO, NO VIGENTE)...", options: fondoOjoSmartOptions },
@@ -2740,8 +2740,8 @@ export const FichaIngresoEcicep: React.FC<FichaIngresoEcicepProps> = ({ onBackTo
                 </section>
 
                 {formData.sexo === 'Femenino' && (
-                  <section id="sec-gineco" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-4">
-                    <h3 className="text-lg font-semibold mb-3 text-sky-700 border-b border-sky-200 pb-2">Gineco-Obstetricia</h3>
+                  <section id="sec-gineco" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-4">
+                    <h3 className="text-lg font-semibold mb-1.5 text-sky-700 border-b border-sky-200 pb-1">Gineco-Obstetricia</h3>
                     <FormField label="Antecedentes Gineco-Obstétricos" id="antecedentesGineco" name="antecedentesGineco" value={formData.antecedentesGineco || ''} onChange={handleChange} isTextArea rows={2} />
                     <FormField label="FUM (Fecha Última Menstruación)" id="fum" name="fum" value={formData.fum || ''} onChange={handleChange} placeholder="Ej: 15-05-2023 o 'Hace 2 meses'" />
                     <FormField label="Síntomas Climaterio" id="sintomasClimaterio" name="sintomasClimaterio" value={formData.sintomasClimaterio || ''} onChange={handleChange} isTextArea rows={2} />
@@ -2750,8 +2750,8 @@ export const FichaIngresoEcicep: React.FC<FichaIngresoEcicepProps> = ({ onBackTo
                   </section>
                 )}
 
-                <section id="sec-habitos" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-2">
-                  <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-2">Hábitos</h3>
+                <section id="sec-habitos" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2">
+                  <h3 className="text-lg font-semibold mb-1.5 text-sky-700 border-b border-sky-200 pb-1">Hábitos</h3>
                   {habitosCheckboxConfig.map(renderCheckboxClarificationField)}
 
                   <div className="flex items-end gap-3 mb-0">
@@ -2801,8 +2801,8 @@ export const FichaIngresoEcicep: React.FC<FichaIngresoEcicepProps> = ({ onBackTo
                   <FormField label="Actividad Sexual (medidas de protección)" id="actividadSexualProteccion" name="actividadSexualProteccion" value={formData.actividadSexualProteccion || ''} onChange={handleChange} isTextArea rows={2} />
                 </section>
 
-                <section id="sec-alimentacion" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-2">
-                  <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-2">Alimentación</h3>
+                <section id="sec-alimentacion" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2">
+                  <h3 className="text-lg font-semibold mb-1.5 text-sky-700 border-b border-sky-200 pb-1">Alimentación</h3>
                   <SmartDietaTextarea
                     label="Encuesta alimentaria"
                     id="encuestaAlimentaria"
@@ -2832,8 +2832,8 @@ export const FichaIngresoEcicep: React.FC<FichaIngresoEcicepProps> = ({ onBackTo
                   />
                 </section>
 
-                <section id="sec-animo" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-2">
-                  <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-2">Ánimo</h3>
+                <section id="sec-animo" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2">
+                  <h3 className="text-lg font-semibold mb-1.5 text-sky-700 border-b border-sky-200 pb-1">Ánimo</h3>
                   <div className="space-y-2">
                     <button
                       type="button"
@@ -2925,8 +2925,8 @@ export const FichaIngresoEcicep: React.FC<FichaIngresoEcicepProps> = ({ onBackTo
                 </section>
 
 
-                <section id="sec-dimension-social" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-2">
-                  <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-2">Dimensión Social, Familiar y Comunitaria</h3>
+                <section id="sec-dimension-social" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2">
+                  <h3 className="text-lg font-semibold mb-1.5 text-sky-700 border-b border-sky-200 pb-1">Dimensión Social, Familiar y Comunitaria</h3>
                   <div className="flex items-end gap-3 mb-0">
                     <div className="flex-grow">
                       <label htmlFor="escolaridad" className="block text-sm font-medium text-slate-700 mb-1.5">Escolaridad</label>
@@ -3040,9 +3040,9 @@ export const FichaIngresoEcicep: React.FC<FichaIngresoEcicepProps> = ({ onBackTo
 
                 </section>
 
-                <section id="sec-estudios" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-2">
+                <section id="sec-estudios" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2">
                   <div className="flex justify-between items-center mb-1">
-                    <h3 className="text-lg font-semibold text-sky-700 border-b border-sky-200 pb-2 flex-grow">Estudios Recientes (Lab, EKG, Imágenes)</h3>
+                    <h3 className="text-lg font-semibold text-sky-700 border-b border-sky-200 pb-1 flex-grow">Estudios Recientes (Lab, EKG, Imágenes)</h3>
                     <input type="file" ref={labFileRef} onChange={handleLabFileChange} className="hidden" accept="application/pdf,image/*" />
                     <input type="file" ref={ekgFileRef} onChange={handleEkgFileChange} className="hidden" accept="application/pdf,image/*" />
                     <input type="file" ref={imgFileRef} onChange={handleImgFileChange} className="hidden" accept="application/pdf,image/*" />
@@ -3089,8 +3089,8 @@ export const FichaIngresoEcicep: React.FC<FichaIngresoEcicepProps> = ({ onBackTo
                   <textarea value={formData.otrasImagenesResultados || ''} onChange={handleChange as any} name="otrasImagenesResultados" className="w-full p-2 bg-white border border-slate-300 rounded-md shadow-sm custom-scrollbar font-sans text-sm leading-normal text-slate-800 focus:ring-1 focus:ring-sky-500 focus:border-sky-500 min-h-[60px]"></textarea>
                 </section>
 
-                <section id="sec-examen-fisico" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-2">
-                  <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-2">Examen Físico</h3>
+                <section id="sec-examen-fisico" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2">
+                  <h3 className="text-lg font-semibold mb-1.5 text-sky-700 border-b border-sky-200 pb-1">Examen Físico</h3>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5">
                     <FormField label="Peso (kg)" id="peso" name="peso" value={formData.peso || ''} onChange={handleChange} type="number" step="0.1" inputClassName="!h-[42px]" />
                     <FormField label="Talla (cm)" id="talla" name="talla" value={formData.talla || ''} onChange={handleChange} type="number" inputClassName="!h-[42px]" />
@@ -3138,8 +3138,8 @@ export const FichaIngresoEcicep: React.FC<FichaIngresoEcicepProps> = ({ onBackTo
                   )}
                 </section>
 
-                <section id="sec-valoracion" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-2">
-                  <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-2">VALORACIÓN INTEGRAL</h3>
+                <section id="sec-valoracion" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2">
+                  <h3 className="text-lg font-semibold mb-1.5 text-sky-700 border-b border-sky-200 pb-1">VALORACIÓN INTEGRAL</h3>
                   <div className="space-y-2">
                     <div>
                       <label htmlFor="integralIndividual" className="block text-sm font-medium text-slate-700 mb-1.5">Ciclo vital individual:</label>
@@ -3184,7 +3184,7 @@ export const FichaIngresoEcicep: React.FC<FichaIngresoEcicepProps> = ({ onBackTo
                   </div>
                 </section>
 
-                <section id="sec-pci" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-2"><h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-2">PLAN DE CUIDADO INTEGRAL (PCI) Y TOMA DE DECISIONES COMPARTIDAS</h3>
+                <section id="sec-pci" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-3"><h3 className="text-lg font-semibold mb-1.5 text-sky-700 border-b border-sky-200 pb-1">PLAN DE CUIDADO INTEGRAL (PCI) Y TOMA DE DECISIONES COMPARTIDAS</h3>
 
                   <div>
                     <h4 className="text-md font-bold text-slate-800 mb-1.5 uppercase text-xs tracking-wider">PROBLEMAS VISUALIZADOS</h4>
@@ -3309,18 +3309,22 @@ export const FichaIngresoEcicep: React.FC<FichaIngresoEcicepProps> = ({ onBackTo
                       </div>
                     </div>
 
-                    <div className="space-y-6">
+                    <div className="space-y-3 mt-2">
                       {formData.pccObjetivos.map((obj, index) => (
-                        <div key={index} className="p-4 bg-white border-2 border-slate-200 rounded-lg shadow-sm relative animate-fadeIn">
-                          <button
-                            type="button"
-                            onClick={() => handleRemovePccObjetivo(index)}
-                            className="absolute top-2 right-2 text-red-400 hover:text-red-600 p-1"
-                            title="Eliminar objetivo"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                          </button>
-                          <h5 className="text-sm font-bold text-sky-800 mb-4 bg-sky-50 px-2 py-1 inline-block rounded">OBJETIVO/META #${index + 1}</h5>
+                        <div key={index} className="p-3.5 bg-white border border-slate-200 rounded-lg shadow-xs relative space-y-2.5 animate-fadeIn">
+                          <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
+                            <span className="text-xs font-bold text-sky-800 bg-sky-50 px-2 py-0.5 rounded border border-sky-100">
+                              OBJETIVO / META #{index + 1}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleRemovePccObjetivo(index)}
+                              className="text-rose-500 hover:text-rose-700 p-1 rounded hover:bg-rose-50 transition-colors cursor-pointer"
+                              title="Eliminar objetivo"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                           <div className="space-y-4">
                             <AutoExpandingTextArea
                               label="Objetivo"
@@ -3396,7 +3400,7 @@ export const FichaIngresoEcicep: React.FC<FichaIngresoEcicepProps> = ({ onBackTo
 
                 </section>
 
-                <section id="sec-proximo-control" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-0"><h3 className="text-lg font-semibold mb-2 text-sky-700 border-b border-sky-200 pb-2">Próximo Control</h3>
+                <section id="sec-proximo-control" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2"><h3 className="text-lg font-semibold mb-1.5 text-sky-700 border-b border-sky-200 pb-1">Próximo Control</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label htmlFor="planProximoControlTiempo" className="block text-sm font-medium text-slate-700 mb-1.5">Tiempo para próximo control</label>
@@ -3424,7 +3428,7 @@ export const FichaIngresoEcicep: React.FC<FichaIngresoEcicepProps> = ({ onBackTo
                     </div>
                 </section>
 
-                <section id="sec-indicaciones" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-0"><h3 className="text-lg font-semibold mb-2 text-sky-700 border-b border-sky-200 pb-2">Indicaciones Adicionales</h3>
+                <section id="sec-indicaciones" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2"><h3 className="text-lg font-semibold mb-1.5 text-sky-700 border-b border-sky-200 pb-1">Indicaciones Adicionales</h3>
                   <FormField label="" id="indicaciones" name="indicaciones" value={formData.indicaciones || ''} onChange={handleChange} isTextArea rows={4} placeholder="Ingrese indicaciones adicionales o detalles del plan aquí..." />
                 </section>
               </form>
