@@ -31,8 +31,8 @@ def main():
     }
 
     repo = 'missingc0de/portalmedico'
-    tag = 'v1.4.30'
-    version = '1.4.30'
+    tag = 'v1.4.31'
+    version = '1.4.31'
     
     release_id = None
     upload_url_base = None
@@ -52,10 +52,14 @@ def main():
             'name': f'Portal Médico {tag}',
             'body': (
                 f"### Novedades {tag}:\n"
-                "- **Pauta Alimentaria y Recomendaciones Nutricionales (ECICEP):** Nuevo menú de pautas desplegado por defecto con dietas clínicas especializadas (Enfermedad Renal Crónica, Alergia/Urticaria, Colelitiasis, APLV, Celiaquía, etc.) y generación de segunda página PDF con formato limpio.\n"
-                "- **PCI y Toma de Decisiones Compartidas en Sala ERA/IRA:** Planes consensuados, opciones conversadas y acuerdos clínicos respiratorios específicos integrados en ficha y resumen.\n"
-                "- **Ingreso y Control PADDS:** Nuevos campos de 'Delirios' y 'Dolor' con opción de 'Niega' por defecto en Ánimo de Ingreso PADDS, y evaluación de Sí/No con aclaración en Control PADDS.\n"
-                "- **Webview Bundling:** Ejecutable e instalador oficial v1.4.30 optimizado con WebView2 para Windows."
+                "- **Enviar a PC (Transferencia Teléfono -> PC):** Nueva función móvil para adjuntar fotos, documentos y texto directamente a la versión de escritorio/navegador.\n"
+                "- **Archivos Recibidos en PC:** Canal dedicado y permanente en Chat Local con ícono de descarga, fecha y hora exacta, copiado rápido y descarga con 1 clic.\n"
+                "- **Guardado Automático en Descargas:** Los archivos y notas (.txt) se descargan de forma 100% automática en la carpeta 'Descargas/Recibidos desde PORTAL MÉDICO' creándola si no existe, y liberando el almacenamiento en la nube al instante.\n"
+                "- **Nuevo Ícono de Grupo General:** Diseño retro inspirado en los dos muñecos clásicos de Windows Live Messenger (WLM).\n"
+                "- **Pautas Alimentarias Autónomas:** Ícono de acceso rápido en barra superior, generación de PDF independiente e incorporación de dietas (Migraña, Metilfenidato, Gastroenteritis, y ERC separada en pre-diálisis y diálisis).\n"
+                "- **Smartfármacos Mejorados:** Insulinas NPH, Toujeo y Apidra con selección interactiva de dosis AM y PM, y nuevos hipoglicemiantes orales (Vildagliptina, Empagliflozina, Dapagliflozina, Linagliptina).\n"
+                "- **Estandarización UI:** Diseño unificado de botones de objetivos y planes predeterminados en todas las fichas clínicas.\n"
+                "- **Webview Bundling:** Ejecutable standalone e instalador oficial v1.4.31 optimizados con WebView2 para Windows."
             ),
             'draft': False,
             'prerelease': False,

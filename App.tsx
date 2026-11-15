@@ -18,6 +18,7 @@ import { RecetaMedicaWindow } from './components/RecetaMedicaWindow';
 import { OrdenLaboratorioWindow } from './components/OrdenLaboratorioWindow';
 import { OrdenImagenologiaWindow } from './components/OrdenImagenologiaWindow';
 import { FichaFirmarGesWindow } from './components/FichaFirmarGesWindow';
+import { PautasAlimentariasWindow } from './components/PautasAlimentariasWindow';
 import OnCallCalendar from './components/OnCallCalendar';
 import MainMenuDashboard from './components/MainMenuDashboard';
 import LoginForm from './components/LoginForm';
@@ -97,11 +98,12 @@ import { DriveEcicepWindow } from './components/DriveEcicepWindow';
 import { NotesWindow } from './components/NotesWindow';
 import { CalculatorWindow } from './components/CalculatorWindow';
 import { LoginToast } from './components/LoginToast';
-import { Home, Users, MessageSquare, Hospital, Menu, ChevronLeft, ClipboardList, BookOpen, Settings, Copy, CloudUpload, Trash2, X } from 'lucide-react';
+import { Home, Users, MessageSquare, Hospital, Menu, ChevronLeft, ClipboardList, BookOpen, Settings, Copy, CloudUpload, Trash2, X, Drumstick } from 'lucide-react';
 import { App as CapApp } from '@capacitor/app';
 import FichasCatalog from './components/FichasCatalog';
 import AppSettingsView from './components/AppSettingsView';
 import { initNotificationChannels, requestNotificationPermission } from './services/notificationService';
+import { listenAndConsumePcTransfers } from './services/pcTransferService';
 
 const MaskedDateInput: React.FC<{ value: string; onChange: (val: string) => void; className?: string }> = ({ value, onChange, className }) => {
   const [localValue, setLocalValue] = useState(value || '');
@@ -839,6 +841,23 @@ const App: React.FC = () => {
     }
   }, [isAuthenticated]);
 
+  useEffect(() => {
+    if (!loggedInUser?.username) return;
+    const unsub = listenAndConsumePcTransfers(loggedInUser.username, (transfer) => {
+      if ('Notification' in window && Notification.permission === 'granted') {
+        try {
+          new Notification('Archivo recibido desde el teléfono', {
+            body: transfer.text ? transfer.text.slice(0, 80) : `${transfer.files.length} archivo(s) recibido(s)`,
+            icon: '/favicon.ico'
+          });
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    });
+    return unsub;
+  }, [loggedInUser?.username]);
+
   const mergedFeed = React.useMemo(() => {
     const combined = [...tweets, ...userPosts];
     return combined.sort((a, b) => {
@@ -954,6 +973,7 @@ const App: React.FC = () => {
   const [isLabWindowOpen, setIsLabWindowOpen] = useState<boolean>(false);
   const [isImagenologiaWindowOpen, setIsImagenologiaWindowOpen] = useState<boolean>(false);
   const [isGesWindowOpen, setIsGesWindowOpen] = useState<boolean>(false);
+  const [isPautasAlimentariasWindowOpen, setIsPautasAlimentariasWindowOpen] = useState<boolean>(false);
   const [showUpdateNotification, setShowUpdateNotification] = useState(false);
   const [installPromptEvent, setInstallPromptEvent] = useState<any | null>(null);
   const [loginToastUsers, setLoginToastUsers] = useState<Array<{ id: string; name: string; avatar?: string }>>([]);
@@ -968,6 +988,7 @@ const App: React.FC = () => {
       setIsLabWindowOpen(false);
       setIsImagenologiaWindowOpen(false);
       setIsGesWindowOpen(false);
+      setIsPautasAlimentariasWindowOpen(false);
       setIsCalcOpen(false);
       setIsNotesOpen(false);
     } else if (windowName === 'certificado') {
@@ -977,6 +998,7 @@ const App: React.FC = () => {
       setIsLabWindowOpen(false);
       setIsImagenologiaWindowOpen(false);
       setIsGesWindowOpen(false);
+      setIsPautasAlimentariasWindowOpen(false);
       setIsCalcOpen(false);
       setIsNotesOpen(false);
     } else if (windowName === 'receta') {
@@ -986,6 +1008,7 @@ const App: React.FC = () => {
       setIsLabWindowOpen(false);
       setIsImagenologiaWindowOpen(false);
       setIsGesWindowOpen(false);
+      setIsPautasAlimentariasWindowOpen(false);
       setIsCalcOpen(false);
       setIsNotesOpen(false);
     } else if (windowName === 'lab') {
@@ -995,6 +1018,7 @@ const App: React.FC = () => {
       setIsRecetaWindowOpen(false);
       setIsImagenologiaWindowOpen(false);
       setIsGesWindowOpen(false);
+      setIsPautasAlimentariasWindowOpen(false);
       setIsCalcOpen(false);
       setIsNotesOpen(false);
     } else if (windowName === 'imagenologia') {
@@ -1004,6 +1028,7 @@ const App: React.FC = () => {
       setIsRecetaWindowOpen(false);
       setIsLabWindowOpen(false);
       setIsGesWindowOpen(false);
+      setIsPautasAlimentariasWindowOpen(false);
       setIsCalcOpen(false);
       setIsNotesOpen(false);
     } else if (windowName === 'ges') {
@@ -1013,6 +1038,17 @@ const App: React.FC = () => {
       setIsRecetaWindowOpen(false);
       setIsLabWindowOpen(false);
       setIsImagenologiaWindowOpen(false);
+      setIsPautasAlimentariasWindowOpen(false);
+      setIsCalcOpen(false);
+      setIsNotesOpen(false);
+    } else if (windowName === 'pautasAlimentarias') {
+      setIsPautasAlimentariasWindowOpen(!isPautasAlimentariasWindowOpen);
+      setIsDriveOpen(false);
+      setIsCertificadoWindowOpen(false);
+      setIsRecetaWindowOpen(false);
+      setIsLabWindowOpen(false);
+      setIsImagenologiaWindowOpen(false);
+      setIsGesWindowOpen(false);
       setIsCalcOpen(false);
       setIsNotesOpen(false);
     } else if (windowName === 'calc') {
@@ -1023,6 +1059,7 @@ const App: React.FC = () => {
       setIsLabWindowOpen(false);
       setIsImagenologiaWindowOpen(false);
       setIsGesWindowOpen(false);
+      setIsPautasAlimentariasWindowOpen(false);
       setIsNotesOpen(false);
     } else if (windowName === 'notes') {
       setIsNotesOpen(!isNotesOpen);
@@ -1031,6 +1068,7 @@ const App: React.FC = () => {
       setIsRecetaWindowOpen(false);
       setIsLabWindowOpen(false);
       setIsGesWindowOpen(false);
+      setIsPautasAlimentariasWindowOpen(false);
       setIsCalcOpen(false);
     }
   };
@@ -1179,6 +1217,7 @@ const App: React.FC = () => {
     setIsLabWindowOpen(false);
     setIsImagenologiaWindowOpen(false);
     setIsGesWindowOpen(false);
+    setIsPautasAlimentariasWindowOpen(false);
     setIsMobileDrawerOpen(false);
 
     if (patientData) {
@@ -3308,18 +3347,14 @@ const App: React.FC = () => {
                 </svg>
               </button>
 
-              {/* Botón Guardar en Nube (Escritorio) */}
-              {isClinicalRecord(currentView) && (
-                <button
-                  type="button"
-                  onClick={handleOpenSaveCloudModal}
-                  title="Guardar Registro en Firebase para Mis Pacientes"
-                  className="px-3 h-8 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white rounded-lg text-xs font-bold shadow-xs transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ml-1"
-                >
-                  <CloudUpload className="w-4 h-4" />
-                  <span>Guardar</span>
-                </button>
-              )}
+              {/* Pautas Alimentarias */}
+              <button
+                onClick={() => toggleWindow('pautasAlimentarias')}
+                title="Pautas alimentarias"
+                className="relative w-10 h-10 rounded-full text-white hover:text-white/85 hover:bg-white/10 transition-colors duration-150 cursor-pointer flex items-center justify-center shrink-0"
+              >
+                <Drumstick className="w-[22px] h-[22px]" strokeWidth={2.2} />
+              </button>
             </>
           )}
           </div>
@@ -3442,7 +3477,7 @@ const App: React.FC = () => {
               <button
                 type="button"
                 onClick={handleOpenSaveCloudModal}
-                className="flex-1 h-9 bg-sky-600 hover:bg-sky-700 active:bg-sky-800 text-white font-bold rounded-lg text-xs flex items-center justify-center gap-1.5 shadow-2xs active:scale-95 transition-all cursor-pointer"
+                className="flex-1 h-9 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold rounded-lg text-xs flex items-center justify-center gap-1.5 shadow-2xs active:scale-95 transition-all cursor-pointer"
                 title="Guardar paciente en Firebase para Mis Pacientes"
               >
                 <CloudUpload className="w-3.5 h-3.5 shrink-0" />
@@ -3545,6 +3580,7 @@ const App: React.FC = () => {
       <OrdenLaboratorioWindow isOpen={isLabWindowOpen} onClose={() => setIsLabWindowOpen(false)} loggedInUser={loggedInUser} />
       <OrdenImagenologiaWindow isOpen={isImagenologiaWindowOpen} onClose={() => setIsImagenologiaWindowOpen(false)} loggedInUser={loggedInUser} />
       <FichaFirmarGesWindow isOpen={isGesWindowOpen} onClose={() => setIsGesWindowOpen(false)} loggedInUser={loggedInUser} />
+      <PautasAlimentariasWindow isOpen={isPautasAlimentariasWindowOpen} onClose={() => setIsPautasAlimentariasWindowOpen(false)} loggedInUser={loggedInUser} />
       
       {/* MSN Login Toast Stacked on Y Axis & Minimized Update Floating Tab */}
       <div className="fixed bottom-[64px] right-6 z-[99999] flex flex-col gap-3 items-end" style={{ pointerEvents: 'none' }}>

@@ -47,9 +47,10 @@ const AutoExpandingTextArea: React.FC<{
   name: string;
   value: string;
   onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
   placeholder?: string;
   containerClassName?: string;
-}> = ({ label, id, name, value, onChange, placeholder, containerClassName }) => {
+}> = ({ label, id, name, value, onChange, onKeyDown, placeholder, containerClassName }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -72,6 +73,7 @@ const AutoExpandingTextArea: React.FC<{
         name={name}
         value={value}
         onChange={onChange}
+        onKeyDown={onKeyDown}
         placeholder={placeholder}
         rows={1}
         className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg shadow-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition-all duration-150 ease-in-out text-slate-700 placeholder-slate-400 overflow-hidden min-h-[42px] text-sm"
@@ -122,6 +124,8 @@ const initialFormData: FichaControlSalaIraFormData = {
   antecedentesFamiliaresRespAclaracion: '',
   laboratorioFecha: '',
   laboratorioResultados: '',
+  espirometriaOtrosFecha: '',
+  espirometriaOtrosResultados: '',
   historiaActual: '',
   sintomasTosRisaEjercicioFrio: false,
   sintomasTosRisaEjercicioFrioAclaracion: '',
@@ -397,7 +401,24 @@ const FichaControlSalaIra: React.FC<FichaControlSalaIraProps> = ({ onBackToMenu,
     });
     anam += `\n`;
 
-    let expl = `EXAMEN FÍSICO:\n`;
+    const formatToDDMMYYYY = (isoDate: string) => {
+        if (!isoDate) return '';
+        const parts = isoDate.split('-');
+        if (parts.length === 3) {
+            return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+        return isoDate;
+    };
+
+    let expl = ``;
+    if (formData.laboratorioFecha || formData.laboratorioResultados) {
+        expl += `ÚLTIMO LABORATORIO ${formatToDDMMYYYY(formData.laboratorioFecha)}\n${formData.laboratorioResultados || 'No ingresado.'}\n\n`;
+    }
+    if (formData.espirometriaOtrosFecha || formData.espirometriaOtrosResultados) {
+        expl += `ESPIROMETRÍA Y OTROS EXÁMENES ${formatToDDMMYYYY(formData.espirometriaOtrosFecha)}\n${formData.espirometriaOtrosResultados || 'No ingresado.'}\n\n`;
+    }
+
+    expl += `EXAMEN FÍSICO:\n`;
     expl += `- Piel y mucosas: ${formData.efPielMucosas}\n`;
     expl += `- Mucosa nasal: ${formData.efMucosaNasal || '(No seleccionado)'}\n`;
     expl += `- Cavidad oral: ${formData.efCavidadOral || '(No seleccionado)'}\n`;
@@ -479,9 +500,12 @@ const FichaControlSalaIra: React.FC<FichaControlSalaIraProps> = ({ onBackToMenu,
       return;
     }
     setStatus(FormStatus.Generating);
+    const firstControl = proximosControles.find(c => c.tiempo) || proximosControles[0];
     try {
       await generateAtencionResumenPdf({
         ...formData,
+        proximoControlTiempo: firstControl?.tiempo,
+        proximoControlDupla: firstControl?.profesional,
         indicaciones: formData.indicaciones,
         actuacionText,
       }, loggedInUser, {
@@ -737,6 +761,55 @@ const FichaControlSalaIra: React.FC<FichaControlSalaIraProps> = ({ onBackToMenu,
                         )}
                         {spiroError && <p className="text-red-500 text-[10px] font-bold uppercase text-center">{spiroError}</p>}
                     </div>
+                </section>
+
+                <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2">
+                    <h3 className="text-lg font-semibold mb-1.5 text-sky-700 border-b border-sky-200 pb-1">Exámenes de Laboratorio y Otros</h3>
+                    <div className="mb-0">
+                      <DateField
+                        label="Laboratorio"
+                        id="laboratorioFecha"
+                        name="laboratorioFecha"
+                        value={formData.laboratorioFecha || ''}
+                        onChange={handleChange as any}
+                        containerClassName="mb-0 flex-grow"
+                        labelPrefix={
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 text-sky-700 shrink-0 ml-1">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                          </svg>
+                        }
+                      />
+                    </div>
+                    <textarea
+                      value={formData.laboratorioResultados || ''}
+                      onChange={handleChange as any}
+                      name="laboratorioResultados"
+                      className="w-full p-2 bg-white border border-slate-300 rounded-md shadow-sm custom-scrollbar font-sans text-sm leading-normal text-slate-800 focus:ring-1 focus:ring-sky-500 focus:border-sky-500 min-h-[100px]"
+                      placeholder="Resultados del último laboratorio..."
+                    />
+
+                    <div className="mb-0 mt-2">
+                      <DateField
+                        label="Espirometría y otros exámenes"
+                        id="espirometriaOtrosFecha"
+                        name="espirometriaOtrosFecha"
+                        value={formData.espirometriaOtrosFecha || ''}
+                        onChange={handleChange as any}
+                        containerClassName="mb-0 flex-grow"
+                        labelPrefix={
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 text-sky-700 shrink-0 ml-1">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                        }
+                      />
+                    </div>
+                    <textarea
+                      value={formData.espirometriaOtrosResultados || ''}
+                      onChange={handleChange as any}
+                      name="espirometriaOtrosResultados"
+                      className="w-full p-2 bg-white border border-slate-300 rounded-md shadow-sm custom-scrollbar font-sans text-sm leading-normal text-slate-800 focus:ring-1 focus:ring-sky-500 focus:border-sky-500 min-h-[100px]"
+                      placeholder="Resultados de espirometría y otros exámenes..."
+                    />
                 </section>
 
                 <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2">

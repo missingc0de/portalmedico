@@ -11,7 +11,7 @@ from http.server import SimpleHTTPRequestHandler
 from socketserver import TCPServer
 import webview
 
-APP_VERSION = "1.4.30"
+APP_VERSION = "1.4.31"
 UPDATE_URL = "https://raw.githubusercontent.com/missingc0de/portalmedico/main/latest.yml"
 
 def check_webview2_runtime():
@@ -195,6 +195,30 @@ class Api:
 
     def open_pdf(self, base64_data, filename="documento.pdf"):
         return self.save_and_open_pdf(base64_data, filename)
+
+    def save_received_file(self, filename, data_base64="", is_text=False, text_content=""):
+        try:
+            import base64, os
+            downloads_dir = os.path.join(os.path.expanduser("~"), "Downloads")
+            target_dir = os.path.join(downloads_dir, "Recibidos desde PORTAL MÉDICO")
+            if not os.path.exists(target_dir):
+                os.makedirs(target_dir, exist_ok=True)
+            safe_name = "".join(c for c in filename if c not in '<>:"/\\|?*')
+            full_path = os.path.join(target_dir, safe_name)
+            if is_text and text_content:
+                with open(full_path, "w", encoding="utf-8") as f:
+                    f.write(text_content)
+            elif data_base64:
+                if data_base64.startswith("data:"):
+                    data_base64 = data_base64.split(",", 1)[1]
+                raw_bytes = base64.b64decode(data_base64)
+                with open(full_path, "wb") as f:
+                    f.write(raw_bytes)
+            print(f"Saved received file to: {full_path}")
+            return {"success": True, "path": full_path}
+        except Exception as e:
+            print("Error saving received file in pywebview:", e)
+            return {"success": False, "error": str(e)}
 
 def get_dist_path():
     if getattr(sys, 'frozen', False):

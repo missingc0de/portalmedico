@@ -2064,9 +2064,17 @@ export const generateAtencionResumenPdf = async (data: any, user: User, options?
         const proxTiempo = data.planProximoControlTiempo || data.proximoControlTiempo || data.proximoControl || data.proxControl;
         const proxDupla = data.planProximoControlDupla || data.proximoControlDupla;
         if (proxTiempo) {
-            const propControlText = proxDupla 
-                ? `PRÓXIMO CONTROL EN ${proxTiempo} CON MÉDICO + ${proxDupla}`.toUpperCase()
-                : `PRÓXIMO CONTROL: ${proxTiempo}`.toUpperCase();
+            let propControlText = '';
+            if (proxDupla) {
+                const cleanDupla = String(proxDupla).trim();
+                if (cleanDupla.toUpperCase().startsWith('CON ')) {
+                    propControlText = `PRÓXIMO CONTROL EN ${proxTiempo} ${cleanDupla}`.toUpperCase();
+                } else {
+                    propControlText = `PRÓXIMO CONTROL EN ${proxTiempo} CON ${cleanDupla}`.toUpperCase();
+                }
+            } else {
+                propControlText = `PRÓXIMO CONTROL: ${proxTiempo}`.toUpperCase();
+            }
             firstPage.drawText(propControlText, {
                 x: marginX,
                 y: Math.max(50, startY),
@@ -2260,6 +2268,231 @@ export const generateAtencionResumenPdf = async (data: any, user: User, options?
     } catch (err: any) {
         console.error("Error generating Resumen PDF", err);
         alert(`Ocurrió un error al generar el PDF de resumen.\n\nDetalle técnico: ${err.message}`);
+    }
+};
+
+export const generateSoloPautaAlimentariaPdf = async (
+    pautaData: {
+        id?: string;
+        nombre?: string;
+        favorecer?: string;
+        evitar?: string;
+        recomendaciones?: string;
+    },
+    loggedInUser?: User | null
+): Promise<void> => {
+    try {
+        const baseUrl = window.location.origin !== "null" && !window.location.origin.includes("file://") 
+           ? window.location.origin 
+           : '.';
+        const url = `${baseUrl}/base_ecicep.pdf`.replace('//base', '/base');
+
+        let existingPdfBytes;
+        try {
+            const res = await fetch(url);
+            if (!res.ok) throw new Error(`HTTP ${res.status} al cargar plantilla`);
+            existingPdfBytes = await res.arrayBuffer();
+        } catch (fetchErr) {
+            console.error("Error fetching PDF template:", fetchErr);
+            throw new Error(`No se pudo cargar la plantilla PDF (base_ecicep.pdf). Intente recargar la página. Detalle: ${fetchErr}`);
+        }
+
+        const pdfDoc = await PDFDocument.load(existingPdfBytes);
+        
+        const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
+        const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+        const helveticaOblique = await pdfDoc.embedFont(StandardFonts.HelveticaOblique);
+        
+        const pages = pdfDoc.getPages();
+        const page = pages[0];
+        const { width, height } = page.getSize();
+
+        const pautaId = pautaData.id;
+        const preset = pautaId ? getPautaById(pautaId) : undefined;
+        const pautaNombre = (pautaData.nombre || preset?.nombre || 'Pauta Alimentaria General').trim();
+        const pautaFavorecer = (pautaData.favorecer || (preset ? preset.alimentosFavorecer.map((f: string) => `• ${f}`).join('\n') : '')).trim();
+        const pautaEvitar = (pautaData.evitar || (preset ? preset.alimentosEvitar.map((e: string) => `• ${e}`).join('\n') : '')).trim();
+        const pautaRecomendaciones = (pautaData.recomendaciones || (preset ? preset.recomendacionesGenerales.map((r: string) => `• ${r}`).join('\n') : '')).trim();
+
+        const drawTextOnPage = (
+            targetPage: any,
+            text: string,
+            x: number,
+            startY: number,
+            font: any,
+            size: number,
+            maxWidth: number,
+            color = rgb(0, 0, 0),
+            lineSpacing = 3
+        ) => {
+            if (!text || typeof text !== 'string') return startY;
+            const lines = text.split('\n');
+            let currentY = startY;
+
+            for (const rawLine of lines) {
+                const trimmed = rawLine.trim();
+                if (!trimmed) {
+                    currentY -= (size * 0.4);
+                    continue;
+                }
+                const words = trimmed.split(' ');
+                let line = '';
+                for (let i = 0; i < words.length; i++) {
+                    const testLine = line + words[i] + ' ';
+                    const testWidth = font.widthOfTextAtSize(testLine, size);
+                    if (testWidth > maxWidth && i > 0) {
+                        targetPage.drawText(line.trim(), { x, y: currentY, size, font, color });
+                        line = words[i] + ' ';
+                        currentY -= (size + lineSpacing);
+                    } else {
+                        line = testLine;
+                    }
+                }
+                if (line.trim()) {
+                    targetPage.drawText(line.trim(), { x, y: currentY, size, font, color });
+                    currentY -= (size + lineSpacing);
+                }
+                currentY -= 2;
+            }
+            return currentY;
+        };
+
+        const marginX2 = 50;
+        const availableW2 = width - (marginX2 * 2);
+        let y2 = height - 120; // 672 pt
+
+        // Page Title
+        const pautaHeaderTitle = 'PAUTA ALIMENTARIA Y RECOMENDACIONES NUTRICIONALES';
+        page.drawText(pautaHeaderTitle, {
+            x: width / 2 - (helveticaBold.widthOfTextAtSize(pautaHeaderTitle, 12.5) / 2),
+            y: y2,
+            size: 12.5,
+            font: helveticaBold,
+            color: rgb(0.04, 0.4, 0.61),
+        });
+        y2 -= 24;
+
+        // Diet Name Banner
+        const bannerHeight = 22;
+        page.drawRectangle({
+            x: marginX2,
+            y: y2 - 4,
+            width: availableW2,
+            height: bannerHeight,
+            color: rgb(0.92, 0.95, 0.98),
+        });
+        const bannerTitle = `PAUTA INDICADA: ${pautaNombre.toUpperCase()}`;
+        page.drawText(bannerTitle, {
+            x: marginX2 + 8,
+            y: y2 + 3,
+            size: 9.5,
+            font: helveticaBold,
+            color: rgb(0.04, 0.4, 0.61),
+        });
+        y2 -= (bannerHeight + 8);
+
+        // Subtitle / Objective if available
+        if (preset?.descripcion) {
+            y2 = drawTextOnPage(page, preset.descripcion, marginX2 + 2, y2, helveticaOblique, 8.5, availableW2 - 4, rgb(0.32, 0.32, 0.32), 3);
+            y2 -= 6;
+        }
+
+        // Columns Setup: Side-by-Side Favorecer vs Evitar
+        const gap = 14;
+        const colW = (availableW2 - gap) / 2;
+        const col1X = marginX2;
+        const col2X = marginX2 + colW + gap;
+        const colHeaderH = 18;
+
+        // Column 1 Header (Favorecer - Green)
+        page.drawRectangle({
+            x: col1X,
+            y: y2 - 4,
+            width: colW,
+            height: colHeaderH,
+            color: rgb(0.88, 0.96, 0.9),
+        });
+        page.drawText('ALIMENTOS A FAVORECER / RECOMENDADOS', {
+            x: col1X + 8,
+            y: y2 + 2,
+            size: 8.5,
+            font: helveticaBold,
+            color: rgb(0.08, 0.48, 0.2),
+        });
+
+        // Column 2 Header (Evitar - Red)
+        page.drawRectangle({
+            x: col2X,
+            y: y2 - 4,
+            width: colW,
+            height: colHeaderH,
+            color: rgb(0.99, 0.91, 0.91),
+        });
+        page.drawText('ALIMENTOS A EVITAR / DESACONSEJADOS', {
+            x: col2X + 8,
+            y: y2 + 2,
+            size: 8.5,
+            font: helveticaBold,
+            color: rgb(0.72, 0.12, 0.12),
+        });
+
+        y2 -= (colHeaderH + 8);
+        const contentStartY = y2;
+
+        // Draw Column 1 Items
+        const endY1 = drawTextOnPage(page, pautaFavorecer || '• No especificado', col1X + 4, contentStartY, helveticaFont, 8, colW - 8, rgb(0.12, 0.12, 0.12), 2.5);
+
+        // Draw Column 2 Items
+        const endY2 = drawTextOnPage(page, pautaEvitar || '• No especificado', col2X + 4, contentStartY, helveticaFont, 8, colW - 8, rgb(0.12, 0.12, 0.12), 2.5);
+
+        y2 = Math.min(endY1, endY2) - 14;
+
+        // Section: Recomendaciones Generales
+        if (pautaRecomendaciones && pautaRecomendaciones.trim()) {
+            const recHeaderH = 18;
+            page.drawRectangle({
+                x: marginX2,
+                y: y2 - 4,
+                width: availableW2,
+                height: recHeaderH,
+                color: rgb(0.93, 0.95, 0.98),
+            });
+            page.drawText('RECOMENDACIONES GENERALES Y CONSEJOS CLAVE', {
+                x: marginX2 + 8,
+                y: y2 + 2,
+                size: 8.5,
+                font: helveticaBold,
+                color: rgb(0.15, 0.35, 0.55),
+            });
+            y2 -= (recHeaderH + 8);
+
+            y2 = drawTextOnPage(page, pautaRecomendaciones, marginX2 + 4, y2, helveticaFont, 8, availableW2 - 8, rgb(0.12, 0.12, 0.12), 2.5);
+        }
+
+        // Footer line & text
+        const footerLine = 'Documento de educación y apoyo clínico nutricional complementario al Plan de Cuidado Integral (PCI) - CESFAM San Juan Coquimbo';
+        page.drawLine({
+            start: { x: marginX2, y: 55 },
+            end: { x: marginX2 + availableW2, y: 55 },
+            thickness: 0.5,
+            color: rgb(0.8, 0.8, 0.8),
+        });
+        page.drawText(footerLine, {
+            x: width / 2 - (helveticaOblique.widthOfTextAtSize(footerLine, 7.5) / 2),
+            y: 44,
+            size: 7.5,
+            font: helveticaOblique,
+            color: rgb(0.45, 0.45, 0.45),
+        });
+
+        // Save and open
+        const pdfBytes = await pdfDoc.save();
+        const safeFileName = `Pauta_Alimentaria_${(pautaNombre || 'Nutricional').replace(/[<>:"/\\|?*]+/g, '').replace(/\s+/g, '_')}.pdf`;
+        const blob = new Blob([pdfBytes as unknown as BlobPart], { type: 'application/pdf' });
+        openPdfInNewTab(blob, safeFileName);
+    } catch (err: any) {
+        console.error("Error generating Pauta Alimentaria PDF", err);
+        alert(`Ocurrió un error al generar la pauta alimentaria en PDF.\n\nDetalle técnico: ${err.message}`);
     }
 };
 

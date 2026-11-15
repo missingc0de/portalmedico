@@ -7,7 +7,7 @@ import MedicamentoArsenalInput from './MedicamentoArsenalInput';
 import PHQ9Modal from './PHQ9Modal';
 import RutInput from './RutInput';
 import { UniversalAIClient, Type } from '../utils/aiClient';
-import { AlertTriangle, X, Printer, ExternalLink, Trash2 } from 'lucide-react';
+import { AlertTriangle, X, Printer, ExternalLink, Trash2, FileText, Plus } from 'lucide-react';
 import CopyButton from './CopyButton';
 import { generateClinicalRecordPdf, generateEcicepResumenPdf } from '../services/pdfGenerator';
 import ImportModal from './ImportModal';
@@ -930,9 +930,12 @@ export const FichaIngresoEcicep: React.FC<FichaIngresoEcicepProps> = ({ onBackTo
   const filteredPredefinedPlans = useMemo(() => {
     if (!planSearchTerm.trim()) return predefinedPccPlans;
     const term = planSearchTerm.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    return predefinedPccPlans.filter(p =>
-      p.acuerdo.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(term)
-    );
+    return predefinedPccPlans.filter(p => {
+      const obj = (p.objetivo || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      const acu = (p.acuerdo || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      const acc = (p.acciones || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      return obj.includes(term) || acu.includes(term) || acc.includes(term);
+    });
   }, [planSearchTerm]);
 
   const [isEscolaridadLibre, setIsEscolaridadLibre] = useState(false);
@@ -3207,17 +3210,25 @@ export const FichaIngresoEcicep: React.FC<FichaIngresoEcicepProps> = ({ onBackTo
                           const end = textarea.selectionEnd;
                           const value = textarea.value;
 
-                          // Count existing lines to determine next number
-                          const lines = value.split('\n');
-                          const nextNumber = lines.length + 1;
+                          // Find number from current line before cursor
+                          const textBeforeCursor = value.substring(0, start);
+                          const lastLineMatch = textBeforeCursor.match(/(?:^|\n)(\d+)\.\s*[^\n]*$/);
+                          let nextNumber = 1;
+                          if (lastLineMatch) {
+                            nextNumber = parseInt(lastLineMatch[1], 10) + 1;
+                          } else {
+                            const lines = textBeforeCursor.split('\n');
+                            nextNumber = lines.length + 1;
+                          }
 
-                          const newValue = value.substring(0, start) + '\n' + nextNumber + '. ' + value.substring(end);
+                          const insertion = `\n${nextNumber}. `;
+                          const newValue = value.substring(0, start) + insertion + value.substring(end);
 
                           setFormData(prev => ({ ...prev, tomaDecisionesCompartidas: newValue }));
 
                           // Set cursor position after update
                           setTimeout(() => {
-                            const newPos = start + String(nextNumber).length + 3;
+                            const newPos = start + insertion.length;
                             textarea.setSelectionRange(newPos, newPos);
                           }, 0);
                         }
@@ -3239,60 +3250,61 @@ export const FichaIngresoEcicep: React.FC<FichaIngresoEcicepProps> = ({ onBackTo
                   </div>
 
                   <div>
-                    <div className="flex flex-col gap-1.5 mb-1">
-                      <h4 className="text-md font-bold text-slate-800 uppercase text-xs tracking-wider">PRIORIZACION DE OBJETIVOS, DIMENSIONES Y METAS</h4>
-                      <div className="flex gap-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+                      <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        Priorización de Objetivos, Dimensiones y Metas
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
                         <div className="relative" ref={predefinedPlanRef}>
                           <button
                             type="button"
                             onClick={() => setIsPredefinedPlanOpen(!isPredefinedPlanOpen)}
-                            className="flex items-center px-4 py-2 bg-emerald-600 text-white text-xs font-bold rounded-md hover:bg-emerald-700 transition-colors shadow-sm"
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg transition-colors shadow-2xs cursor-pointer"
                           >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
-                            AGREGAR PLAN PREDETERMINADO
+                            <FileText className="w-3.5 h-3.5" />
+                            <span>AGREGAR PLAN PREDETERMINADO</span>
                           </button>
                           {isPredefinedPlanOpen && (
-                            <div className="absolute left-0 mt-2 w-72 bg-white border border-slate-300 rounded-lg shadow-xl z-50 overflow-hidden animate-fadeIn">
-                              <div className="p-3 bg-slate-100 border-b border-slate-200">
-                                <div className="relative">
-                                  <input
-                                    type="text"
-                                    value={planSearchTerm}
-                                    onChange={(e) => setPlanSearchTerm(e.target.value)}
-                                    placeholder="Buscar plan..."
-                                    className="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-md focus:ring-1 focus:ring-emerald-500 outline-none"
-                                    autoFocus
-                                  />
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-slate-400 absolute left-2 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                                </div>
+                            <div className="absolute left-0 sm:right-0 sm:left-auto mt-2 w-80 sm:w-96 bg-white border border-slate-300 rounded-lg shadow-xl z-50 overflow-hidden animate-fadeIn">
+                              <div className="p-2.5 bg-slate-100 border-b border-slate-200">
+                                <input
+                                  type="text"
+                                  value={planSearchTerm}
+                                  onChange={(e) => setPlanSearchTerm(e.target.value)}
+                                  placeholder="Buscar plan predeterminado (alimentación, actividad física, adherencia)..."
+                                  className="w-full px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-md focus:ring-1 focus:ring-emerald-500 outline-none"
+                                  autoFocus
+                                />
                               </div>
-                              <div className="max-h-64 overflow-y-auto custom-scrollbar">
+                              <div className="max-h-72 overflow-y-auto custom-scrollbar">
                                 {filteredPredefinedPlans.length > 0 ? (
                                   filteredPredefinedPlans.map((plan, idx) => (
                                     <button
                                       key={idx}
                                       type="button"
                                       onClick={() => handleAddPredefinedPlan(plan)}
-                                      className="w-full text-left px-4 py-3 text-sm text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 border-b border-slate-50 last:border-b-0 transition-colors"
+                                      className="w-full text-left px-3.5 py-2.5 text-xs text-slate-700 hover:bg-emerald-50 hover:text-emerald-800 border-b border-slate-100 last:border-b-0 transition-colors"
                                     >
-                                      <span className="font-bold block leading-tight">{plan.acuerdo}</span>
-                                      <span className="text-[10px] text-slate-500 truncate block mt-0.5">{plan.acciones}</span>
+                                      <span className="font-bold block leading-snug">{plan.objetivo}</span>
+                                      <span className="text-[11px] text-slate-600 block mt-0.5"><strong className="text-emerald-700">Acuerdo:</strong> {plan.acuerdo}</span>
+                                      <span className="text-[10px] text-slate-500 block truncate mt-0.5">{plan.acciones}</span>
                                     </button>
                                   ))
                                 ) : (
-                                  <div className="p-4 text-center text-xs text-slate-400 italic">No se encontraron planes.</div>
+                                  <div className="p-4 text-center text-xs text-slate-400 italic">No se encontraron planes predeterminados.</div>
                                 )}
                               </div>
                             </div>
                           )}
                         </div>
+
                         <button
                           type="button"
                           onClick={handleAddPccObjetivo}
-                          className="flex items-center px-4 py-2.5 bg-sky-600 text-white text-xs font-bold rounded-md hover:bg-sky-700 transition-colors shadow-sm"
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold rounded-lg transition-colors shadow-2xs cursor-pointer"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
-                          AGREGAR OBJETIVO
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>AGREGAR OBJETIVO</span>
                         </button>
                       </div>
                     </div>

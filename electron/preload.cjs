@@ -74,6 +74,7 @@ if (window.self === window.top) {
     storageGetAll: () => ipcRenderer.invoke('storage-get-all'),
     storageSetItem: (key, value) => ipcRenderer.invoke('storage-set-item', key, value),
     storageRemoveItem: (key) => ipcRenderer.invoke('storage-remove-item', key),
-    storageSaveAll: (allData) => ipcRenderer.invoke('storage-save-all', allData)
+    storageSaveAll: (allData) => ipcRenderer.invoke('storage-save-all', allData),
+    saveReceivedFile: (data) => ipcRenderer.invoke('save-received-file', data)
   });
 }

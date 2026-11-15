@@ -13,6 +13,30 @@ import { soundService } from '../services/soundService';
 import { LoginToast } from './LoginToast';
 import { showUserConnectNotification, showChatMessageNotification, showChatNudgeNotification, requestNotificationPermission } from '../services/notificationService';
 import { App as CapApp } from '@capacitor/app';
+import { 
+  Download, 
+  Trash2, 
+  Copy, 
+  Check, 
+  FileText, 
+  Image as ImageIcon, 
+  ExternalLink, 
+  Smartphone, 
+  X,
+  Paperclip
+} from 'lucide-react';
+import { 
+  PcTransferItem, 
+  getAllLocalTransfers, 
+  deleteLocalTransfer, 
+  clearAllLocalTransfers, 
+  markLocalTransferAsRead,
+  listenAndConsumePcTransfers,
+  saveFileToRecibidosFolder,
+  DEFAULT_RECIBIDOS_FOLDER_NAME,
+  setBrowserDownloadFolder,
+  hasNativeFolderAccess
+} from '../services/pcTransferService';
 
 interface Message {
   id: string;
@@ -218,6 +242,109 @@ export const ChatLocal: React.FC<ChatLocalProps> = ({
   const [unreadCount, setUnreadCount] = useState(0);
   const [isShaking, setIsShaking] = useState(false);
   const [showEmojis, setShowEmojis] = useState(false);
+
+  // Received Transfers from Phone (Enviar a PC)
+  const [receivedTransfers, setReceivedTransfers] = useState<PcTransferItem[]>([]);
+  const [copiedTextId, setCopiedTextId] = useState<string | null>(null);
+  const [viewingImageModal, setViewingImageModal] = useState<{ url: string; name: string } | null>(null);
+
+  const loadLocalTransfers = useCallback(async () => {
+    if (!loggedInUser?.username) return;
+    try {
+      const items = await getAllLocalTransfers(loggedInUser.username);
+      setReceivedTransfers(items);
+    } catch (e) {
+      console.warn('Error loading local transfers:', e);
+    }
+  }, [loggedInUser?.username]);
+
+  useEffect(() => {
+    loadLocalTransfers();
+    const handleTransferEvt = () => {
+      loadLocalTransfers();
+    };
+    window.addEventListener('pc-transfer-received', handleTransferEvt);
+    return () => {
+      window.removeEventListener('pc-transfer-received', handleTransferEvt);
+    };
+  }, [loadLocalTransfers]);
+
+  // Mark transfers as read when entering 'archivos_recibidos'
+  useEffect(() => {
+    if (isOpen && activeChannel === 'archivos_recibidos') {
+      receivedTransfers.forEach(t => {
+        if (!t.read) markLocalTransferAsRead(t.id, loggedInUser.username);
+      });
+    }
+  }, [isOpen, activeChannel, receivedTransfers, loggedInUser.username]);
+
+  const unreadTransfersCount = useMemo(() => {
+    return receivedTransfers.filter(t => !t.read).length;
+  }, [receivedTransfers]);
+
+  const lastReceivedTransfer = useMemo(() => {
+    return receivedTransfers.length > 0 ? receivedTransfers[0] : null;
+  }, [receivedTransfers]);
+
+  const handleDeleteTransfer = async (id: string) => {
+    await deleteLocalTransfer(id, loggedInUser.username);
+    setReceivedTransfers(prev => prev.filter(x => x.id !== id));
+  };
+
+  const handleClearAllTransfers = async () => {
+    if (!window.confirm('¿Deseas vaciar el historial de archivos recibidos de este computador?')) return;
+    await clearAllLocalTransfers(loggedInUser.username);
+    setReceivedTransfers([]);
+  };
+
+  const handleCopyText = (txt: string, id: string) => {
+    navigator.clipboard.writeText(txt);
+    setCopiedTextId(id);
+    setTimeout(() => setCopiedTextId(null), 2000);
+  };
+
+  const triggerDownload = async (dataUrl: string, filename: string) => {
+    await saveFileToRecibidosFolder(filename, dataUrl, false);
+  };
+
+  const handleDownloadTextAsFile = async (text: string, timestamp: number, senderName: string) => {
+    const dateObj = new Date(timestamp || Date.now());
+    const yyyy = dateObj.getFullYear();
+    const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const dd = String(dateObj.getDate()).padStart(2, '0');
+    const hh = String(dateObj.getHours()).padStart(2, '0');
+    const min = String(dateObj.getMinutes()).padStart(2, '0');
+    const ss = String(dateObj.getSeconds()).padStart(2, '0');
+    const dateStr = `${dd}/${mm}/${yyyy}`;
+    const timeStr = `${hh}:${min}:${ss}`;
+    const timeStampTag = `${yyyy}${mm}${dd}_${hh}${min}${ss}`;
+    const txtFilename = `Texto_${timeStampTag}.txt`;
+    const txtContent = `=====================================================
+PORTAL MÉDICO - TEXTO RECIBIDO DESDE DISPOSITIVO MÓVIL
+=====================================================
+Fecha de recepción: ${dateStr}
+Hora de recepción:  ${timeStr} hrs
+Remitente:          ${senderName}
+=====================================================
+
+MENSAJE / TEXTO:
+-----------------------------------------------------
+${text}
+
+=====================================================
+Guardado en:
+Descargas / ${DEFAULT_RECIBIDOS_FOLDER_NAME}
+=====================================================
+`;
+    await saveFileToRecibidosFolder(txtFilename, undefined, true, txtContent);
+  };
+
+  const formatFileSize = (bytes: number): string => {
+    if (!bytes) return '';
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
 
   // Profile modales and state
   const [myProfile, setMyProfile] = useState<UserProfile>({ visibleName: '', status: '' });
@@ -1050,6 +1177,8 @@ export const ChatLocal: React.FC<ChatLocalProps> = ({
   if (activeChannel === 'general') {
     activeMessages = messagesGeneral;
     chatTitle = "Grupo General";
+  } else if (activeChannel === 'archivos_recibidos') {
+    chatTitle = "Archivos recibidos";
   } else {
     // Private chat
     const partnerUsername = activeChannel.replace('private_', '');
@@ -1570,6 +1699,52 @@ export const ChatLocal: React.FC<ChatLocalProps> = ({
                   {/* PESTAÑA: MENSAJES (Grupo General + usuarios con quienes hay conversación) */}
                   {activeTabSub === 'mensajes' && (
                     <>
+                      {/* Canal Especial: Archivos recibidos (encima de Grupo General) */}
+                      {(!isSearching || normalizeText("Archivos recibidos").includes(normalizeText(searchTerm))) && (
+                        <div
+                          onClick={() => {
+                            setActiveChannel('archivos_recibidos');
+                            setCurrentPane('chat');
+                          }}
+                          className={`flex items-center space-x-3 p-3 transition-colors cursor-pointer bg-white hover:bg-slate-50 border-b border-slate-100 border-l-4 ${activeChannel === 'archivos_recibidos' ? 'border-l-indigo-600 bg-indigo-50/20' : 'border-l-transparent'}`}
+                        >
+                          <div className="relative shrink-0 flex items-center justify-center w-9 h-9 rounded-full bg-gradient-to-tr from-indigo-600 to-sky-500 shadow-sm border border-indigo-500 text-white">
+                            <Download className="w-5 h-5" strokeWidth={2.3} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex justify-between items-baseline">
+                              <h4 className="text-xs font-bold text-slate-800 truncate flex items-center gap-1.5">
+                                <span>Archivos recibidos</span>
+                                <span className="text-[9px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-1 py-0.2 rounded">
+                                  Teléfono
+                                </span>
+                              </h4>
+                              {lastReceivedTransfer && (
+                                <span className="text-[9px] text-slate-400 font-medium shrink-0 ml-1">
+                                  {formatLastMessageDateTime(lastReceivedTransfer.timestamp)}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex justify-between items-center mt-0.5">
+                              <p className="text-[10px] text-slate-500 truncate pr-2">
+                                {lastReceivedTransfer ? (
+                                  lastReceivedTransfer.files?.length > 0 
+                                    ? `📎 ${lastReceivedTransfer.files.length} archivo(s): ${lastReceivedTransfer.files.map(f => f.name).join(', ')}`
+                                    : (lastReceivedTransfer.text || 'Transferencia recibida')
+                                ) : (
+                                  'Archivos enviados desde tu teléfono'
+                                )}
+                              </p>
+                              {unreadTransfersCount > 0 && (
+                                <span className="bg-emerald-600 text-white text-[9px] font-black rounded-full px-1.5 py-0.5 leading-none shadow-sm shrink-0 border border-white animate-pulse">
+                                  {unreadTransfersCount}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
                       {/* Grupo General */}
                       {(!isSearching || normalizeText("Grupo General").includes(normalizeText(searchTerm))) && (
                         <div
@@ -1577,12 +1752,17 @@ export const ChatLocal: React.FC<ChatLocalProps> = ({
                             setActiveChannel('general');
                             setCurrentPane('chat');
                           }}
-                          className={`flex items-center space-x-3 p-3 transition-colors cursor-pointer bg-white hover:bg-slate-50 ${activeChannel === 'general' ? 'border-l-4 border-emerald-600 bg-emerald-50/10' : ''}`}
+                          className={`flex items-center space-x-3 p-3 transition-colors cursor-pointer bg-white hover:bg-slate-50 border-b border-slate-100 border-l-4 ${activeChannel === 'general' ? 'border-l-emerald-600 bg-emerald-50/10' : 'border-l-transparent'}`}
                         >
-                          <div className="relative shrink-0 flex items-center justify-center w-9 h-9 rounded-full bg-sky-500 shadow-sm border border-sky-600 text-white">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                              <path d="M19 3H5C3.89543 3 3 3.89543 3 5V21H21V5C21 3.89543 20.1046 3 19 3Z" />
-                              <path d="M12 9V15" /><path d="M9 12H15" />
+                          <div className="relative shrink-0 flex items-center justify-center w-9 h-9 rounded-full bg-gradient-to-tr from-[#0078d7] via-[#0288d1] to-[#26a69a] shadow-sm border border-sky-600 text-white">
+                            {/* WLM Duo Buddy Icon */}
+                            <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
+                              {/* Left Buddy (Green MSN buddy) */}
+                              <circle cx="8" cy="7.5" r="2.8" fill="#4ade80" />
+                              <path d="M2.5 17.5c0-2.8 2.5-5 5.5-5s5.5 2.2 5.5 5v1h-11v-1z" fill="#4ade80" />
+                              {/* Right Buddy (White/Blue MSN buddy) */}
+                              <circle cx="15.8" cy="7" r="3" fill="#ffffff" />
+                              <path d="M10 17c0-3 2.6-5.5 5.8-5.5s5.8 2.5 5.8 5.5v1.5H10V17z" fill="#ffffff" />
                             </svg>
                             <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-white bg-emerald-600"></div>
                           </div>
@@ -1795,21 +1975,39 @@ export const ChatLocal: React.FC<ChatLocalProps> = ({
                     setCurrentPane('list');
                     setShowContacts(false);
                   }}
-                  className="text-slate-500 hover:bg-slate-100 p-1.5 rounded-full transition-colors flex items-center justify-center cursor-pointer"
+                  className="text-slate-500 hover:bg-slate-100 p-1.5 rounded-full transition-colors flex items-center justify-center cursor-pointer shrink-0"
                   title="Volver a la lista"
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
                     <line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" />
                   </svg>
                 </button>
+
+                {activeChannel === 'archivos_recibidos' ? (
+                  <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-indigo-600 to-sky-500 flex items-center justify-center text-white shrink-0 shadow-2xs">
+                    <Download className="w-4 h-4" strokeWidth={2.3} />
+                  </div>
+                ) : activeChannel === 'general' ? (
+                  <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-[#0078d7] via-[#0288d1] to-[#26a69a] flex items-center justify-center text-white shrink-0 shadow-2xs">
+                    <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
+                      <circle cx="8" cy="7.5" r="2.8" fill="#4ade80" />
+                      <path d="M2.5 17.5c0-2.8 2.5-5 5.5-5s5.5 2.2 5.5 5v1h-11v-1z" fill="#4ade80" />
+                      <circle cx="15.8" cy="7" r="3" fill="#ffffff" />
+                      <path d="M10 17c0-3 2.6-5.5 5.8-5.5s5.8 2.5 5.8 5.5v1.5H10V17z" fill="#ffffff" />
+                    </svg>
+                  </div>
+                ) : null}
+
                 <div className="min-w-0">
                   <h3 className="font-bold text-sm text-shadow-sm truncate max-w-[170px]" title={chatTitle}>
                     {chatTitle}
                   </h3>
-                  <span className="text-[9px] text-slate-500 block -mt-0.5">
-                    {activeChannel.startsWith('private_')
-                      ? (onlineUsers.some(u => u.id === activeChannel.replace('private_', '')) ? 'En línea' : 'Desconectado')
-                      : 'Chat de grupo'}
+                  <span className="text-[9px] text-slate-500 block -mt-0.5 truncate max-w-[210px]">
+                    {activeChannel === 'archivos_recibidos'
+                      ? 'Descargas / Recibidos desde PORTAL MÉDICO'
+                      : activeChannel.startsWith('private_')
+                        ? (onlineUsers.some(u => u.id === activeChannel.replace('private_', '')) ? 'En línea' : 'Desconectado')
+                        : 'Chat de grupo'}
                   </span>
                 </div>
               </div>
@@ -1831,7 +2029,208 @@ export const ChatLocal: React.FC<ChatLocalProps> = ({
             <div className={isDedicatedTab 
               ? "flex-1 p-3 overflow-y-auto space-y-3 bg-[#f0f4fc] min-h-0" 
               : "flex-1 p-3 md:p-4 overflow-y-auto space-y-4 shadow-inner bg-white border border-sky-200 rounded-lg m-2 min-h-0"}>
-              {activeMessages.length === 0 ? (
+              {activeChannel === 'archivos_recibidos' ? (
+                receivedTransfers.length === 0 ? (
+                  <div className="h-full flex flex-col items-center justify-center text-slate-400 p-6 text-center">
+                    <div className="w-16 h-16 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center mb-3 text-indigo-500 shadow-xs">
+                      <Download className="w-8 h-8" strokeWidth={2.2} />
+                    </div>
+                    <p className="text-sm font-bold text-slate-700">Sin archivos recibidos todavía</p>
+                    <p className="text-xs text-slate-500 mt-1 max-w-xs leading-relaxed">
+                      En la app del teléfono, usa el botón <span className="font-semibold text-indigo-600">"Enviar a PC"</span>. Los archivos y textos se guardarán automáticamente en tu carpeta <strong className="text-slate-700">Descargas / Recibidos desde PORTAL MÉDICO</strong> de este equipo.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="p-3 bg-gradient-to-r from-indigo-50 via-sky-50 to-emerald-50 border border-indigo-200 rounded-xl text-xs text-slate-700 flex items-start gap-2.5 shadow-xs">
+                      <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-xs font-bold">
+                        <Download className="w-4 h-4" strokeWidth={2.3} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-indigo-950">Descarga automática en este PC</p>
+                        <p className="text-[11px] text-slate-600 mt-0.5 leading-snug">
+                          Los archivos y textos recibidos se guardan automáticamente en tu carpeta <strong className="text-indigo-900 font-semibold">Descargas / Recibidos desde PORTAL MÉDICO</strong> del equipo y se eliminan de la nube al descargarse para mantenerla libre.
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {typeof window !== 'undefined' && 'showDirectoryPicker' in window && !hasNativeFolderAccess() && (
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              const ok = await setBrowserDownloadFolder();
+                              if (ok) alert('Carpeta vinculada con éxito. Los archivos se guardarán directamente en "Recibidos desde PORTAL MÉDICO".');
+                            }}
+                            className="px-2.5 py-1 text-[11px] font-semibold text-indigo-700 bg-white hover:bg-indigo-50 border border-indigo-200 rounded-lg transition-colors cursor-pointer"
+                            title="Vincular la carpeta Descargas en el navegador"
+                          >
+                            📁 Vincular carpeta
+                          </button>
+                        )}
+                        <button
+                          onClick={handleClearAllTransfers}
+                          className="px-2.5 py-1 text-[11px] font-semibold text-rose-600 hover:text-white hover:bg-rose-600 border border-rose-200 hover:border-rose-600 rounded-lg transition-colors cursor-pointer shrink-0"
+                        >
+                          Vaciar historial
+                        </button>
+                      </div>
+                    </div>
+
+                    {receivedTransfers.map((item) => {
+                      const itemDate = new Date(item.timestamp || Date.now());
+                      const fechaStr = itemDate.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                      const horaStr = itemDate.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' hrs';
+
+                      return (
+                        <div key={item.id} className="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden transition-all hover:border-indigo-200">
+                          {/* Header with clear Fecha and Hora */}
+                          <div className="px-3.5 py-2.5 bg-slate-50 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2">
+                            <div className="flex items-center gap-2.5">
+                              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
+                              <div>
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-xs font-bold text-slate-800">
+                                    Recibido desde {item.senderFullName || item.senderUsername}
+                                  </span>
+                                  <span className="text-[10px] text-slate-400 font-normal">(@{item.senderUsername})</span>
+                                </div>
+                                <div className="flex items-center gap-2 text-[11px] text-slate-500 font-medium mt-0.5">
+                                  <span className="font-semibold text-slate-700">📅 Fecha: {fechaStr}</span>
+                                  <span className="text-slate-300">•</span>
+                                  <span className="font-semibold text-slate-700">⏰ Hora: {horaStr}</span>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                                <Check className="w-3 h-3 text-emerald-600" />
+                                Guardado en Descargas / Recibidos desde PORTAL MÉDICO
+                              </span>
+                              <button
+                                onClick={() => handleDeleteTransfer(item.id)}
+                                className="p-1 text-slate-400 hover:text-rose-600 rounded transition-colors cursor-pointer"
+                                title="Eliminar de este historial"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="p-3.5 space-y-3">
+                            {/* Text Message (saved as .txt) */}
+                            {item.text && (
+                              <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 relative group">
+                                <div className="flex items-center justify-between mb-1.5 pb-1 border-b border-slate-200/60">
+                                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide flex items-center gap-1">
+                                    <FileText className="w-3.5 h-3.5 text-indigo-600" />
+                                    Mensaje de texto (Guardado como .txt)
+                                  </span>
+                                  <span className="text-[10px] text-emerald-700 font-semibold flex items-center gap-1">
+                                    <Check className="w-3 h-3" />
+                                    Descargado automáticamente
+                                  </span>
+                                </div>
+                                <p className="text-xs text-slate-800 whitespace-pre-wrap leading-relaxed select-text font-sans">
+                                  {item.text}
+                                </p>
+                                <div className="mt-2.5 flex items-center justify-end gap-2 pt-1 border-t border-slate-200/40">
+                                  <button
+                                    onClick={() => handleCopyText(item.text, item.id)}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium text-slate-600 hover:text-indigo-600 bg-white border border-slate-200 rounded-md shadow-2xs hover:border-indigo-300 transition-colors cursor-pointer"
+                                  >
+                                    {copiedTextId === item.id ? (
+                                      <>
+                                        <Check className="w-3 h-3 text-emerald-600" />
+                                        <span className="text-emerald-700 font-semibold">Copiado</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Copy className="w-3 h-3" />
+                                        <span>Copiar texto</span>
+                                      </>
+                                    )}
+                                  </button>
+                                  <button
+                                    onClick={() => handleDownloadTextAsFile(item.text, item.timestamp, item.senderFullName || item.senderUsername)}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold text-indigo-700 hover:text-white hover:bg-indigo-600 bg-indigo-50 border border-indigo-200 hover:border-indigo-600 rounded-md shadow-2xs transition-colors cursor-pointer"
+                                    title="Descargar de nuevo como archivo .txt a Recibidos desde PORTAL MÉDICO"
+                                  >
+                                    <Download className="w-3 h-3" />
+                                    <span>Descargar .txt</span>
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Attached Files (photos, pdf, etc.) */}
+                            {item.files && item.files.length > 0 && (
+                              <div className="space-y-2">
+                                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">
+                                  Archivos adjuntos ({item.files.length})
+                                </span>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                  {item.files.map((file) => {
+                                    const isImg = file.type?.startsWith('image/') || file.name.match(/\.(jpg|jpeg|png|webp|gif)$/i);
+                                    return (
+                                      <div
+                                        key={file.id}
+                                        className="border border-slate-200 rounded-lg p-2 flex items-center gap-2.5 bg-slate-50/50 hover:bg-slate-50 transition-colors"
+                                      >
+                                        {isImg ? (
+                                          <div
+                                            onClick={() => setViewingImageModal({ name: file.name, url: file.data })}
+                                            className="w-12 h-12 rounded-md bg-slate-200 overflow-hidden shrink-0 cursor-pointer border border-slate-300 hover:opacity-90 relative group"
+                                            title="Clic para ampliar"
+                                          >
+                                            <img src={file.data} alt={file.name} className="w-full h-full object-cover" />
+                                            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                              <ExternalLink className="w-4 h-4 text-white" />
+                                            </div>
+                                          </div>
+                                        ) : (
+                                          <div className="w-12 h-12 rounded-md bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
+                                            <FileText className="w-6 h-6" />
+                                          </div>
+                                        )}
+
+                                        <div className="flex-1 min-w-0">
+                                          <p className="text-xs font-semibold text-slate-800 truncate" title={file.name}>
+                                            {file.name}
+                                          </p>
+                                          <p className="text-[10px] text-slate-400">
+                                            {formatFileSize(file.size)}
+                                          </p>
+                                          <div className="mt-1 flex items-center gap-2">
+                                            {isImg && (
+                                              <button
+                                                onClick={() => setViewingImageModal({ name: file.name, url: file.data })}
+                                                className="text-[10px] font-semibold text-indigo-600 hover:text-indigo-800 cursor-pointer"
+                                              >
+                                                Ver
+                                              </button>
+                                            )}
+                                            <button
+                                              onClick={() => triggerDownload(file.data, file.name)}
+                                              className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 hover:text-emerald-900 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded cursor-pointer transition-colors"
+                                              title="Descargar de nuevo a Recibidos desde PORTAL MÉDICO"
+                                            >
+                                              <Download className="w-3 h-3" />
+                                              Descargar
+                                            </button>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )
+              ) : activeMessages.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-slate-400 space-y-3">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
@@ -1930,14 +2329,16 @@ export const ChatLocal: React.FC<ChatLocalProps> = ({
             </div>
 
             {/* Typing indicator */}
-            <div className="h-5 px-3 bg-[#e8f2fc] text-[10px] text-[#2c539e] italic flex items-center border-t border-[#c6d7ed] shrink-0 select-none">
-              {onlineUsers.some(u => u.id !== loggedInUser.username && u.typingTo === (activeChannel.startsWith('private_') ? loggedInUser.username : activeChannel))
-                ? onlineUsers.find(u => u.id !== loggedInUser.username && u.typingTo === (activeChannel.startsWith('private_') ? loggedInUser.username : activeChannel))?.fullName + " está escribiendo..."
-                : ""}
-            </div>
+            {activeChannel !== 'archivos_recibidos' && (
+              <div className="h-5 px-3 bg-[#e8f2fc] text-[10px] text-[#2c539e] italic flex items-center border-t border-[#c6d7ed] shrink-0 select-none">
+                {onlineUsers.some(u => u.id !== loggedInUser.username && u.typingTo === (activeChannel.startsWith('private_') ? loggedInUser.username : activeChannel))
+                  ? onlineUsers.find(u => u.id !== loggedInUser.username && u.typingTo === (activeChannel.startsWith('private_') ? loggedInUser.username : activeChannel))?.fullName + " está escribiendo..."
+                  : ""}
+              </div>
+            )}
 
             {/* Toolbar */}
-            {canSendMessages && (
+            {canSendMessages && activeChannel !== 'archivos_recibidos' && (
               <div className="bg-gradient-to-b from-[#f3f7fd] to-[#d7e5f9] px-2 py-1 flex items-center border-y border-[#b4cbe7] shrink-0 shadow-xs z-10 select-none">
                 <div className="relative mr-2">
                   <button
@@ -1978,7 +2379,25 @@ export const ChatLocal: React.FC<ChatLocalProps> = ({
             )}
 
             {/* Input form */}
-            {canSendMessages ? (
+            {activeChannel === 'archivos_recibidos' ? (
+              <div className="p-2.5 bg-gradient-to-r from-slate-50 via-indigo-50/40 to-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-600 shrink-0">
+                <div className="flex items-center gap-2">
+                  <Download className="w-4 h-4 text-indigo-600 shrink-0" strokeWidth={2.3} />
+                  <span className="text-[11px] font-medium text-slate-700">
+                    Guardado automático en: <strong className="text-slate-900 font-semibold">Descargas / Recibidos desde PORTAL MÉDICO</strong>
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={loadLocalTransfers}
+                    className="px-2.5 py-1 text-[11px] font-bold text-indigo-700 hover:bg-indigo-50 rounded border border-indigo-200 transition-colors cursor-pointer"
+                  >
+                    Actualizar
+                  </button>
+                </div>
+              </div>
+            ) : canSendMessages ? (
               <form onSubmit={handleSendMessage} className="relative p-2 md:p-3 bg-[#f0f5fc] border-t border-[#b6cef1] shrink-0 flex flex-col">
                 {mentionQuery && mentionSuggestions.length > 0 && activeChannel === 'general' && (
                   <div className="absolute left-2 bottom-[100%] mb-1 w-64 bg-white border border-slate-200 rounded-lg shadow-xl overflow-hidden z-20">
@@ -2080,6 +2499,50 @@ export const ChatLocal: React.FC<ChatLocalProps> = ({
                   </button>
                 )}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Image Preview Modal for received transfers */}
+      {viewingImageModal && (
+        <div 
+          className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm"
+          onClick={() => setViewingImageModal(null)}
+        >
+          <div 
+            className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] flex flex-col overflow-hidden border border-slate-700/30"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="px-4 py-3 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
+              <div className="flex items-center gap-2 truncate pr-2">
+                <ImageIcon className="w-4 h-4 text-indigo-400 shrink-0" />
+                <span className="text-sm font-semibold truncate">{viewingImageModal.name}</span>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => triggerDownload(viewingImageModal.url, viewingImageModal.name)}
+                  className="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  Descargar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewingImageModal(null)}
+                  className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+            <div className="p-4 bg-slate-950/50 flex-1 overflow-auto flex items-center justify-center min-h-[300px]">
+              <img
+                src={viewingImageModal.url}
+                alt={viewingImageModal.name}
+                className="max-h-[75vh] max-w-full object-contain rounded-lg shadow-lg"
+              />
             </div>
           </div>
         </div>

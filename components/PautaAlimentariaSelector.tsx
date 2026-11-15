@@ -135,11 +135,15 @@ const PautaAlimentariaSelector: React.FC<PautaAlimentariaSelectorProps> = ({
             >
               <option value="">-- Sin pauta alimentaria (no se generará página adicional) --</option>
               <optgroup label="Dietas específicas para patologías">
-                <option value="erc">Enfermedad renal crónica (ERC - Control Potasio, Fósforo y Sodio)</option>
+                <option value="erc_predialisis">Enfermedad Renal Crónica - Prediálisis / No dialítica (Hipoproteica)</option>
+                <option value="erc_dialisis">Enfermedad Renal Crónica - En Diálisis (Hiperproteica y restricción hídrica)</option>
                 <option value="alergia_urticaria">Alergia (urticaria reciente, baja en histamina / alérgenos)</option>
                 <option value="colelitiasis">Colelitiasis (Colecistopatía / Baja en grasas)</option>
                 <option value="aplv">Alergia a proteína de leche de vaca (APLV - Exclusión estricta)</option>
                 <option value="celiaquia">Celiaquía (Libre de gluten / Sin TACC)</option>
+                <option value="migrana">Migraña y cefaleas recurrentes (Exclusión de aminas vasoactivas)</option>
+                <option value="gastroenteritis">Gastroenteritis aguda y diarrea (Régimen astringente)</option>
+                <option value="metilfenidato">Usuario de metilfenidato (TDAH / Densidad proteica y calórica)</option>
               </optgroup>
               <optgroup label="Otras dietas clínicas relevantes">
                 <option value="diabetes">Diabetes Mellitus / Resistencia a la insulina (Bajo índice glicémico)</option>

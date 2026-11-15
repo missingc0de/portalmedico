@@ -35,7 +35,8 @@ const getDrugHighlightClass = (drugText: string): string => {
     'HYDROCLOROTIAZIDA', 'HIDROCLOROTIAZIDA', 'FUROSEMIDA', 'GLIBENCLAMIDA', 'METFORMINA', 
     'INSULINA', 'ATORVASTATINA', 'SIMVASTATINA', 'GEMFIBROZILO', 'ASPIRINA', 'ACETILSALICILICO', 
     'ACETILSALICÍLICO', 'CLOPIDOGREL', 'CAPTOPRIL', 'ESPIRONOLACTONA', 'DILTIAZEM', 
-    'VERAPAMILO', 'NITROGLICERINA', 'ISOSORBIDA', 'JARDIANCE', 'TRAYENTA', 'NPH'
+    'VERAPAMILO', 'NITROGLICERINA', 'ISOSORBIDA', 'JARDIANCE', 'TRAYENTA', 'NPH',
+    'VILDAGLIPTINA', 'EMPAGLIFLOZINA', 'DAPAGLIFLOZINA', 'LINAGLIPTINA', 'TOUJEO', 'APIDRA'
   ];
   if (cvTerms.some(t => textUpper.includes(t))) {
     return 'bg-orange-200/85 rounded text-transparent px-0.5 inline';
@@ -73,14 +74,31 @@ const SmartFarmacosTextarea: React.FC<SmartFarmacosTextareaProps> = ({
   const [am, setAm] = useState('0');
   const [pm, setPm] = useState('0');
   const [noche, setNoche] = useState('0');
+  const [isSos, setIsSos] = useState(false);
+  const [nphAm, setNphAm] = useState('');
+  const [nphPm, setNphPm] = useState('');
 
   const containerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const amInputRef = useRef<HTMLInputElement>(null);
+  const nphAmInputRef = useRef<HTMLInputElement>(null);
+  const nphPmInputRef = useRef<HTMLInputElement>(null);
 
-  // Filtrar fármacos crónicos (omitir inyectables, ampollas, jabones, etc.)
+  // Determinar si el fármaco es una insulina que usa dosificación AM/PM (NPH, Toujeo, Apidra)
+  const isAmPmInsulin = (drug: Farmaco | null) => {
+    if (!drug) return false;
+    const m = drug.medicamento.toUpperCase();
+    return m.includes('INSULINA') || m.includes('NPH') || m.includes('TOUJEO') || m.includes('APIDRA');
+  };
+
+  // Filtrar fármacos crónicos (omitir inyectables agudos, ampollas, jabones, etc., permitiendo insulinas crónicas)
   const chronicDrugs = useMemo(() => {
     return arsenalFarmacologicoData.filter(d => {
+      const med = d.medicamento.toLowerCase();
+      // Permitir insulinas de uso crónico ambulatorio
+      if (med.includes('insulina') || med.includes('nph') || med.includes('toujeo') || med.includes('apidra')) {
+        return true;
+      }
       const form = d.formaFarmaceutica.toLowerCase();
       return !form.includes('inyectable') && 
              !form.includes('ampolla') && 
@@ -100,9 +118,13 @@ const SmartFarmacosTextarea: React.FC<SmartFarmacosTextareaProps> = ({
 
   // Efecto para enfocar automáticamente el input AM cuando se selecciona un fármaco
   useEffect(() => {
-    if (selectedDrug && amInputRef.current) {
-      amInputRef.current.focus();
-      amInputRef.current.select(); // Selecciona el texto (el '0') para que sea fácil de sobrescribir
+    if (selectedDrug) {
+      if (isAmPmInsulin(selectedDrug)) {
+        nphAmInputRef.current?.focus();
+      } else if (amInputRef.current) {
+        amInputRef.current.focus();
+        amInputRef.current.select(); // Selecciona el texto (el '0') para que sea fácil de sobrescribir
+      }
     }
   }, [selectedDrug]);
 
@@ -136,14 +158,38 @@ const SmartFarmacosTextarea: React.FC<SmartFarmacosTextareaProps> = ({
     setAm('0');
     setPm('0');
     setNoche('0');
+    setIsSos(false);
+    setNphAm('');
+    setNphPm('');
   };
 
   const confirmAddition = () => {
     if (!selectedDrug) return;
 
-    const scheme = `${am}-${pm}-${noche}`;
-    // Agregar prefijo "- " y asegurar formato
-    const drugString = `- ${selectedDrug.medicamento.toUpperCase()} ${selectedDrug.dosificacion} ${scheme}.`;
+    let drugString = '';
+
+    if (isAmPmInsulin(selectedDrug)) {
+      const parts: string[] = [];
+      const cleanAm = nphAm.trim().replace(/[^0-9.]/g, '');
+      const cleanPm = nphPm.trim().replace(/[^0-9.]/g, '');
+      if (cleanAm && cleanAm !== '0') parts.push(`${cleanAm} UI AM`);
+      if (cleanPm && cleanPm !== '0') parts.push(`${cleanPm} UI PM`);
+      
+      const doseText = parts.length > 0 ? ` ${parts.join(' / ')}` : '';
+      const medName = selectedDrug.medicamento.toUpperCase().includes('NPH')
+        ? 'INSULINA NPH'
+        : selectedDrug.medicamento.toUpperCase();
+      drugString = `- ${medName}${doseText}.`;
+    } else {
+      const scheme = isSos ? 'SOS' : `${am}-${pm}-${noche}`;
+      let cleanDosage = selectedDrug.dosificacion ? selectedDrug.dosificacion.trim().replace(/\.$/, '') : '';
+      // Si la dosificación contiene UI/mL o U.I./mL (ej. insulinas de frasco/lápiz), se omite para evitar redundancia
+      if (/ui\/ml/i.test(cleanDosage)) {
+        cleanDosage = '';
+      }
+      const dosageStr = cleanDosage ? `${cleanDosage} ` : '';
+      drugString = `- ${selectedDrug.medicamento.toUpperCase()} ${dosageStr}${scheme}.`;
+    }
     
     const cursorPosition = textareaRef.current?.selectionStart || 0;
     const textBeforeCursor = value.slice(0, cursorPosition);
@@ -237,7 +283,7 @@ const SmartFarmacosTextarea: React.FC<SmartFarmacosTextareaProps> = ({
             }
 
             if (!matchedName) {
-              const m = line.match(/^(-\s*)([A-ZÁÉÍÓÚÑa-zñáéíóú0-9\s\+\.\/]+?)(?=\s+\d+|\s*$)/);
+              const m = line.match(/^(-\s*)([A-ZÁÉÍÓÚÑa-zñáéíóú0-9\s\+\.\/]+?)(?=\s+\d+|\s+SOS|\s*$)/i);
               if (m && m[2] && m[2].trim().length > 2) {
                 matchedName = m[2];
               }
@@ -312,29 +358,99 @@ const SmartFarmacosTextarea: React.FC<SmartFarmacosTextareaProps> = ({
         <div className="mt-3 p-4 bg-sky-50 border-2 border-sky-200 rounded-xl shadow-inner animate-fadeIn flex flex-col sm:flex-row items-center gap-4">
           <div className="flex-grow">
             <div className="text-[10px] font-black text-sky-800 uppercase mb-1 tracking-widest">Añadiendo Dosis:</div>
-            <div className="text-sm font-bold text-slate-800">{selectedDrug.medicamento} {selectedDrug.dosificacion}</div>
+            <div className="text-sm font-bold text-slate-800">
+              {selectedDrug.medicamento} {isAmPmInsulin(selectedDrug) ? '' : selectedDrug.dosificacion}
+            </div>
           </div>
           
-          <div className="flex items-center gap-3 bg-white p-3 rounded-xl border border-sky-100 shadow-sm">
-            {[
-              { label: 'AM', val: am, set: setAm, ref: amInputRef },
-              { label: 'Tarde', val: pm, set: setPm },
-              { label: 'Noche', val: noche, set: setNoche }
-            ].map((slot, idx) => (
-              <div key={slot.label} className="flex flex-col items-center">
-                <span className="text-[9px] font-bold text-slate-400 uppercase mb-1">{slot.label}</span>
-                <input
-                  ref={slot.ref}
-                  type="text"
-                  value={slot.val}
-                  onKeyDown={handleDoseKeyDown}
-                  onChange={(e) => slot.set(e.target.value.replace(/[^0-9.]/g, ''))}
-                  className="w-10 h-10 bg-sky-600 text-white rounded-lg text-center font-black outline-none focus:ring-2 focus:ring-sky-400 shadow-sm transition-all"
-                  placeholder="0"
-                />
+          {isAmPmInsulin(selectedDrug) ? (
+            <div className="flex items-center gap-4 bg-white p-3 rounded-xl border border-sky-100 shadow-sm flex-wrap sm:flex-nowrap justify-center">
+              <div className="flex flex-col items-center">
+                <span className="text-[9px] font-bold text-sky-700 uppercase mb-1">Dosis AM</span>
+                <div className="flex items-center">
+                  <input
+                    ref={nphAmInputRef}
+                    type="text"
+                    value={nphAm}
+                    onKeyDown={handleDoseKeyDown}
+                    onChange={(e) => setNphAm(e.target.value.replace(/[^0-9.]/g, ''))}
+                    className="w-14 h-10 px-2 rounded-lg text-center font-black outline-none focus:ring-2 focus:ring-sky-400 shadow-sm transition-all bg-sky-600 text-white placeholder-sky-200 text-sm"
+                    placeholder="UI"
+                  />
+                  <span className="ml-1.5 text-xs font-bold text-slate-600">UI</span>
+                </div>
               </div>
-            ))}
-          </div>
+
+              <div className="h-8 w-px bg-slate-200 mx-1 hidden sm:block" />
+
+              <div className="flex flex-col items-center">
+                <span className="text-[9px] font-bold text-indigo-700 uppercase mb-1">Dosis PM</span>
+                <div className="flex items-center">
+                  <input
+                    ref={nphPmInputRef}
+                    type="text"
+                    value={nphPm}
+                    onKeyDown={handleDoseKeyDown}
+                    onChange={(e) => setNphPm(e.target.value.replace(/[^0-9.]/g, ''))}
+                    className="w-14 h-10 px-2 rounded-lg text-center font-black outline-none focus:ring-2 focus:ring-indigo-400 shadow-sm transition-all bg-indigo-600 text-white placeholder-indigo-200 text-sm"
+                    placeholder="UI"
+                  />
+                  <span className="ml-1.5 text-xs font-bold text-slate-600">UI</span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3 bg-white p-3 rounded-xl border border-sky-100 shadow-sm flex-wrap sm:flex-nowrap justify-center">
+              {[
+                { label: 'AM', val: am, set: setAm, ref: amInputRef },
+                { label: 'Tarde', val: pm, set: setPm },
+                { label: 'Noche', val: noche, set: setNoche }
+              ].map((slot) => (
+                <div key={slot.label} className="flex flex-col items-center">
+                  <span className="text-[9px] font-bold text-slate-400 uppercase mb-1">{slot.label}</span>
+                  <input
+                    ref={slot.ref}
+                    type="text"
+                    value={slot.val}
+                    disabled={isSos}
+                    onKeyDown={handleDoseKeyDown}
+                    onChange={(e) => slot.set(e.target.value.replace(/[^0-9.]/g, ''))}
+                    className={`w-10 h-10 rounded-lg text-center font-black outline-none focus:ring-2 focus:ring-sky-400 shadow-sm transition-all ${
+                      isSos
+                        ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed opacity-60'
+                        : 'bg-sky-600 text-white'
+                    }`}
+                    placeholder="0"
+                  />
+                </div>
+              ))}
+
+              <div className="h-8 w-px bg-slate-200 mx-0.5 hidden sm:block" />
+
+              <div className="flex flex-col items-center">
+                <span className="text-[9px] font-bold text-slate-400 uppercase mb-1">SOS</span>
+                <label 
+                  htmlFor="smart-farmaco-sos"
+                  className={`h-10 px-3 rounded-lg flex items-center gap-2 cursor-pointer border transition-all shadow-sm select-none ${
+                    isSos
+                      ? 'bg-amber-500 border-amber-600 text-white font-black ring-2 ring-amber-300'
+                      : 'bg-slate-50 border-slate-300 text-slate-700 hover:bg-slate-100'
+                  }`}
+                  title="Marcar para uso SOS"
+                >
+                  <input
+                    id="smart-farmaco-sos"
+                    type="checkbox"
+                    checked={isSos}
+                    onChange={(e) => setIsSos(e.target.checked)}
+                    onKeyDown={handleDoseKeyDown}
+                    className="w-4 h-4 text-amber-600 rounded border-slate-300 focus:ring-amber-500 cursor-pointer"
+                  />
+                  <span className="text-xs font-black tracking-wider">SOS</span>
+                </label>
+              </div>
+            </div>
+          )}
 
           <div className="flex gap-2">
             <button

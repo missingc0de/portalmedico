@@ -10,33 +10,64 @@ export interface PautaAlimentariaInfo {
 
 export const PAUTAS_ALIMENTARIAS: PautaAlimentariaInfo[] = [
   {
-    id: 'erc',
-    nombre: 'Enfermedad Renal Crónica (ERC)',
-    subtitulo: 'Cuidado renal y control de solutos (Sodio, Potasio y Fósforo)',
-    descripcion: 'Pauta para proteger la función renal residual, prevenir la acumulación de toxinas urémicas y controlar electrolitos (fósforo, potasio y sodio).',
+    id: 'erc_predialisis',
+    nombre: 'Enfermedad Renal Crónica (Etapa No Dialítica / Prediálisis)',
+    subtitulo: 'Régimen hipoproteico, control de fósforo, sodio y preservación de función renal residual',
+    descripcion: 'Pauta para enlentecer la progresión del daño renal, disminuir la hiperfiltración glomerular y reducir la acumulación de toxinas urémicas mediante restricción proteica controlada (0.6 a 0.8 g/kg/día), limitación de sodio y fósforo, y manejo de potasio según kalemia.',
     alimentosFavorecer: [
-      'Proteínas magras en porción controlada: clara de huevo, pechuga de pollo, pavo o pescado fresco.',
-      'Verduras bajas o moderadas en potasio: zapallo italiano, zanahoria, pepino, lechuga, porotos verdes.',
-      'Técnica de remojo prolongado (12-24h) y doble cocción en abundante agua (desechando el caldo) para reducir potasio.',
-      'Frutas bajas en potasio: manzana, pera, piña, arándanos, sandía en porción moderada.',
-      'Carbohidratos energéticos sin fósforo añadido: arroz blanco, fideos, maicena, pan blanco sin sal.',
-      'Aceites vegetales crudos: aceite de oliva virgen o canola en crudo como aporte calórico.',
-      'Agua e infusiones claras según la indicación médica de balance de líquidos.'
+      'Proteínas en porción restringida y controlada (0.6 - 0.8 g/kg/peso al día): clara de huevo, pechuga de pollo, pavo o pescado fresco en gramajes exactos indicados por nutricionista.',
+      'Aporte calórico suficiente a base de carbohidratos complejos y grasas de calidad para prevenir desnutrición: arroz blanco, fideos, maicena, papas con técnica de doble cocción.',
+      'Aceites vegetales puros en crudo: aceite de oliva virgen extra o canola como fuente energética concentrada no proteica.',
+      'Verduras bajas o moderadas en potasio: zapallo italiano, zanahoria, pepino, lechuga hidropónica, porotos verdes.',
+      'Frutas bajas en potasio en porciones medidas: manzana, pera, piña, arándanos, uva verde.',
+      'Técnica de remojo prolongado (12-24 horas) y doble cocción en abundante agua (desechando el caldo) si existe tendencia a hiperkalemia.',
+      'Agua e infusiones claras ajustadas a la diuresis residual y ausencia/presencia de edema.'
     ],
     alimentosEvitar: [
-      'Sal de mesa y alimentos altos en sodio (embutidos, cecinas, caldos en cubo, conservas, snacks).',
-      'Sustitutos de sal (BioSal, sales dietéticas) por contener cloruro de potasio altamente peligroso.',
-      'Frutas y vegetales muy ricos en potasio: plátano, naranja, kiwi, melón, palta, tomate y espinacas.',
-      'Lácteos enteros, quesos maduros y yogurt en grandes cantidades (alto contenido de fósforo).',
-      'Bebidas gaseosas oscuras (tipo cola) y ultraprocesados con aditivos de fósforo inorgánico.',
-      'Frutos secos, semillas, legumbres sin técnica de doble cocción, cacao y chocolates.',
-      'Vísceras e interiores (hígado, riñón, panas, sesos).'
+      'Exceso de carnes rojas, pescados, aves y embutidos (el exceso proteico acelera el daño y fallo renal acelerando la entrada a diálisis).',
+      'Sal de mesa y alimentos ricos en sodio (embutidos, cecinas, caldos concentrados en cubo, conservas, snacks procesados).',
+      'Sustitutos de sal (BioSal, sales dietéticas o light) por contener cloruro de potasio potencialmente mortal.',
+      'Lácteos enteros, quesos maduros y yogurt en grandes cantidades (alto contenido de fósforo que deteriora el hueso y la vasculatura).',
+      'Bebidas gaseosas oscuras (tipo cola) y ultraprocesados con aditivos de fósforo inorgánico (conservantes fosfatados).',
+      'Frutas y vegetales con muy alto contenido de potasio si la VFG está disminuida: plátano, kiwi, naranja, melón, palta, espinacas y concentrados de tomate.',
+      'Frutos secos, semillas, legumbres enteras sin remojo previo, chocolates y cacao.',
+      'Vísceras e interiores (hígado, riñones, panas, chunchules).'
     ],
     recomendacionesGenerales: [
-      'Aplicar siempre técnica de doble cocción: pelar, picar, remojar 12-24 hrs, cambiar agua y hervir dos veces desechando el caldo.',
-      'No consumir sustitutos de sal light/diet ya que reemplazan el sodio por potasio.',
-      'Controlar estrictamente el volumen de líquidos diario si presenta edema o restricción hídrica.',
-      'Monitorear periódicamente niveles de Creatinina, RAC, Potasio, Fósforo y Calcio en su CESFAM.'
+      'Respetar rigurosamente la restricción proteica prescrita: a diferencia del paciente en diálisis, en prediálisis el riñón enfermo NO tolera dietas hiperproteicas.',
+      'Evitar absolutamente sales dietéticas o BioSal (reemplazan el sodio por potasio, con grave riesgo de paro cardíaco por hiperkalemia).',
+      'Evitar medicamentos nefrotóxicos (AINEs como ibuprofeno, ketoprofeno, naproxeno, diclofenaco).',
+      'Monitorear periódicamente niveles de Creatinina, VFG, RAC, Potasio, Fósforo, Bicarbonato y Calcio en su CESFAM.'
+    ]
+  },
+  {
+    id: 'erc_dialisis',
+    nombre: 'Enfermedad Renal Crónica en Diálisis (Hemodiálisis / Peritoneodiálisis)',
+    subtitulo: 'Régimen hiperproteico, restricción hídrica estricta y control severo de potasio y fósforo',
+    descripcion: 'Pauta para pacientes en terapia de sustitución renal (hemodiálisis o peritoneodiálisis), donde se requiere un alto aporte proteico (1.2 a 1.4 g/kg/día) para reponer las pérdidas en el dializado y evitar el desgaste proteico-energético, con restricción estricta de líquidos interdiálisis, potasio y fósforo.',
+    alimentosFavorecer: [
+      'Aporte proteico ELEVADO de alto valor biológico (1.2 - 1.4 g/kg/peso al día): claras de huevo diarias (excelente proteína sin fósforo), pechuga de pollo, pavo, pescado fresco, posta magra.',
+      'Verduras bajas en potasio preparadas OBLIGATORIAMENTE con técnica de remojo y doble cocción: zapallo italiano, zanahoria, pepino pelado, porotos verdes.',
+      'Frutas bajas en potasio en porciones pequeñas controladas: manzana cocida o pelada, pera, piña en rodaja fina, arándanos.',
+      'Carbohidratos refinados energéticos sin fósforo añadido: arroz blanco, fideos, fideos de arroz, sémola, pan marraqueta sin sal.',
+      'Aceites vegetales crudos: aceite de oliva virgen o canola para cubrir los altos requerimientos calóricos.',
+      'Cubos de hielo pequeños o rodajas de fruta congelada en volumen estrictamente medido para aliviar la sed sin sobrecargar volumen.'
+    ],
+    alimentosEvitar: [
+      'Sobrecarga de líquidos: sopas, caldos, gelatinas, helados, sandía, melón y agua libre por sobre la cuota hídrica prescrita (riesgo inminente de edema agudo de pulmón y crisis hipertensiva).',
+      'Alimentos muy altos en potasio (riesgo de hiperkalemia severa y paro cardíaco entre diálisis): plátano, palta, naranja, kiwi, melón, frutos secos, tomate crudo, papas sin doble cocción, champiñones, chocolate.',
+      'Sustitutos de sal y sales dietéticas / BioSal (estrictamente prohibidos).',
+      'Fósforo inorgánico de alta absorción: bebidas gaseosas oscuras (tipo cola), cecinas, embutidos, alimentos congelados ultraprocesados con aditivos fosfatados.',
+      'Lácteos en exceso: leche entera, quesos duros, queso fundido, yogurt cremoso (alto fósforo que produce calcificaciones vasculares y prurito).',
+      'Sal de mesa y alimentos salados (estimulan la sed y aumentan peligrosamente la ganancia de peso interdialítica).'
+    ],
+    recomendacionesGenerales: [
+      'Control estricto de la ganancia de peso interdialítica: no debe superar los 1.5 a 2.0 kg (o el 4-5% del peso seco) entre sesiones de hemodiálisis.',
+      'La cuota de líquidos diaria suele ser: volumen de orina residual en 24 horas + 500 a 700 ml (incluyendo agua, infusiones, sopas y frutas ricas en agua).',
+      'Tomar los quelantes de fósforo (carbonato de calcio, sevelamero) estrictamente JUNTO con el primer bocado de las comidas principales.',
+      'Consumir suficientes proteínas (especialmente clara de huevo): la desnutrición proteico-calórica es la principal causa de morbimortalidad en pacientes en diálisis.',
+      'Aplicar siempre doble cocción a tubérculos y vegetales: pelar, picar pequeños, remojar 12-24 horas, botar el agua y hervir dos veces desechando el caldo.',
+      'Acudir puntualmente a todas las sesiones de diálisis programadas sin acortar el tiempo de tratamiento.'
     ]
   },
   {
@@ -374,10 +405,100 @@ export const PAUTAS_ALIMENTARIAS: PautaAlimentariaInfo[] = [
       'Evitar absolutamente el consumo de alcohol y productos endulzados con jarabe de fructosa.',
       'Realizar ejercicio físico regular combinando entrenamiento aeróbico con ejercicios de fuerza muscular.'
     ]
+  },
+  {
+    id: 'migrana',
+    nombre: 'Migraña y Cefaleas Recurrentes',
+    subtitulo: 'Dieta de exclusión de aminas biógenas y desencadenantes neurovasculares',
+    descripcion: 'Pauta orientada a reducir la frecuencia e intensidad de las crisis migrañosas mediante la exclusión de tiramina, histamina, glutamato monosódico, nitritos y fluctuaciones bruscas de glucosa.',
+    alimentosFavorecer: [
+      'Carnes y aves frescas recién preparadas: pechuga de pollo, pavo, vacuno magro no procesado ni recalentado.',
+      'Pescados blancos y frescos recién cocinados (merluza, reineta, salmón fresco, no ahumados ni en conserva).',
+      'Huevos frescos bien cocidos.',
+      'Granos enteros y carbohidratos complejos: arroz integral, avena tradicional, quínoa, papas cocidas.',
+      'Verduras frescas bien toleradas: zapallo italiano, zanahoria, pepino, lechuga, espárragos, zapallo camote.',
+      'Frutas frescas seleccionadas: manzana, pera, cerezas, durazno (evitar cítricos y plátano maduro).',
+      'Alimentos ricos en magnesio y riboflavina (vitamina B2): semillas de calabaza, avena, espinaca cocida fresca.',
+      'Hidratación abundante y regular: agua pura e infusiones suaves naturales (manzanilla, tilo).'
+    ],
+    alimentosEvitar: [
+      'Quesos madurados y fermentados (chanco añejo, gouda curado, parmesano, queso azul, cheddar) ricos en tiramina.',
+      'Embutidos, cecinas y carnes procesadas (vienesas, salame, jamón serrano, tocino, longanizas) por nitritos y nitratos.',
+      'Chocolates, cacao y derivados (ricos en feniletilamina y cafeína).',
+      'Bebidas alcohólicas (especialmente vino tinto, cerveza y destilados oscuros ricos en taninos y congéneres).',
+      'Exceso o variaciones bruscas de cafeína (café cargado, bebidas cola, energéticas, mate concentrado).',
+      'Glutamato monosódico (GMS / saborizante umami): cubos de caldo, sopas en sobre, comida china comercial, snacks procesados.',
+      'Edulcorantes artificiales (aspartamo, sucralosa en exceso).',
+      'Frutas cítricas (naranja, limón, mandarina), plátanos muy maduros, palta y frutos secos si se reconocen como gatillantes individuales.',
+      'Alimentos encurtidos, fermentados, chucrut, vinagre y conservas.'
+    ],
+    recomendacionesGenerales: [
+      'Mantener horarios regulares de comida: evitar ayunos prolongados o saltarse comidas (la hipoglucemia es un potente gatillante).',
+      'Llevar un diario de cefaleas registrando los alimentos consumidos en las 24 horas previas a cada crisis para detectar sensibilidades personales.',
+      'Asegurar un patrón regular de sueño y una hidratación constante de al menos 2 litros de agua al día.',
+      'Evitar la automedicación reiterada con analgésicos comunes para prevenir la cefalea por sobreuso de medicamentos.'
+    ]
+  },
+  {
+    id: 'metilfenidato',
+    nombre: 'Usuario de Metilfenidato (TDAH / Estimulantes)',
+    subtitulo: 'Estrategia nutricional ante hiporexia, retraso del apetito y optimización neuroconductual',
+    descripcion: 'Pauta enfocada en contrarrestar el efecto anorexígeno del metilfenidato, asegurar un aporte calórico y proteico óptimo, prevenir pérdidas de peso y evitar interferencias en la absorción del fármaco.',
+    alimentosFavorecer: [
+      'Desayuno denso y nutritivo antes de la toma del fármaco: huevos revueltos, pan con quesillo, avena con leche, yogurt con frutos secos.',
+      'Colaciones nutritivas de alta densidad calórica y volumen pequeño: frutos secos, barritas de cereal integrales, mantequilla de maní, plátano, queso fresco.',
+      'Proteínas de alto valor biológico: pollo, pavo, pescado, huevos, legumbres (apoyan la síntesis de neurotransmisores dopaminérgicos).',
+      'Grasas saludables y ácidos grasos omega-3: pescado graso (jurel, salmón, sardinas), aceite de oliva, nueces, chía.',
+      'Cena reforzada y colación nocturna: comidas completas y nutritivas en la tarde-noche cuando cede el efecto anorexígeno y retorna el apetito.',
+      'Líquidos e hidratación continua: agua fresca durante todo el día para prevenir la sequedad bucal inducida por estimulantes.'
+    ],
+    alimentosEvitar: [
+      'Zumos o jugos cítricos (naranja, pomelo, limón) y vitamina C en altas dosis en las 2 horas previas y posteriores a la toma (el pH ácido interfiere con la absorción del metilfenidato).',
+      'Bebidas estimulantes con cafeína (café, bebidas energéticas, bebidas cola, té cargado): potencian taquicardia, irritabilidad, ansiedad e insomnio.',
+      'Azúcares simples refinados y golosinas: causan picos y valles glucémicos bruscos que empeoran la irritabilidad, concentración y conducta.',
+      'Colorantes artificiales (tartrazina E102, rojo allura): vinculados a exacerbación de hiperactividad en personas sensibles.'
+    ],
+    recomendacionesGenerales: [
+      'Administrar el medicamento junto o inmediatamente después de un desayuno abundante y proteico antes de que comience el efecto supresor del apetito.',
+      'Flexibilizar la estructura de las comidas: no obligar a comer grandes porciones en el almuerzo si no hay apetito; compensar con una cena contundente y nutritiva.',
+      'Monitorear periódicamente el peso corporal y la curva de crecimiento pondoestatural en cada control médico.',
+      'Fomentar una rutina de hidratación constante durante la jornada escolar o laboral.'
+    ]
+  },
+  {
+    id: 'gastroenteritis',
+    nombre: 'Gastroenteritis Aguda y Diarrea (Régimen Astringente)',
+    subtitulo: 'Hidratación oral, reposición hidroelectrolítica y reposo de la mucosa digestiva',
+    descripcion: 'Pauta para reponer agua y electrolitos perdidos, disminuir la motilidad intestinal excesiva y facilitar la recuperación del epitelio digestivo.',
+    alimentosFavorecer: [
+      'Hidratación oral prioritaria: Sales de Rehidratación Oral (SRO) en sorbos pequeños y frecuentes; agua hervida, sopa clara de arroz con zanahoria.',
+      'Cereales astringentes refinados: arroz blanco bien cocido, fideos de sopa finos, maicena cocida al agua, sémola.',
+      'Zanahoria cocida al agua o en puré (rica en pectina con efecto astringente y protector de mucosa).',
+      'Carnes muy magras hervidas o al vapor sin grasa: pechuga de pollo desmenuzada, posta rosada en caldo desgrasado.',
+      'Frutas astringentes cocidas o procesadas: manzana cocida sin piel, manzana rallada oxidada (concentra taninos astringentes), compota de pera, plátano maduro.',
+      'Pan batido / marraqueta tostada (sin miga húmeda), galletas de agua tradicionales sin manteca.',
+      'Infusiones claras: té liviano, manzanilla o agua de canela a temperatura tibia.'
+    ],
+    alimentosEvitar: [
+      'Lácteos enteros, leche, quesos y crema (déficit transitorio de lactasa secundario al daño de vellosidades intestinales).',
+      'Frituras, comidas grasosas, mayonesa, frituras, embutidos y cecinas.',
+      'Verduras crudas, ensaladas y hortalizas meteorizantes (repollo, coliflor, brócoli, cebolla, legumbres).',
+      'Frutas crudas con cáscara, ciruelas, kiwi, uvas, naranjas y frutas con efecto laxante.',
+      'Bebidas azucaradas, gaseosas, jugos envasados y néctares (la alta osmolaridad empeora la diarrea osmótica).',
+      'Café, mate, alcohol, condimentos picantes e irritantes digestivos.',
+      'Edulcorantes de tipo poliol (sorbitol, xilitol, manitol) por su efecto laxante.'
+    ],
+    recomendacionesGenerales: [
+      'Fraccionar la hidratación: beber líquidos a sorbos pequeños (o con cuchara) cada 5 a 10 minutos, especialmente si hay náuseas o vómitos.',
+      'No prolongar el ayuno: reintroducir alimentos sólidos blandos astringentes tan pronto se tolere la vía oral para favorecer la regeneración de la mucosa.',
+      'Progresar hacia una alimentación normal de manera paulatina según la consistencia de las deposiciones.',
+      'Consultar de inmediato en Urgencias ante signos de deshidratación severa (boca seca, ojos hundidos, ausencia de orina por más de 6 horas, decaimiento extremo), diarrea con sangre (disentería) o fiebre alta persistente.'
+    ]
   }
 ];
 
 export const getPautaById = (id: string): PautaAlimentariaInfo | undefined => {
+  if (id === 'erc') return PAUTAS_ALIMENTARIAS.find(p => p.id === 'erc_predialisis');
   return PAUTAS_ALIMENTARIAS.find(p => p.id === id);
 };
 

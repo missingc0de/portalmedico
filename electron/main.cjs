@@ -261,15 +261,41 @@ function createWindow() {
     return true;
   });
 
-  mainWindow.webContents.session.on('will-download', (event, item, webContents) => {
-    const defaultPath = path.join(app.getPath('desktop'), item.getFilename());
-    item.setSavePath(defaultPath);
-    item.once('done', (event, state) => {
-      if (state === 'completed') {
-        const { shell } = require('electron');
-        shell.openPath(defaultPath);
+  ipcMain.handle('save-received-file', async (event, { filename, dataBase64, isText, textContent }) => {
+    try {
+      const fs = require('fs');
+      const os = require('os');
+      const downloadsDir = app.getPath('downloads') || path.join(os.homedir(), 'Downloads');
+      const targetDir = path.join(downloadsDir, 'Recibidos desde PORTAL MÉDICO');
+      if (!fs.existsSync(targetDir)) {
+        fs.mkdirSync(targetDir, { recursive: true });
       }
-    });
+      const cleanFilename = (filename || 'archivo_recibido').replace(/[<>:"/\\|?*]/g, '_');
+      const fullPath = path.join(targetDir, cleanFilename);
+      if (isText && textContent !== undefined) {
+        fs.writeFileSync(fullPath, textContent, 'utf-8');
+      } else if (dataBase64) {
+        const base64Data = dataBase64.replace(/^data:[^;]+;base64,/, '');
+        fs.writeFileSync(fullPath, Buffer.from(base64Data, 'base64'));
+      }
+      return { success: true, path: fullPath };
+    } catch (err) {
+      console.error('Error saving received file to downloads:', err);
+      return { success: false, error: String(err) };
+    }
+  });
+
+  mainWindow.webContents.session.on('will-download', (event, item, webContents) => {
+    const fs = require('fs');
+    const os = require('os');
+    const downloadsDir = app.getPath('downloads') || path.join(os.homedir(), 'Downloads');
+    const targetDir = path.join(downloadsDir, 'Recibidos desde PORTAL MÉDICO');
+    if (!fs.existsSync(targetDir)) {
+      fs.mkdirSync(targetDir, { recursive: true });
+    }
+    const cleanFilename = (item.getFilename() || 'descarga').replace(/[<>:"/\\|?*]/g, '_');
+    const defaultPath = path.join(targetDir, cleanFilename);
+    item.setSavePath(defaultPath);
   });
 
   // Permitir iframes eliminando X-Frame-Options y CSP restrictivos de forma completamente insensible a mayúsculas/minúsculas

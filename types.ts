@@ -1367,6 +1367,8 @@ export interface FichaControlSalaEraFormData {
   antecedentesFamiliaresRespAclaracion: string;
   laboratorioFecha: string;
   laboratorioResultados: string;
+  espirometriaOtrosFecha?: string;
+  espirometriaOtrosResultados?: string;
   historiaActual: string;
   sintomasTosRisaEjercicioFrio: boolean;
   sintomasTosRisaEjercicioFrioAclaracion: string;
@@ -1758,6 +1760,13 @@ export interface FichaIngresoEcicepFormData {
 export interface FichaIngresoPaddsFormData extends FichaIngresoEcicepFormData {
   delirios?: string;
   dolor?: string;
+
+  // Datos del cuidador
+  cuidadorNombre?: string;
+  cuidadorRut?: string;
+  cuidadorRelacion?: string;
+  cuidadorTelefono?: string;
+  cuidadorDireccion?: string;
 
   // Piel, lesiones por presión y cuidados corporales
   padds_barthel_calculado?: string;

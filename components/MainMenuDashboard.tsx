@@ -23,8 +23,11 @@ import {
   Italic,
   PhoneCall,
   Stethoscope,
-  HeartPulse
+  HeartPulse,
+  Laptop,
+  Paperclip
 } from 'lucide-react';
+import EnviarPcModal from './EnviarPcModal';
 import { db } from '../services/firebase';
 import { collection, query, orderBy, onSnapshot, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
 
@@ -69,6 +72,8 @@ const MainMenuDashboard: React.FC<MainMenuDashboardProps> = ({
 }) => {
   const today = useMemo(() => new Date(), []);
   const isFriday = useMemo(() => today.getDay() === 5, [today]);
+
+  const [isEnviarPcModalOpen, setIsEnviarPcModalOpen] = useState(false);
 
   // Real-time synchronization of Avisos from Firebase
   const [avisos, setAvisos] = useState<Aviso[]>([]);
@@ -354,6 +359,31 @@ const MainMenuDashboard: React.FC<MainMenuDashboardProps> = ({
             <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-white"></span>
           </div>
         </div>
+
+        {/* Botón Enviar a PC (Móvil) */}
+        <button
+          type="button"
+          onClick={() => setIsEnviarPcModalOpen(true)}
+          className="w-full bg-gradient-to-r from-sky-600 via-indigo-600 to-indigo-700 hover:from-sky-700 hover:to-indigo-800 text-white p-3 rounded-2xl shadow-xs flex items-center justify-between transition-all active:scale-[0.98] cursor-pointer shrink-0 border border-sky-400/30"
+        >
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-xs flex items-center justify-center shrink-0 border border-white/30 text-white shadow-2xs">
+              <Laptop className="w-5 h-5" />
+            </div>
+            <div className="text-left min-w-0">
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-black uppercase tracking-wider">Enviar a PC</span>
+                <span className="text-[9px] font-bold bg-white/25 px-1.5 py-0.2 rounded-full">Adjuntar</span>
+              </div>
+              <p className="text-[11px] text-sky-100 truncate mt-0.5">
+                Fotos, archivos o texto directo a tu computador
+              </p>
+            </div>
+          </div>
+          <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center shrink-0 ml-2 shadow-2xs">
+            <Paperclip className="w-4 h-4 text-white" />
+          </div>
+        </button>
 
         {/* 2. Quién está de Llamado de Urgencia */}
         <div className="bg-white rounded-2xl p-3 border border-slate-200/90 shadow-2xs flex flex-col justify-between shrink-0">
@@ -888,6 +918,13 @@ const MainMenuDashboard: React.FC<MainMenuDashboardProps> = ({
           </div>
         </div>
       )}
+
+      {/* Modal Enviar a PC */}
+      <EnviarPcModal
+        isOpen={isEnviarPcModalOpen}
+        onClose={() => setIsEnviarPcModalOpen(false)}
+        loggedInUser={loggedInUser}
+      />
 
     </div>
   );

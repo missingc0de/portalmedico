@@ -64,7 +64,6 @@ export const arsenalFarmacologicoData: Farmaco[] = [
   { registroISP: 'F-23507/22', medicamento: 'Haloperidol', formaFarmaceutica: 'Solución Inyectable', dosificacion: '5 mg./mL.', programaOges: '', observaciones: 'Carro de Paro, Móvil SAPU', tipo: 'URGENCIA' },
   { registroISP: 'F-19054/21', medicamento: 'Hidrocortisona Succinato', formaFarmaceutica: 'Polvo para Solución Inyectable', dosificacion: '100 mg.', programaOges: '', observaciones: 'Carro de Paro, Móvil SAPU', tipo: 'URGENCIA' },
   { registroISP: 'F-8025/22', medicamento: 'Hidrocortisona Succinato', formaFarmaceutica: 'Polvo Liofilizado para Solución Inyectable', dosificacion: '500 mg.', programaOges: '', observaciones: 'Carro de Paro, Móvil SAPU', tipo: 'URGENCIA' },
-  { registroISP: 'B-1499/21', medicamento: 'Insulina Humana', formaFarmaceutica: 'Solución Inyectable', dosificacion: '100 U.I./mL.', programaOges: '', observaciones: '', tipo: 'URGENCIA' },
   { registroISP: 'F-7662/21', medicamento: 'Ketamina', formaFarmaceutica: 'Solución Inyectable', dosificacion: '50 mg./mL.', programaOges: '', observaciones: '', tipo: 'URGENCIA' },
   { registroISP: 'F-23402/22', medicamento: 'Ketorolaco trometamol', formaFarmaceutica: 'Solución Inyectable', dosificacion: '30 mg./mL.', programaOges: '', observaciones: '', tipo: 'URGENCIA' },
   { registroISP: 'F-10893/21', medicamento: 'Lanatosido C', formaFarmaceutica: 'Solución Inyectable', dosificacion: '0,4 mg./2 mL.', programaOges: '', observaciones: 'Carro de Paro', tipo: 'URGENCIA' },
@@ -168,8 +167,6 @@ export const arsenalFarmacologicoData: Farmaco[] = [
   { registroISP: 'F-24661/19', medicamento: 'Hidroclorotiazida', formaFarmaceutica: 'Comprimido', dosificacion: '50 mg.', programaOges: 'FOFAR', observaciones: 'Continuidad Tratamiento¹', tipo: 'RURAL' },
   { registroISP: 'F-19054/21', medicamento: 'Hidrocortisona Succinato', formaFarmaceutica: 'Polvo Liofilizado para solución inyectable', dosificacion: '100mg.', programaOges: '', observaciones: '', tipo: 'RURAL' },
   { registroISP: 'F-7467/21', medicamento: 'Imipramina Clorhidrato', formaFarmaceutica: 'Grageas', dosificacion: '25 mg.', programaOges: '', observaciones: 'Continuidad Tratamiento¹', tipo: 'RURAL' },
-  { registroISP: 'B-1499/21', medicamento: 'Insulina Humana', formaFarmaceutica: 'Solución inyectable', dosificacion: '100 U.I./mL.', programaOges: 'PM APS CARDIOVASCULAR', observaciones: '', tipo: 'RURAL' },
-  { registroISP: 'B-2338/18', medicamento: 'Insulina Isófana Humana (NPH)', formaFarmaceutica: 'Suspensión inyectable', dosificacion: '100 U.I./mL.', programaOges: 'PM APS CARDIOVASCULAR', observaciones: 'Continuidad Tratamiento¹', tipo: 'RURAL' },
   { registroISP: 'F-24875/19', medicamento: 'Ipratropio Bromuro', formaFarmaceutica: 'Aerosol para inhalación', dosificacion: '20 mcg./Dosis', programaOges: 'PM-APS IRA/ERA', observaciones: 'Continuidad Tratamiento¹', tipo: 'RURAL' },
   { registroISP: 'F-22210/20', medicamento: 'Ipratropio Bromuro', formaFarmaceutica: 'Solución para inhalación', dosificacion: '0,025%', programaOges: '', observaciones: '', tipo: 'RURAL' },
   { registroISP: 'F-7204/20', medicamento: 'Isosorbida Dinitrato', formaFarmaceutica: 'Comprimido', dosificacion: '10 mg.', programaOges: '', observaciones: 'Continuidad Tratamiento¹', tipo: 'RURAL' },
@@ -316,6 +313,13 @@ export const arsenalFarmacologicoData: Farmaco[] = [
   { registroISP: '', medicamento: 'Metilfenidato', formaFarmaceutica: 'Comprimido', dosificacion: '10 mg', programaOges: '', observaciones: '', tipo: 'APS' },
   { registroISP: '', medicamento: 'Metilfenidato Retard', formaFarmaceutica: 'Comprimido de liberación prolongada', dosificacion: '10 mg', programaOges: '', observaciones: '', tipo: 'APS' },
   { registroISP: '', medicamento: 'Metilfenidato', formaFarmaceutica: 'Comprimido', dosificacion: '20 mg', programaOges: '', observaciones: '', tipo: 'APS' },
-  { registroISP: '', medicamento: 'Metilfenidato Retard', formaFarmaceutica: 'Comprimido de liberación prolongada', dosificacion: '20 mg', programaOges: '', observaciones: '', tipo: 'APS' }
+  { registroISP: '', medicamento: 'Metilfenidato Retard', formaFarmaceutica: 'Comprimido de liberación prolongada', dosificacion: '20 mg', programaOges: '', observaciones: '', tipo: 'APS' },
+  { registroISP: '', medicamento: 'Vildagliptina', formaFarmaceutica: 'Comprimido', dosificacion: '50 mg.', programaOges: '', observaciones: '', tipo: 'APS' },
+  { registroISP: '', medicamento: 'Empagliflozina', formaFarmaceutica: 'Comprimido', dosificacion: '10 mg.', programaOges: '', observaciones: '', tipo: 'APS' },
+  { registroISP: '', medicamento: 'Empagliflozina', formaFarmaceutica: 'Comprimido', dosificacion: '25 mg.', programaOges: '', observaciones: '', tipo: 'APS' },
+  { registroISP: '', medicamento: 'Dapagliflozina', formaFarmaceutica: 'Comprimido', dosificacion: '10 mg.', programaOges: '', observaciones: '', tipo: 'APS' },
+  { registroISP: '', medicamento: 'Linagliptina', formaFarmaceutica: 'Comprimido', dosificacion: '5 mg.', programaOges: '', observaciones: '', tipo: 'APS' },
+  { registroISP: '', medicamento: 'Insulina Toujeo (Lenta)', formaFarmaceutica: 'Solución Inyectable', dosificacion: '300 UI/mL.', programaOges: '', observaciones: 'Insulina glargina de acción prolongada', tipo: 'APS' },
+  { registroISP: '', medicamento: 'Insulina Apidra (Rápida, según esquema)', formaFarmaceutica: 'Solución Inyectable', dosificacion: '100 UI/mL.', programaOges: '', observaciones: 'Insulina glulisina de acción rápida', tipo: 'APS' }
 ]
 
