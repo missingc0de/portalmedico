@@ -8,6 +8,14 @@
   <link rel="manifest" href="/manifest.json" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect x=%2230%22 y=%2210%22 width=%2240%22 height=%2280%22 rx=%225%22 fill=%22%230EA5E9%22/><rect x=%2210%22 y=%2230%22 width=%2280%22 height=%2240%22 rx=%225%22 fill=%22%230EA5E9%22/></svg>">
   <link rel="stylesheet" href="/index.css">
+  <script>
+    try {
+      if (localStorage.getItem('theme') === 'dark') {
+        document.documentElement.classList.add('dark');
+        document.body.classList.add('dark');
+      }
+    } catch (e) {}
+  </script>
 </head>
 <body class="bg-slate-100">
   <div id="root"></div>

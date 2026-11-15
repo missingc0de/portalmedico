@@ -704,6 +704,27 @@ const App: React.FC = () => {
     localStorage.setItem('appZoomLevel', zoomLevel.toString());
   }, [zoomLevel]);
 
+  // Tema Claro / Oscuro (Modo Claro por defecto)
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    return localStorage.getItem('theme') === 'dark';
+  });
+
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+      document.body.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      document.body.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [isDarkMode]);
+
+  const toggleTheme = () => {
+    setIsDarkMode(prev => !prev);
+  };
+
   const [activeMenu, setActiveMenu] = useState<'archivo' | 'vista' | 'ayuda' | null>(null);
   const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
@@ -3178,6 +3199,14 @@ const App: React.FC = () => {
                     </button>
                     <hr className="my-1 border-slate-150" />
                     <button
+                      onClick={() => { setActiveMenu(null); toggleTheme(); }}
+                      className="w-full text-left px-4 py-1.5 hover:bg-slate-100 flex items-center justify-between font-medium cursor-pointer"
+                    >
+                      <span>{isDarkMode ? "Cambiar a Modo Claro" : "Cambiar a Modo Oscuro"}</span>
+                      <span className="text-xs">{isDarkMode ? "☀️" : "🌙"}</span>
+                    </button>
+                    <hr className="my-1 border-slate-150" />
+                    <button
                       onClick={() => {
                         setActiveMenu(null);
                         if (document.fullscreenElement) {
@@ -3268,6 +3297,26 @@ const App: React.FC = () => {
               </button>
             </div>
 
+            {/* Alternar Modo Claro / Modo Oscuro */}
+            <button
+              onClick={toggleTheme}
+              title={isDarkMode ? "Cambiar a Modo Claro" : "Cambiar a Modo Oscuro"}
+              className="w-8 h-8 rounded-lg flex items-center justify-center transition-all cursor-pointer active:scale-95 text-white bg-sky-900/40 hover:bg-sky-900/60 border border-sky-400/30 shadow-inner mr-1"
+            >
+              {isDarkMode ? (
+                /* Sol para alternar a modo claro */
+                <svg className="w-4 h-4 text-amber-300 hover:text-amber-200 transition-colors" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="4" fill="currentColor" fillOpacity="0.25" stroke="currentColor" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41m14.14-14.14l-1.41 1.41" />
+                </svg>
+              ) : (
+                /* Luna para alternar a modo oscuro */
+                <svg className="w-4 h-4 text-sky-100 hover:text-white transition-colors" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                </svg>
+              )}
+            </button>
+
             {isAuthenticated && loggedInUser && (
               <>
               {/* Certificado Médico */}
@@ -3357,6 +3406,26 @@ const App: React.FC = () => {
               </button>
             </>
           )}
+          </div>
+
+          {/* Alternar Modo Claro / Modo Oscuro en Dispositivos Móviles */}
+          <div className="flex md:hidden items-center">
+            <button
+              onClick={toggleTheme}
+              title={isDarkMode ? "Cambiar a Modo Claro" : "Cambiar a Modo Oscuro"}
+              className="w-8 h-8 rounded-lg flex items-center justify-center transition-all cursor-pointer active:scale-95 text-white bg-sky-900/40 hover:bg-sky-900/60 border border-sky-400/30 shadow-inner"
+            >
+              {isDarkMode ? (
+                <svg className="w-4 h-4 text-amber-300 hover:text-amber-200 transition-colors" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="4" fill="currentColor" fillOpacity="0.25" stroke="currentColor" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41m14.14-14.14l-1.41 1.41" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4 text-sky-100 hover:text-white transition-colors" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                </svg>
+              )}
+            </button>
           </div>
         </div>
       </header>

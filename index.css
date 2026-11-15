@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
@@ -374,5 +375,202 @@ body {
     border: 1.5px solid #94a3b8 !important;
     box-shadow: none !important;
     border-radius: 0.5rem !important;
+  }
+}
+
+/* ==========================================================================
+   Antigravity IDE Dark Mode Theme
+   Palette: Deep Navy (#0b0f19), Card Surface (#131b2e), Wells/Subcards (#182238),
+   Borders (#24314c), Input (#0c121e), Royal Blue Accent (#3b82f6 / #2563eb).
+   ========================================================================== */
+
+html.dark,
+body.dark {
+  background-color: #0b0f19 !important;
+  color: #f1f5f9 !important;
+  color-scheme: dark;
+}
+
+/* Header bar */
+html.dark header,
+html.dark header.bg-gradient-to-r {
+  background: linear-gradient(to right, #0d1322, #131b2e) !important;
+  border-bottom: 1px solid #1e293b !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45) !important;
+}
+
+/* Sidebar & Navigation */
+html.dark aside,
+html.dark .bg-\[\#f8fafc\] {
+  background-color: #0d1322 !important;
+  border-color: #1e293b !important;
+  color: #cbd5e1 !important;
+}
+
+html.dark aside button:hover:not(.bg-gradient-to-r) {
+  background-color: #162035 !important;
+  color: #f8fafc !important;
+}
+
+/* Surfaces and Cards */
+html.dark .bg-white {
+  background-color: #131b2e !important;
+  color: #e2e8f0 !important;
+}
+
+html.dark .bg-slate-50 {
+  background-color: #182238 !important;
+}
+
+html.dark .bg-slate-100 {
+  background-color: #0b0f19 !important;
+}
+
+html.dark .bg-slate-200 {
+  background-color: #1f2b45 !important;
+}
+
+html.dark .bg-slate-300 {
+  background-color: #263554 !important;
+}
+
+/* Subtle Borders */
+html.dark .border-slate-100,
+html.dark .border-slate-150,
+html.dark .border-slate-200,
+html.dark .border-slate-300,
+html.dark .border-gray-200,
+html.dark .border-gray-300 {
+  border-color: #24314c !important;
+}
+
+/* Text Hierarchy */
+html.dark .text-slate-900,
+html.dark .text-slate-800,
+html.dark .text-gray-900,
+html.dark .text-gray-800 {
+  color: #f8fafc !important;
+}
+
+html.dark .text-slate-700,
+html.dark .text-gray-700 {
+  color: #e2e8f0 !important;
+}
+
+html.dark .text-slate-600,
+html.dark .text-gray-600 {
+  color: #94a3b8 !important;
+}
+
+html.dark .text-slate-500,
+html.dark .text-gray-500 {
+  color: #64748b !important;
+}
+
+/* Form Controls (Inputs, Textareas, Selects) */
+html.dark input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]):not([type="range"]),
+html.dark textarea,
+html.dark select {
+  background-color: #0c121e !important;
+  border: 1px solid #24314c !important;
+  color: #f1f5f9 !important;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #64748b !important;
+}
+
+html.dark input:focus,
+html.dark textarea:focus,
+html.dark select:focus {
+  border-color: #3b82f6 !important;
+  outline: 1px solid rgba(59, 130, 246, 0.4) !important;
+}
+
+/* Interactive Hover States */
+html.dark .hover\:bg-slate-50:hover,
+html.dark .hover\:bg-slate-100:hover,
+html.dark .hover\:bg-slate-200:hover,
+html.dark .hover\:bg-slate-200\/60:hover,
+html.dark .hover\:bg-gray-50:hover,
+html.dark .hover\:bg-gray-100:hover {
+  background-color: #1a253d !important;
+  color: #f8fafc !important;
+}
+
+/* Floating Menus, Modals & Dialogs */
+html.dark .shadow-xl,
+html.dark .shadow-2xl,
+html.dark [role="dialog"] {
+  background-color: #131b2e !important;
+  border-color: #24314c !important;
+}
+
+html.dark [role="dialog"] header,
+html.dark [role="dialog"] footer {
+  background-color: #101726 !important;
+  border-color: #24314c !important;
+}
+
+/* Tables */
+html.dark table thead th,
+html.dark table thead tr {
+  background-color: #101726 !important;
+  color: #94a3b8 !important;
+  border-color: #24314c !important;
+}
+
+html.dark table tbody tr {
+  border-color: #24314c !important;
+}
+
+html.dark table tbody tr:hover {
+  background-color: #18243c !important;
+}
+
+/* Dark Mode Scrollbars */
+html.dark ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+  background-color: #0b0f19;
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+  background-color: #24314c;
+  border-radius: 4px;
+}
+
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background-color: #384c73;
+}
+
+html.dark ::-webkit-scrollbar-track {
+  background-color: #0d1322;
+}
+
+/* Mobile overrides for dark mode */
+@media (max-width: 767px) {
+  html.dark .mobile-ficha-container .fixed.inset-0 footer,
+  html.dark .mobile-ficha-container [role="dialog"] footer,
+  html.dark .fixed.inset-0 footer {
+    background-color: #101726 !important;
+    border-top-color: #24314c !important;
+  }
+
+  html.dark .mobile-ficha-container .absolute.z-50,
+  html.dark .mobile-ficha-container .absolute.z-\[100\],
+  html.dark .mobile-ficha-container [class*="absolute"][class*="z-50"],
+  html.dark .mobile-ficha-container [class*="absolute"][class*="z-[100]"],
+  html.dark .mobile-ficha-container [class*="absolute"][class*="shadow-xl"],
+  html.dark .mobile-ficha-container [class*="absolute"][class*="shadow-lg"] {
+    background-color: #131b2e !important;
+    border-color: #24314c !important;
+  }
+
+  html.dark .mobile-ficha-container .pointer-events-none.bg-white,
+  html.dark .mobile-ficha-container .absolute.inset-0.bg-white {
+    background-color: #0c121e !important;
+    border-color: #24314c !important;
   }
 }
