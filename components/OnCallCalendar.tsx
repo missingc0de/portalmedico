@@ -193,13 +193,13 @@ const OnCallCalendar: React.FC<OnCallCalendarProps> = ({
         let cellClasses = "relative p-1.5 h-[78px] sm:h-[86px] flex flex-col text-xs overflow-hidden rounded-md shadow-2xs border transition-all duration-150 group";
         
         if (isCurrentDay) {
-            cellClasses += " ring-2 ring-sky-500 bg-sky-50 border-sky-300";
+            cellClasses += " ring-2 ring-sky-500 bg-sky-50 dark:bg-[#1E1F2A] border-sky-300 dark:border-sky-500";
         } else if (hasFeriado) {
-            cellClasses += " bg-emerald-100/90 border-emerald-300 text-emerald-900 font-semibold";
+            cellClasses += " bg-emerald-100/90 dark:bg-[#262738] border-emerald-300 dark:border-[#383A4E] text-emerald-900 dark:text-emerald-300 font-semibold";
         } else if (isWeekend) {
-            cellClasses += " bg-rose-50/70 border-rose-200/80 hover:border-rose-300 hover:shadow-xs";
+            cellClasses += " bg-rose-50/70 dark:bg-[#262738] border-rose-200/80 dark:border-[#383A4E] hover:border-rose-300 dark:hover:border-[#89B1D6]/50 hover:shadow-xs";
         } else {
-            cellClasses += " bg-white border-slate-300 hover:border-slate-400 hover:shadow-xs";
+            cellClasses += " bg-white dark:bg-[#1E1F2A] border-slate-300 dark:border-[#2E303E] hover:border-slate-400 dark:hover:border-[#89B1D6]/50 hover:shadow-xs";
         }
 
         cells.push(
@@ -214,7 +214,7 @@ const OnCallCalendar: React.FC<OnCallCalendarProps> = ({
                     <span className={`font-semibold text-[11px] ${
                       isCurrentDay 
                         ? 'bg-sky-500 text-white rounded-full w-4 h-4 flex items-center justify-center font-semibold font-sans shadow-2xs text-[10px]' 
-                        : (isWeekend ? 'text-rose-800 font-bold' : 'text-slate-800')
+                        : (isWeekend ? 'text-rose-800 dark:text-rose-400 font-bold' : 'text-slate-800 dark:text-white')
                     }`}>
                         {day}
                     </span>
@@ -254,7 +254,7 @@ const OnCallCalendar: React.FC<OnCallCalendarProps> = ({
                         <div 
                           key={idx} 
                           className={`text-[10px] font-normal leading-tight truncate ${
-                            idx === 0 ? 'font-bold text-slate-900' : 'font-normal text-slate-500'
+                            idx === 0 ? 'font-bold text-slate-900 dark:text-white' : 'font-normal text-slate-500 dark:text-[#89B1D6]'
                           }`} 
                           title={docName}
                         >
@@ -283,29 +283,29 @@ const OnCallCalendar: React.FC<OnCallCalendarProps> = ({
     const daysOfWeek = ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'];
 
     return (
-        <div className="bg-white rounded-xl shadow-md border-[1.5px] border-slate-300 p-4 sm:p-5 pt-3 sm:pt-3.5 flex flex-col w-full font-sans">
+        <div className="bg-white dark:bg-[#1A1B26] rounded-xl shadow-md border-[1.5px] border-slate-300 dark:border-[#2E303E] p-4 sm:p-5 pt-3 sm:pt-3.5 flex flex-col w-full font-sans">
             
             {/* Top Card Header with Calendar Icon */}
-            <div className="flex items-center justify-between pb-2 mb-3 border-b border-slate-100 shrink-0">
+            <div className="flex items-center justify-between pb-2 mb-3 border-b border-slate-100 dark:border-[#20222F] shrink-0">
               <div className="flex items-center gap-2 min-w-0">
-                <CalendarIcon className="w-4 h-4 text-sky-600 shrink-0" />
-                <h3 className="text-sm font-semibold text-slate-800 tracking-tight uppercase truncate">
+                <CalendarIcon className="w-4 h-4 text-sky-600 dark:text-[#89B1D6] shrink-0" />
+                <h3 className="text-sm font-semibold text-slate-800 dark:text-[#89B1D6] tracking-tight uppercase truncate">
                   URGENCIA NO PROGRAMADA: {monthName} DE {year}
                 </h3>
               </div>
 
               {/* Month Navigation Buttons */}
-              <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-lg p-0.5 shadow-2xs shrink-0">
+              <div className="flex items-center gap-1 bg-slate-50 dark:bg-[#16161E] border border-slate-200 dark:border-[#2E303E] rounded-lg p-0.5 shadow-2xs shrink-0">
                 <button
                   onClick={() => navigateDate('prev')}
-                  className="p-1 hover:bg-slate-200/60 rounded text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
+                  className="p-1 hover:bg-slate-200/60 dark:hover:bg-[#1E1F2A] rounded text-slate-600 dark:text-[#89B1D6] hover:text-slate-900 transition-colors cursor-pointer"
                   title="Mes anterior"
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => navigateDate('next')}
-                  className="p-1 hover:bg-slate-200/60 rounded text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
+                  className="p-1 hover:bg-slate-200/60 dark:hover:bg-[#1E1F2A] rounded text-slate-600 dark:text-[#89B1D6] hover:text-slate-900 transition-colors cursor-pointer"
                   title="Siguiente mes"
                 >
                   <ChevronRight className="w-4 h-4" />

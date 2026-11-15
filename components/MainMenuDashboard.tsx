@@ -674,7 +674,7 @@ const MainMenuDashboard: React.FC<MainMenuDashboardProps> = ({
                                   e.stopPropagation();
                                   setActiveAvisoIndex(prev => (prev - 1 + avisos.length) % avisos.length);
                                 }}
-                                className="absolute left-1 top-1/2 -translate-y-1/2 z-10 w-6 h-6 rounded-full bg-amber-200/90 hover:bg-amber-300 text-amber-950 border border-amber-300/80 shadow-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 cursor-pointer active:scale-90"
+                                className="absolute left-1 top-1/2 -translate-y-1/2 z-10 w-6 h-6 rounded-full bg-amber-200/90 hover:bg-amber-300 dark:bg-[#16161E] dark:hover:bg-[#1A1B26] text-amber-950 dark:text-[#89B1D6] border border-amber-300/80 dark:border-[#2E303E] shadow-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 cursor-pointer active:scale-90"
                                 title="Aviso anterior"
                               >
                                 <ChevronLeft className="w-4 h-4 stroke-[2.5]" />
@@ -689,14 +689,14 @@ const MainMenuDashboard: React.FC<MainMenuDashboardProps> = ({
                                   e.stopPropagation();
                                   setActiveAvisoIndex(prev => (prev + 1) % avisos.length);
                                 }}
-                                className="absolute right-1 top-1/2 -translate-y-1/2 z-10 w-6 h-6 rounded-full bg-amber-200/90 hover:bg-amber-300 text-amber-950 border border-amber-300/80 shadow-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 cursor-pointer active:scale-90"
+                                className="absolute right-1 top-1/2 -translate-y-1/2 z-10 w-6 h-6 rounded-full bg-amber-200/90 hover:bg-amber-300 dark:bg-[#16161E] dark:hover:bg-[#1A1B26] text-amber-950 dark:text-[#89B1D6] border border-amber-300/80 dark:border-[#2E303E] shadow-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 cursor-pointer active:scale-90"
                                 title="Siguiente aviso"
                               >
                                 <ChevronRight className="w-4 h-4 stroke-[2.5]" />
                               </button>
                             )}
 
-                            <div className="text-xs font-sans leading-snug text-amber-950 w-full h-full break-words bg-yellow-50 py-1.5 px-2 rounded-lg border border-yellow-200/80 overflow-y-auto custom-scrollbar flex items-center">
+                            <div className="text-xs font-sans leading-snug text-amber-950 dark:text-white w-full h-full break-words bg-yellow-50 dark:bg-[#1E1F2A] py-1.5 px-2 rounded-lg border border-yellow-200/80 dark:border-[#2E303E] overflow-y-auto custom-scrollbar flex items-center">
                               <div className="w-full">{renderFormattedText(currentAviso.content)}</div>
                             </div>
                           </div>

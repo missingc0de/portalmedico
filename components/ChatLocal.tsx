@@ -1395,8 +1395,8 @@ Descargas / ${DEFAULT_RECIBIDOS_FOLDER_NAME}
       {/* Main Animated Messenger Box */}
       <div
         className={isDedicatedTab 
-          ? "w-full h-full flex flex-col bg-[#E3EFFE] overflow-hidden select-none border-0 rounded-none shadow-none"
-          : `hidden md:flex fixed bottom-0 right-0 md:right-6 z-50 border border-slate-300 shadow-[0_-2px_10px_rgba(0,0,0,0.06)] transition-all duration-300 ease-in-out overflow-hidden ${isShaking ? 'animate-shake' : ''} ${isOpen ? 'w-full md:w-[360px] h-[520px] rounded-t-2xl bg-[#E3EFFE] border-[#7A96DF]' : 'w-full md:w-[360px] h-12 rounded-t-xl cursor-pointer bg-white hover:bg-slate-50'}`}
+          ? "w-full h-full flex flex-col bg-[#E3EFFE] dark:bg-[#16161E] overflow-hidden select-none border-0 rounded-none shadow-none"
+          : `hidden md:flex fixed bottom-0 right-0 md:right-6 z-50 border border-slate-300 dark:border-[#2E303E] shadow-[0_-2px_10px_rgba(0,0,0,0.06)] transition-all duration-300 ease-in-out overflow-hidden ${isShaking ? 'animate-shake' : ''} ${isOpen ? 'w-full md:w-[360px] h-[520px] rounded-t-2xl bg-[#E3EFFE] dark:bg-[#1A1B26] border-[#7A96DF] dark:border-[#2E303E]' : 'w-full md:w-[360px] h-12 rounded-t-xl cursor-pointer bg-white hover:bg-slate-50 dark:bg-[#1A1B26] dark:hover:bg-[#1E1F2A]'}`}
         onClick={(!isOpen && !isDedicatedTab) ? () => { setIsOpen(true); setIsProfileExpanded(false); setUnreadCount(0); } : undefined}
       >
         {/* Profile Panel */}
@@ -1562,7 +1562,7 @@ Descargas / ${DEFAULT_RECIBIDOS_FOLDER_NAME}
           {(!isOpen || currentPane === 'list') && !isDedicatedTab && (
             <div
               onClick={(!isOpen && !isDedicatedTab) ? () => { setIsOpen(true); setIsProfileExpanded(false); setUnreadCount(0); } : undefined}
-              className={`px-3 h-12 flex justify-between items-center shrink-0 select-none ${(!isOpen && !isDedicatedTab) ? 'w-full h-full bg-gradient-to-b from-[#e1ecfc] to-[#cbdffb]' : 'border-b border-[#a6c1e3] bg-gradient-to-b from-[#e1ecfc] to-[#cbdffb]'}`}
+              className={`px-3 h-12 flex justify-between items-center shrink-0 select-none ${(!isOpen && !isDedicatedTab) ? 'w-full h-full bg-gradient-to-b from-[#e1ecfc] to-[#cbdffb] dark:from-[#16161E] dark:to-[#1A1B26] dark:text-white' : 'border-b border-[#a6c1e3] dark:border-[#2E303E] bg-gradient-to-b from-[#e1ecfc] to-[#cbdffb] dark:from-[#16161E] dark:to-[#1A1B26] dark:text-white'}`}
             >
               <div 
                 className="flex items-center gap-2.5 cursor-pointer"

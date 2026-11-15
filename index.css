@@ -380,65 +380,63 @@ body {
 
 /* ==========================================================================
    Antigravity IDE Dark Mode Theme
-   Palette from reference:
-   - Deep Navy Canvas: #0b0f19 / #0f1422
-   - Card Surface / Container: #131b2e / #141a2e
-   - Wells / Inner Sections / Subcards: #182238 / #161e36
-   - Subtle Borders: #24314c / #202945
-   - Inputs / Textareas / Terminal: #0c121e / #0e1424
-   - Primary Accent: #3b82f6 / #2563eb
-   - Headings / Cyan Highlights: #38bdf8
-   - Text Primary: #f8fafc, Text Secondary: #94a3b8
+   Palette:
+   - #16161E: El tono más oscuro (Canvas, Header, Sidebar, Input Wells)
+   - #1A1B26: El intermedio (Contenedores principales, Tarjetas base, Modales, Chat)
+   - #1E1F2A: El más claro (Sub-secciones de fichas, Días del calendario, Avisos)
+   - #262738: Días festivos, feriados y fines de semana en el calendario
+   - #89B1D6: Títulos y Textos guía / Placeholders
+   - #FFFFFF: Textos dentro de campos completables
+   - #2E303E: Bordes sutiles entre contenedores
    ========================================================================== */
 
 html.dark,
 body.dark {
-  background-color: #0b0f19 !important;
-  color: #f1f5f9 !important;
+  background-color: #16161E !important;
+  color: #FFFFFF !important;
   color-scheme: dark;
 }
 
-/* Header bar */
+/* Header y Barra Lateral: Ambos con el tono más oscuro (#16161E) */
 html.dark header,
 html.dark header.bg-gradient-to-r {
-  background: linear-gradient(to right, #0d1322, #131b2e) !important;
-  border-bottom: 1px solid #1e293b !important;
+  background: #16161E !important;
+  border-bottom: 1px solid #20222F !important;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45) !important;
 }
 
-/* Sidebar & Left Navigation */
 html.dark aside,
 html.dark aside .bg-\[\#f8fafc\],
 html.dark aside .bg-\[\#F8FAFC\] {
-  background-color: #0d1322 !important;
-  border-color: #1e293b !important;
+  background-color: #16161E !important;
+  border-color: #20222F !important;
   color: #cbd5e1 !important;
 }
 
 html.dark aside button:hover:not(.bg-gradient-to-r) {
-  background-color: #162035 !important;
-  color: #f8fafc !important;
+  background-color: #1A1B26 !important;
+  color: #FFFFFF !important;
 }
 
 /* Main Background and Containers */
 html.dark main,
 html.dark .bg-slate-100 {
-  background-color: #0b0f19 !important;
+  background-color: #16161E !important;
 }
 
-/* Clinical Ficha Forms & Outer Cards (Desktop & Mobile) */
+/* Clinical Ficha Forms & Outer Cards (Tono Intermedio #1A1B26) */
 html.dark .mobile-ficha-container,
 html.dark .mobile-ficha-container form,
 html.dark form.bg-white,
 html.dark .lg\:col-span-8 > form,
 html.dark .lg\:col-span-4,
 html.dark .bg-white {
-  background-color: #131b2e !important;
-  border-color: #24314c !important;
-  color: #e2e8f0 !important;
+  background-color: #1A1B26 !important;
+  border-color: #2E303E !important;
+  color: #FFFFFF !important;
 }
 
-/* Inner Sections and Subcards in Fichas (All #F8FAFC, #f8fafc, slate-50 blocks) */
+/* Inner Sections and Subcards in Fichas (Tono Más Claro #1E1F2A) */
 html.dark .mobile-ficha-container form section,
 html.dark .mobile-ficha-container section,
 html.dark form section,
@@ -452,20 +450,20 @@ html.dark [class*="bg-[#f8fafc]"],
 html.dark .bg-slate-50,
 html.dark [class*="bg-slate-50"],
 html.dark [class*="bg-gray-50"] {
-  background-color: #182238 !important;
-  border-color: #24314c !important;
-  color: #f1f5f9 !important;
+  background-color: #1E1F2A !important;
+  border-color: #2E303E !important;
+  color: #FFFFFF !important;
 }
 
 html.dark .bg-slate-200 {
-  background-color: #1f2b45 !important;
+  background-color: #262738 !important;
 }
 
 html.dark .bg-slate-300 {
-  background-color: #263554 !important;
+  background-color: #2E303E !important;
 }
 
-/* Borders across all cards, containers, and inputs */
+/* Bordes en general */
 html.dark .border-slate-100,
 html.dark .border-slate-150,
 html.dark .border-slate-200,
@@ -475,31 +473,34 @@ html.dark .border-gray-200,
 html.dark .border-gray-300,
 html.dark [class*="border-slate-200"],
 html.dark [class*="border-slate-300"] {
-  border-color: #24314c !important;
+  border-color: #2E303E !important;
 }
 
-/* Headings and Titles inside Clinical Fichas */
+/* Títulos con el color exacto solicitado: #89B1D6 */
 html.dark .mobile-ficha-container form section > h3,
 html.dark .mobile-ficha-container form h3,
 html.dark form section > h3,
 html.dark form h3,
 html.dark section > h3,
+html.dark h1,
 html.dark h2,
+html.dark h3,
+html.dark h4,
 html.dark h3.text-sky-700,
 html.dark h3.text-sky-800,
 html.dark .text-sky-700,
 html.dark .text-sky-800,
 html.dark .text-blue-700,
 html.dark .text-blue-800 {
-  color: #38bdf8 !important;
-  border-color: #24314c !important;
+  color: #89B1D6 !important;
+  border-color: #2E303E !important;
 }
 
 html.dark .border-sky-200,
 html.dark .border-sky-100,
 html.dark .border-sky-300,
 html.dark .border-blue-200 {
-  border-color: #24314c !important;
+  border-color: #2E303E !important;
 }
 
 /* Text Hierarchy */
@@ -507,7 +508,7 @@ html.dark .text-slate-900,
 html.dark .text-slate-800,
 html.dark .text-gray-900,
 html.dark .text-gray-800 {
-  color: #f8fafc !important;
+  color: #FFFFFF !important;
 }
 
 html.dark .text-slate-700,
@@ -517,7 +518,7 @@ html.dark .text-gray-700 {
 
 html.dark .text-slate-600,
 html.dark .text-gray-600 {
-  color: #94a3b8 !important;
+  color: #89B1D6 !important;
 }
 
 html.dark .text-slate-500,
@@ -533,7 +534,7 @@ html.dark label {
   color: #e2e8f0 !important;
 }
 
-/* Form Controls (Inputs, Textareas, Selects, DateFields) */
+/* Campos completables: Texto SIEMPRE blanco (#FFFFFF) y fondo el tono más oscuro (#16161E) */
 html.dark input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]):not([type="range"]),
 html.dark textarea,
 html.dark select,
@@ -546,24 +547,29 @@ html.dark select.bg-white,
 html.dark input.bg-slate-50,
 html.dark textarea.bg-slate-50,
 html.dark select.bg-slate-50 {
-  background-color: #0c121e !important;
-  border: 1px solid #24314c !important;
-  color: #f8fafc !important;
+  background-color: #16161E !important;
+  border: 1px solid #2E303E !important;
+  color: #FFFFFF !important;
   box-shadow: none !important;
 }
 
 html.dark input[type="date"] {
   color-scheme: dark !important;
+  color: #FFFFFF !important;
 }
 
 html.dark select option {
-  background-color: #0c121e !important;
-  color: #f8fafc !important;
+  background-color: #16161E !important;
+  color: #FFFFFF !important;
 }
 
+/* Textos guía que se borran al introducir texto (Placeholders): #89B1D6 */
 html.dark input::placeholder,
-html.dark textarea::placeholder {
-  color: #64748b !important;
+html.dark textarea::placeholder,
+html.dark input::-webkit-input-placeholder,
+html.dark textarea::-webkit-input-placeholder {
+  color: #89B1D6 !important;
+  opacity: 0.8 !important;
 }
 
 html.dark input:focus,
@@ -572,8 +578,8 @@ html.dark select:focus,
 html.dark .mobile-ficha-container form input:focus,
 html.dark .mobile-ficha-container form textarea:focus,
 html.dark .mobile-ficha-container form select:focus {
-  border-color: #3b82f6 !important;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3) !important;
+  border-color: #89B1D6 !important;
+  box-shadow: 0 0 0 2px rgba(137, 177, 214, 0.3) !important;
   outline: none !important;
 }
 
@@ -582,22 +588,87 @@ html.dark .pointer-events-none.bg-white,
 html.dark .absolute.inset-0.bg-white,
 html.dark [class*="pointer-events-none"][class*="bg-white"],
 html.dark [class*="absolute"][class*="inset-0"][class*="bg-white"] {
-  background-color: #0c121e !important;
-  border: 1px solid #24314c !important;
+  background-color: #16161E !important;
+  border: 1px solid #2E303E !important;
   box-shadow: none !important;
 }
 
 /* Resumen Ficha Clínica Column & Editable Textareas */
+html.dark .lg\:col-span-4,
 html.dark .lg\:col-span-4 .bg-\[\#F8FAFC\],
 html.dark .lg\:col-span-4 [class*="bg-[#F8FAFC]"] {
-  background-color: #182238 !important;
-  border-color: #24314c !important;
+  background-color: #1A1B26 !important;
+  border-color: #2E303E !important;
+}
+
+html.dark .lg\:col-span-4 .bg-\[\#F8FAFC\] {
+  background-color: #1E1F2A !important;
 }
 
 html.dark .lg\:col-span-4 textarea {
-  background-color: #0c121e !important;
-  border: 1px solid #24314c !important;
-  color: #f8fafc !important;
+  background-color: #16161E !important;
+  border: 1px solid #2E303E !important;
+  color: #FFFFFF !important;
+}
+
+/* Calendario de Urgencia No Programada en Modo Oscuro */
+html.dark .oncall-calendar-day-normal {
+  background-color: #1E1F2A !important;
+  border-color: #2E303E !important;
+}
+
+html.dark .oncall-calendar-day-weekend,
+html.dark .oncall-calendar-day-holiday {
+  background-color: #262738 !important;
+  border-color: #383A4E !important;
+}
+
+/* Bloque de Avisos en Modo Oscuro */
+html.dark .aviso-box-content {
+  background-color: #1E1F2A !important;
+  border-color: #2E303E !important;
+  color: #FFFFFF !important;
+}
+
+/* Barra de Chat y Ventanita Flotante en Modo Oscuro */
+html.dark .chat-window-container,
+html.dark .chat-bar-closed,
+html.dark [class*="bg-[#E3EFFE]"] {
+  background-color: #1A1B26 !important;
+  border-color: #2E303E !important;
+}
+
+html.dark .chat-messages-area,
+html.dark [class*="bg-[#f0f4fc]"] {
+  background-color: #1E1F2A !important;
+  border-color: #2E303E !important;
+  color: #FFFFFF !important;
+}
+
+html.dark .chat-input-bar,
+html.dark [class*="bg-[#f0f5fc]"],
+html.dark [class*="bg-[#e8f2fc]"] {
+  background-color: #1A1B26 !important;
+  border-color: #2E303E !important;
+}
+
+html.dark .chat-textarea,
+html.dark [class*="bg-[#f0f5fc]"] textarea,
+html.dark [class*="bg-[#f0f5fc]"] input {
+  background-color: #16161E !important;
+  border: 1px solid #2E303E !important;
+  color: #FFFFFF !important;
+}
+
+html.dark [class*="border-[#b6cef1]"],
+html.dark [class*="border-[#7A96DF]"],
+html.dark [class*="border-[#a6c1e3]"] {
+  border-color: #2E303E !important;
+}
+
+html.dark [class*="text-[#183c7d]"],
+html.dark [class*="text-[#2c539e]"] {
+  color: #89B1D6 !important;
 }
 
 /* Interactive Hover States */
@@ -607,8 +678,8 @@ html.dark .hover\:bg-slate-200:hover,
 html.dark .hover\:bg-slate-200\/60:hover,
 html.dark .hover\:bg-gray-50:hover,
 html.dark .hover\:bg-gray-100:hover {
-  background-color: #1a253d !important;
-  color: #f8fafc !important;
+  background-color: #1E1F2A !important;
+  color: #FFFFFF !important;
 }
 
 /* Autocomplete Dropdowns, Floating Menus & Modals */
@@ -619,94 +690,94 @@ html.dark .absolute.z-50,
 html.dark .absolute.z-\[100\],
 html.dark .absolute.z-\[110\],
 html.dark [class*="absolute"][class*="z-"] {
-  background-color: #131b2e !important;
-  border-color: #24314c !important;
-  color: #f8fafc !important;
+  background-color: #1A1B26 !important;
+  border-color: #2E303E !important;
+  color: #FFFFFF !important;
 }
 
 html.dark [role="dialog"] header,
 html.dark [role="dialog"] footer {
-  background-color: #101726 !important;
-  border-color: #24314c !important;
+  background-color: #16161E !important;
+  border-color: #2E303E !important;
 }
 
 /* Clinical Sub-cards and Category Badges */
 html.dark .bg-sky-50,
 html.dark [class*="bg-sky-50"] {
-  background-color: #11233d !important;
-  border-color: #1e3a66 !important;
-  color: #93c5fd !important;
+  background-color: #1E1F2A !important;
+  border-color: #2E303E !important;
+  color: #89B1D6 !important;
 }
 
 html.dark .bg-blue-50,
 html.dark [class*="bg-blue-50"] {
-  background-color: #11233d !important;
-  border-color: #1e3a66 !important;
-  color: #93c5fd !important;
+  background-color: #1E1F2A !important;
+  border-color: #2E303E !important;
+  color: #89B1D6 !important;
 }
 
 html.dark .bg-emerald-50,
 html.dark [class*="bg-emerald-50"] {
-  background-color: #11271e !important;
+  background-color: #16241E !important;
   border-color: #1a4a35 !important;
   color: #86efac !important;
 }
 
 html.dark .bg-red-50,
 html.dark [class*="bg-red-50"] {
-  background-color: #2a151b !important;
+  background-color: #26161E !important;
   border-color: #5c242a !important;
   color: #fca5a5 !important;
 }
 
 html.dark .bg-amber-50,
 html.dark [class*="bg-amber-50"] {
-  background-color: #2b2212 !important;
+  background-color: #262016 !important;
   border-color: #5c431b !important;
   color: #fcd34d !important;
 }
 
 html.dark .bg-indigo-50,
 html.dark [class*="bg-indigo-50"] {
-  background-color: #1c1c38 !important;
-  border-color: #323269 !important;
-  color: #c7d2fe !important;
+  background-color: #1E1F2A !important;
+  border-color: #2E303E !important;
+  color: #89B1D6 !important;
 }
 
 /* Tables in Dark Mode */
 html.dark table thead th,
 html.dark table thead tr {
-  background-color: #101726 !important;
-  color: #94a3b8 !important;
-  border-color: #24314c !important;
+  background-color: #16161E !important;
+  color: #89B1D6 !important;
+  border-color: #2E303E !important;
 }
 
 html.dark table tbody tr {
-  border-color: #24314c !important;
+  border-color: #2E303E !important;
 }
 
 html.dark table tbody tr:hover {
-  background-color: #18243c !important;
+  background-color: #1E1F2A !important;
 }
 
 /* Dark Mode Scrollbars */
 html.dark ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
-  background-color: #0b0f19;
+  background-color: #16161E;
 }
 
 html.dark ::-webkit-scrollbar-thumb {
-  background-color: #24314c;
+  background-color: #2E303E;
   border-radius: 4px;
 }
 
 html.dark ::-webkit-scrollbar-thumb:hover {
-  background-color: #384c73;
+  background-color: #89B1D6;
 }
 
 html.dark ::-webkit-scrollbar-track {
-  background-color: #0d1322;
+  background-color: #16161E;
 }
 
 /* Mobile Overrides for Dark Mode */
@@ -716,25 +787,25 @@ html.dark ::-webkit-scrollbar-track {
   html.dark .mobile-ficha-container form [class*="bg-gray-50"]:not(.fixed *):not([role="dialog"] *),
   html.dark .mobile-ficha-container form .bg-\[\#F8FAFC\],
   html.dark .mobile-ficha-container form [class*="bg-[#F8FAFC]"] {
-    background-color: #182238 !important;
-    border: 1px solid #24314c !important;
+    background-color: #1E1F2A !important;
+    border: 1px solid #2E303E !important;
     box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.4) !important;
-    color: #f1f5f9 !important;
+    color: #FFFFFF !important;
   }
 
   html.dark .mobile-ficha-container form input:not([type="checkbox"]):not([type="radio"]),
   html.dark .mobile-ficha-container form select,
   html.dark .mobile-ficha-container form textarea {
-    background-color: #0c121e !important;
-    border: 1.5px solid #24314c !important;
-    color: #f8fafc !important;
+    background-color: #16161E !important;
+    border: 1.5px solid #2E303E !important;
+    color: #FFFFFF !important;
   }
 
   html.dark .mobile-ficha-container form input:not([type="checkbox"]):not([type="radio"]):focus,
   html.dark .mobile-ficha-container form select:focus,
   html.dark .mobile-ficha-container form textarea:focus {
-    border-color: #3b82f6 !important;
-    box-shadow: 0 0 0 2.5px rgba(59, 130, 246, 0.3) !important;
+    border-color: #89B1D6 !important;
+    box-shadow: 0 0 0 2.5px rgba(137, 177, 214, 0.3) !important;
   }
 
   html.dark .mobile-ficha-container form label:not(.fixed *):not([role="dialog"] *):not(.flex) {
@@ -744,8 +815,8 @@ html.dark ::-webkit-scrollbar-track {
   html.dark .mobile-ficha-container .fixed.inset-0 footer,
   html.dark .mobile-ficha-container [role="dialog"] footer,
   html.dark .fixed.inset-0 footer {
-    background-color: #101726 !important;
-    border-top-color: #24314c !important;
+    background-color: #16161E !important;
+    border-top-color: #2E303E !important;
   }
 
   html.dark .mobile-ficha-container .absolute.z-50,
@@ -754,14 +825,14 @@ html.dark ::-webkit-scrollbar-track {
   html.dark .mobile-ficha-container [class*="absolute"][class*="z-[100]"],
   html.dark .mobile-ficha-container [class*="absolute"][class*="shadow-xl"],
   html.dark .mobile-ficha-container [class*="absolute"][class*="shadow-lg"] {
-    background-color: #131b2e !important;
-    border-color: #24314c !important;
-    color: #f8fafc !important;
+    background-color: #1A1B26 !important;
+    border-color: #2E303E !important;
+    color: #FFFFFF !important;
   }
 
   html.dark .mobile-ficha-container .pointer-events-none.bg-white,
   html.dark .mobile-ficha-container .absolute.inset-0.bg-white {
-    background-color: #0c121e !important;
-    border-color: #24314c !important;
+    background-color: #16161E !important;
+    border-color: #2E303E !important;
   }
 }

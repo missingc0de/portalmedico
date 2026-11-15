@@ -434,7 +434,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   return (
     <>
       <aside
-        className={`hidden md:flex h-[calc(100vh/var(--app-zoom-factor,1)-48px)] max-h-[calc(100vh/var(--app-zoom-factor,1)-48px)] sticky top-[calc(48px/var(--app-zoom-factor,1))] bg-[#f8fafc] dark:bg-[#0d1322] border-r border-slate-200/90 dark:border-[#1e293b] text-slate-800 dark:text-[#cbd5e1] shrink-0 flex-col select-none transition-all duration-300 ease-in-out z-40 font-sans ${isCollapsed ? 'w-16' : 'w-[260px]'
+        className={`hidden md:flex h-[calc(100vh/var(--app-zoom-factor,1)-48px)] max-h-[calc(100vh/var(--app-zoom-factor,1)-48px)] sticky top-[calc(48px/var(--app-zoom-factor,1))] bg-[#f8fafc] dark:bg-[#16161E] border-r border-slate-200/90 dark:border-[#20222F] text-slate-800 dark:text-[#cbd5e1] shrink-0 flex-col select-none transition-all duration-300 ease-in-out z-40 font-sans ${isCollapsed ? 'w-16' : 'w-[260px]'
           }`}
       >
 
