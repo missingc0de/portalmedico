@@ -616,32 +616,32 @@ const AutomaticTranscriber: React.FC<AutomaticTranscriberProps> = ({ loggedInUse
         </div>
       </div>
 
-      {/* CUERPO DEL BLOQUE: TAMAÑO FIJO Y ESTABLE */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-start w-full">
-        {/* LADO IZQUIERDO: GRILLA SUDOKU CON TAMAÑO FIJO */}
-        <div className="w-full flex flex-col items-center justify-start shrink-0">
-          <div className="relative w-[360px] h-[360px] shrink-0">
+      {/* CUERPO DEL BLOQUE: TAMAÑO AJUSTADO AL FRAME SIN DESBORDAR */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start w-full min-w-0">
+        {/* LADO IZQUIERDO: GRILLA SUDOKU AJUSTADA A SU FRAME */}
+        <div className="w-full flex flex-col items-center justify-start min-w-0">
+          <div className="relative w-full max-w-[280px] sm:max-w-[290px] aspect-square mx-auto shrink-0">
             {/* OVERLAY CUANDO LA PARTIDA SE COMPLETA */}
             {isCompleted && (
-              <div className="absolute inset-0 bg-slate-900/85 backdrop-blur-xs z-40 flex flex-col items-center justify-center p-6 text-center text-white space-y-3 rounded-xl animate-fadeIn">
-                <span className="text-4xl animate-bounce">🏆</span>
-                <h3 className="text-base font-extrabold text-emerald-400">¡Sudoku Completado!</h3>
+              <div className="absolute inset-0 bg-slate-900/90 backdrop-blur-xs z-40 flex flex-col items-center justify-center p-3 text-center text-white space-y-2 rounded-xl animate-fadeIn">
+                <span className="text-3xl animate-bounce">🏆</span>
+                <h3 className="text-sm font-extrabold text-emerald-400">¡Sudoku Completado!</h3>
                 {finalTimeMs !== null && (
-                  <p className="font-mono text-2xl font-black text-white tracking-wider">⏱ {formatTime(finalTimeMs)}</p>
+                  <p className="font-mono text-lg font-black text-white tracking-wider">⏱ {formatTime(finalTimeMs)}</p>
                 )}
-                <div className="flex flex-col items-center gap-1">
-                  <span className="text-lg font-black text-amber-300">
+                <div className="flex flex-col items-center gap-0.5">
+                  <span className="text-sm font-black text-amber-300">
                     +{lastGameResult?.totalScore ?? (mistakes === 0 ? 150 : mistakes === 1 ? 100 : 50)} Puntos
                   </span>
-                  <span className="text-xs text-slate-300">
+                  <span className="text-[10px] text-slate-300">
                     {mistakes === 0 ? 'Sin errores (150 pts)' : mistakes === 1 ? '1 error (100 pts)' : '2 errores (50 pts)'}
-                    {lastGameResult?.isBestTime ? ' • 🥇 Mejor tiempo del día (+50 pts)' : ''}
+                    {lastGameResult?.isBestTime ? ' • 🥇 Mejor tiempo (+50 pts)' : ''}
                   </span>
                 </div>
                 <button
                   type="button"
                   onClick={startNewGame}
-                  className="mt-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-sky-500 to-emerald-500 hover:from-sky-400 hover:to-emerald-400 text-white font-extrabold text-xs shadow-lg shadow-sky-900/40 transition-all hover:scale-105 active:scale-95 cursor-pointer flex items-center gap-2"
+                  className="mt-1 px-3 py-1.5 rounded-xl bg-gradient-to-r from-sky-500 to-emerald-500 hover:from-sky-400 hover:to-emerald-400 text-white font-extrabold text-xs shadow-md transition-all hover:scale-105 active:scale-95 cursor-pointer flex items-center gap-1.5"
                 >
                   <span>🔄</span>
                   <span>Jugar otro Sudoku</span>
@@ -651,24 +651,24 @@ const AutomaticTranscriber: React.FC<AutomaticTranscriberProps> = ({ loggedInUse
 
             {/* OVERLAY CUANDO PIERDE POR 3 ERRORES */}
             {isGameOver && (
-              <div className="absolute inset-0 bg-slate-900/85 backdrop-blur-xs z-40 flex flex-col items-center justify-center p-6 text-center text-white space-y-3 rounded-xl animate-fadeIn">
-                <span className="text-4xl animate-bounce">❌</span>
-                <h3 className="text-base font-extrabold text-red-400">¡3 Errores Cometidos!</h3>
+              <div className="absolute inset-0 bg-slate-900/90 backdrop-blur-xs z-40 flex flex-col items-center justify-center p-3 text-center text-white space-y-2 rounded-xl animate-fadeIn">
+                <span className="text-3xl animate-bounce">❌</span>
+                <h3 className="text-sm font-extrabold text-red-400">¡3 Errores Cometidos!</h3>
                 {finalTimeMs !== null && (
-                  <p className="font-mono text-lg font-bold text-slate-300">⏱ {formatTime(finalTimeMs)}</p>
+                  <p className="font-mono text-base font-bold text-slate-300">⏱ {formatTime(finalTimeMs)}</p>
                 )}
-                <div className="flex flex-col items-center gap-1">
-                  <span className="text-base font-black text-red-300 bg-red-950/60 px-3 py-1 rounded-lg border border-red-500/40">
+                <div className="flex flex-col items-center gap-0.5">
+                  <span className="text-xs font-black text-red-300 bg-red-950/60 px-2.5 py-0.5 rounded-md border border-red-500/40">
                     -50 Puntos de Penalización
                   </span>
-                  <span className="text-xs text-slate-300 max-w-xs leading-relaxed">
-                    El sudoku se ha cerrado y se descontaron 50 puntos de tu acumulado.
+                  <span className="text-[10px] text-slate-300 max-w-[220px] leading-tight">
+                    Sudoku cerrado y 50 pts descontados de tu acumulado.
                   </span>
                 </div>
                 <button
                   type="button"
                   onClick={startNewGame}
-                  className="mt-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-red-500 to-amber-500 hover:from-red-400 hover:to-amber-400 text-white font-extrabold text-xs shadow-lg shadow-red-900/40 transition-all hover:scale-105 active:scale-95 cursor-pointer flex items-center gap-2"
+                  className="mt-1 px-3 py-1.5 rounded-xl bg-gradient-to-r from-red-500 to-amber-500 hover:from-red-400 hover:to-amber-400 text-white font-extrabold text-xs shadow-md transition-all hover:scale-105 active:scale-95 cursor-pointer flex items-center gap-1.5"
                 >
                   <span>🔄</span>
                   <span>Jugar nuevo Sudoku</span>
@@ -678,24 +678,23 @@ const AutomaticTranscriber: React.FC<AutomaticTranscriberProps> = ({ loggedInUse
 
             {/* OVERLAY DE INICIO */}
             {!isStarted && !isCompleted && !isGameOver && (
-              <div className="absolute inset-0 bg-slate-900/75 backdrop-blur-md z-40 flex flex-col items-center justify-center p-6 text-center text-white space-y-3 rounded-xl animate-fadeIn">
-                <span className="text-4xl">⏱️</span>
-                <h3 className="text-base font-extrabold">¿List@ para jugar?</h3>
-                <div className="bg-slate-800/90 rounded-xl p-3 text-[11px] text-slate-200 border border-slate-700/80 max-w-xs text-left space-y-1 shadow-md">
-                  <div className="font-bold text-white border-b border-slate-700 pb-1 text-center">Sistema de Puntuación</div>
+              <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-md z-40 flex flex-col items-center justify-center p-3 text-center text-white space-y-2 rounded-xl animate-fadeIn">
+                <span className="text-3xl">⏱️</span>
+                <h3 className="text-sm font-extrabold">¿List@ para jugar?</h3>
+                <div className="bg-slate-800/90 rounded-xl p-2 text-[10px] text-slate-200 border border-slate-700/80 w-full max-w-[220px] text-left space-y-0.5 shadow-md">
                   <div className="flex justify-between"><span>• Sin errores:</span> <b className="text-emerald-400">+150 pts</b></div>
                   <div className="flex justify-between"><span>• 1 error:</span> <b className="text-sky-400">+100 pts</b></div>
                   <div className="flex justify-between"><span>• 2 errores:</span> <b className="text-amber-400">+50 pts</b></div>
-                  <div className="flex justify-between"><span>• 3 errores (cierre):</span> <b className="text-red-400">-50 pts</b></div>
-                  <div className="flex justify-between border-t border-slate-700/80 pt-1"><span>• 🥇 Mejor tiempo del día:</span> <b className="text-amber-300">+50 pts bonus</b></div>
+                  <div className="flex justify-between"><span>• 3 errores:</span> <b className="text-red-400">-50 pts</b></div>
+                  <div className="flex justify-between border-t border-slate-700/80 pt-0.5"><span>• 🥇 Mejor tiempo:</span> <b className="text-amber-300">+50 pts</b></div>
                 </div>
                 <button
                   id="sudoku-start-button"
                   type="button"
                   onClick={handleStart}
-                  className="mt-1 px-6 py-2.5 rounded-xl bg-gradient-to-r from-sky-500 to-emerald-500 hover:from-sky-400 hover:to-emerald-400 text-white font-extrabold text-sm shadow-lg shadow-sky-900/40 transition-all hover:scale-105 active:scale-95 cursor-pointer flex items-center gap-2"
+                  className="mt-0.5 px-4 py-1.5 rounded-xl bg-gradient-to-r from-sky-500 to-emerald-500 hover:from-sky-400 hover:to-emerald-400 text-white font-extrabold text-xs shadow-md transition-all hover:scale-105 active:scale-95 cursor-pointer flex items-center gap-1.5"
                 >
-                  <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+                  <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
                   Iniciar Sudoku
                 </button>
               </div>
@@ -717,7 +716,7 @@ const AutomaticTranscriber: React.FC<AutomaticTranscriberProps> = ({ loggedInUse
                         key={`${r}-${c}`}
                         disabled={isGameOver || isCompleted || !isStarted}
                         onClick={() => handleCellClick(r, c)}
-                        className={`flex items-center justify-center font-sans font-bold text-base sm:text-lg transition-colors p-0 m-0 w-full h-full leading-none select-none ${
+                        className={`flex items-center justify-center font-sans font-bold text-sm sm:text-base transition-colors p-0 m-0 w-full h-full leading-none select-none ${
                           isMatchHighlight
                             ? 'bg-amber-300 text-amber-950 shadow-inner'
                             : isOriginal
@@ -737,7 +736,7 @@ const AutomaticTranscriber: React.FC<AutomaticTranscriberProps> = ({ loggedInUse
           </div>
 
           {/* TECLADO NUMÉRICO RÁPIDO PARA PANTALLAS TÁCTILES O RATÓN */}
-          <div className="flex items-center justify-center gap-1 mt-2.5 w-[360px] shrink-0">
+          <div className="flex items-center justify-center gap-1 mt-2 w-full max-w-[280px] sm:max-w-[290px] mx-auto shrink-0">
             {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
               <button
                 key={num}
@@ -748,7 +747,7 @@ const AutomaticTranscriber: React.FC<AutomaticTranscriberProps> = ({ loggedInUse
                     updateCellValue(selectedCell[0], selectedCell[1], num);
                   }
                 }}
-                className="flex-1 py-1.5 rounded-lg bg-slate-100 hover:bg-sky-100 text-slate-800 hover:text-sky-800 font-black text-xs sm:text-sm border border-slate-300 shadow-2xs transition active:scale-90 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="flex-1 py-1 rounded bg-slate-100 hover:bg-sky-100 text-slate-800 hover:text-sky-800 font-black text-xs border border-slate-300 shadow-2xs transition active:scale-90 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {num}
               </button>
@@ -761,7 +760,7 @@ const AutomaticTranscriber: React.FC<AutomaticTranscriberProps> = ({ loggedInUse
                   updateCellValue(selectedCell[0], selectedCell[1], 0);
                 }
               }}
-              className="px-2 py-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-700 font-black text-xs border border-red-200 shadow-2xs transition active:scale-90 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="px-1.5 py-1 rounded bg-red-50 hover:bg-red-100 text-red-700 font-black text-xs border border-red-200 shadow-2xs transition active:scale-90 disabled:opacity-40 disabled:cursor-not-allowed"
               title="Borrar número de la celda"
             >
               ⌫
@@ -770,9 +769,9 @@ const AutomaticTranscriber: React.FC<AutomaticTranscriberProps> = ({ loggedInUse
         </div>
 
         {/* LADO DERECHO: CRONÓMETRO, ERRORES Y CUADRO DE HONOR */}
-        <div className="w-full flex flex-col justify-between h-full space-y-2.5">
+        <div className="w-full flex flex-col justify-start space-y-2 min-w-0">
           {/* CRONÓMETRO */}
-          <div className={`flex items-center justify-between p-2 rounded-xl border text-xs transition-colors ${
+          <div className={`flex items-center justify-between p-2 rounded-xl border text-xs shrink-0 transition-colors ${
             isRunning ? 'bg-sky-50 border-sky-200' : isCompleted ? 'bg-emerald-50 border-emerald-200' : isGameOver ? 'bg-red-50 border-red-200' : 'bg-slate-50 border-slate-200/80'
           }`}>
             <span className="font-bold text-slate-700 text-[11px] flex items-center gap-1.5">
@@ -787,13 +786,13 @@ const AutomaticTranscriber: React.FC<AutomaticTranscriberProps> = ({ loggedInUse
           </div>
 
           {/* INDICADOR DE ERRORES (MÁXIMO 3) */}
-          <div className="flex items-center justify-between p-2 bg-slate-50 border border-slate-200/80 rounded-xl text-xs">
+          <div className="flex items-center justify-between p-2 bg-slate-50 border border-slate-200/80 rounded-xl text-xs shrink-0">
             <span className="font-bold text-slate-700 text-[11px]">Errores:</span>
             <div className="flex items-center gap-1">
               {[1, 2, 3].map(step => (
                 <span
                   key={step}
-                  className={`w-4 h-4 rounded-full text-[9px] font-black flex items-center justify-center ${
+                  className={`w-3.5 h-3.5 rounded-full text-[9px] font-black flex items-center justify-center ${
                     mistakes >= step ? 'bg-red-500 text-white shadow-2xs' : 'bg-slate-200 text-slate-400'
                   }`}
                 >
@@ -807,8 +806,8 @@ const AutomaticTranscriber: React.FC<AutomaticTranscriberProps> = ({ loggedInUse
           </div>
 
           {/* CUADRO DE HONOR CON TAMAÑO FIJO Y SCROLL */}
-          <div className="flex flex-col justify-start min-h-0 bg-slate-50/50 border border-slate-200/60 rounded-xl p-2.5">
-            <div className="flex flex-col gap-1.5 border-b border-slate-200/70 pb-2 mb-1.5 shrink-0">
+          <div className="flex flex-col justify-start bg-slate-50/50 border border-slate-200/60 rounded-xl p-2 min-w-0">
+            <div className="flex flex-col gap-1 border-b border-slate-200/70 pb-1.5 mb-1 shrink-0">
               <span className="text-[11px] font-bold text-slate-800 flex items-center gap-1">
                 🏆 CUADRO DE HONOR
               </span>
@@ -844,7 +843,7 @@ const AutomaticTranscriber: React.FC<AutomaticTranscriberProps> = ({ loggedInUse
               </div>
             </div>
 
-            <div className="space-y-1.5 h-[255px] overflow-y-auto custom-scrollbar pr-1">
+            <div className="space-y-1.5 h-[190px] overflow-y-auto custom-scrollbar pr-1">
               {/* TAB 1: HOY (Todas las partidas del día ordenadas del mejor al peor) */}
               {leaderboardTab === 'hoy' && (
                 todaysGames.length === 0 ? (
