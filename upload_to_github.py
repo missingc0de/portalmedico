@@ -31,8 +31,8 @@ def main():
     }
 
     repo = 'missingc0de/portalmedico'
-    tag = 'v1.4.31'
-    version = '1.4.31'
+    tag = 'v1.4.32'
+    version = '1.4.32'
     
     release_id = None
     upload_url_base = None
@@ -52,6 +52,7 @@ def main():
             'name': f'Portal Médico {tag}',
             'body': (
                 f"### Novedades {tag}:\n"
+                "- **Identificador de Versión v1.4.32:** Corrección integral de la versión en el asistente instalador, metadata de Windows, interfaz y sistema de actualizaciones.\n"
                 "- **Enviar a PC (Transferencia Teléfono -> PC):** Nueva función móvil para adjuntar fotos, documentos y texto directamente a la versión de escritorio/navegador.\n"
                 "- **Archivos Recibidos en PC:** Canal dedicado y permanente en Chat Local con ícono de descarga, fecha y hora exacta, copiado rápido y descarga con 1 clic.\n"
                 "- **Guardado Automático en Descargas:** Los archivos y notas (.txt) se descargan de forma 100% automática en la carpeta 'Descargas/Recibidos desde PORTAL MÉDICO' creándola si no existe, y liberando el almacenamiento en la nube al instante.\n"
@@ -59,7 +60,7 @@ def main():
                 "- **Pautas Alimentarias Autónomas:** Ícono de acceso rápido en barra superior, generación de PDF independiente e incorporación de dietas (Migraña, Metilfenidato, Gastroenteritis, y ERC separada en pre-diálisis y diálisis).\n"
                 "- **Smartfármacos Mejorados:** Insulinas NPH, Toujeo y Apidra con selección interactiva de dosis AM y PM, y nuevos hipoglicemiantes orales (Vildagliptina, Empagliflozina, Dapagliflozina, Linagliptina).\n"
                 "- **Estandarización UI:** Diseño unificado de botones de objetivos y planes predeterminados en todas las fichas clínicas.\n"
-                "- **Webview Bundling:** Ejecutable standalone e instalador oficial v1.4.31 optimizados con WebView2 para Windows."
+                "- **Webview Bundling:** Ejecutable standalone e instalador oficial v1.4.32 optimizados con WebView2 para Windows."
             ),
             'draft': False,
             'prerelease': False,

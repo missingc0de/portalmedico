@@ -11,7 +11,7 @@ from http.server import SimpleHTTPRequestHandler
 from socketserver import TCPServer
 import webview
 
-APP_VERSION = "1.4.31"
+APP_VERSION = "1.4.32"
 UPDATE_URL = "https://raw.githubusercontent.com/missingc0de/portalmedico/main/latest.yml"
 
 def check_webview2_runtime():

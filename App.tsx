@@ -719,7 +719,7 @@ const App: React.FC = () => {
     error?: string;
   } | null>(null);
 
-  const APP_VERSION = '1.4.30';
+  const APP_VERSION = '1.4.32';
   useEffect(() => {
     document.title = 'PORTAL MÉDICO';
   }, []);
@@ -2921,7 +2921,7 @@ const App: React.FC = () => {
             setComputerSector={setComputerSector}
             onOpenUserProfile={() => setIsUserProfileModalOpen(true)}
             onLogout={handleLogout}
-            appVersion="1.4.30"
+            appVersion={APP_VERSION}
           />
         );
       case 'misPacientes':
@@ -3435,7 +3435,7 @@ const App: React.FC = () => {
           setComputerSector={setComputerSector}
           onOpenUserProfile={() => setIsUserProfileModalOpen(true)}
           onLogout={handleLogout}
-          appVersion="1.4.30"
+          appVersion={APP_VERSION}
         />
       )}
 
