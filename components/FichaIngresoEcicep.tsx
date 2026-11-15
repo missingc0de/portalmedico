@@ -3139,7 +3139,7 @@ export const FichaIngresoEcicep: React.FC<FichaIngresoEcicepProps> = ({ onBackTo
                 </section>
 
                 <section id="sec-valoracion" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2">
-                  <h3 className="text-lg font-semibold mb-1.5 text-sky-700 border-b border-sky-200 pb-1">VALORACIÓN INTEGRAL</h3>
+                  <h3 className="text-lg font-semibold mb-1.5 text-sky-700 border-b border-sky-200 pb-1">Valoración Integral</h3>
                   <div className="space-y-2">
                     <div>
                       <label htmlFor="integralIndividual" className="block text-sm font-medium text-slate-700 mb-1.5">Ciclo vital individual:</label>
@@ -3184,7 +3184,7 @@ export const FichaIngresoEcicep: React.FC<FichaIngresoEcicepProps> = ({ onBackTo
                   </div>
                 </section>
 
-                <section id="sec-pci" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-3"><h3 className="text-lg font-semibold mb-1.5 text-sky-700 border-b border-sky-200 pb-1">PLAN DE CUIDADO INTEGRAL (PCI) Y TOMA DE DECISIONES COMPARTIDAS</h3>
+                <section id="sec-pci" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-3"><h3 className="text-lg font-semibold mb-1.5 text-sky-700 border-b border-sky-200 pb-1">Plan de Cuidado Integral (PCI) y Toma de Decisiones Compartidas</h3>
 
                   <div>
                     <h4 className="text-md font-bold text-slate-800 mb-1.5 uppercase text-xs tracking-wider">PROBLEMAS VISUALIZADOS</h4>

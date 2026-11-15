@@ -1881,7 +1881,7 @@ export const FichaControlEcicepNuevo: React.FC<FichaControlEcicepNuevoProps> = (
                 </section>
 
                 <section id="sec-valoracion-control" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2">
-                  <h3 className="text-lg font-semibold text-sky-700 border-b border-sky-200 pb-1">Valoración integral</h3>
+                  <h3 className="text-lg font-semibold text-sky-700 border-b border-sky-200 pb-1">Valoración Integral</h3>
                   <div className="space-y-4">
                     <div>
                       <label htmlFor="integralIndividual" className="block text-sm font-medium text-slate-700 mb-1.5">Ciclo vital individual:</label>
@@ -1927,7 +1927,7 @@ export const FichaControlEcicepNuevo: React.FC<FichaControlEcicepNuevoProps> = (
                 </section>
 
                 <section id="sec-plan-cuidado-control" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2">
-                  <h3 className="text-lg font-semibold text-sky-700 border-b border-sky-200 pb-1">PLAN DE CUIDADO INTEGRAL (PCI) Y TOMA DE DECISIONES COMPARTIDAS</h3>
+                  <h3 className="text-lg font-semibold text-sky-700 border-b border-sky-200 pb-1">Plan de Cuidado Integral (PCI) y Toma de Decisiones Compartidas</h3>
 
                   <div>
                     <h4 className="text-md font-bold text-slate-800 mb-3 uppercase text-sm tracking-wider">PROBLEMAS VISUALIZADOS</h4>
