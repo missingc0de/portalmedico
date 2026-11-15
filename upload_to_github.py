@@ -31,8 +31,8 @@ def main():
     }
 
     repo = 'missingc0de/portalmedico'
-    tag = 'v1.4.32'
-    version = '1.4.32'
+    tag = 'v1.4.33'
+    version = '1.4.33'
     
     release_id = None
     upload_url_base = None
@@ -52,15 +52,13 @@ def main():
             'name': f'Portal Médico {tag}',
             'body': (
                 f"### Novedades {tag}:\n"
-                "- **Identificador de Versión v1.4.32:** Corrección integral de la versión en el asistente instalador, metadata de Windows, interfaz y sistema de actualizaciones.\n"
-                "- **Enviar a PC (Transferencia Teléfono -> PC):** Nueva función móvil para adjuntar fotos, documentos y texto directamente a la versión de escritorio/navegador.\n"
-                "- **Archivos Recibidos en PC:** Canal dedicado y permanente en Chat Local con ícono de descarga, fecha y hora exacta, copiado rápido y descarga con 1 clic.\n"
-                "- **Guardado Automático en Descargas:** Los archivos y notas (.txt) se descargan de forma 100% automática en la carpeta 'Descargas/Recibidos desde PORTAL MÉDICO' creándola si no existe, y liberando el almacenamiento en la nube al instante.\n"
-                "- **Nuevo Ícono de Grupo General:** Diseño retro inspirado en los dos muñecos clásicos de Windows Live Messenger (WLM).\n"
-                "- **Pautas Alimentarias Autónomas:** Ícono de acceso rápido en barra superior, generación de PDF independiente e incorporación de dietas (Migraña, Metilfenidato, Gastroenteritis, y ERC separada en pre-diálisis y diálisis).\n"
-                "- **Smartfármacos Mejorados:** Insulinas NPH, Toujeo y Apidra con selección interactiva de dosis AM y PM, y nuevos hipoglicemiantes orales (Vildagliptina, Empagliflozina, Dapagliflozina, Linagliptina).\n"
-                "- **Estandarización UI:** Diseño unificado de botones de objetivos y planes predeterminados en todas las fichas clínicas.\n"
-                "- **Webview Bundling:** Ejecutable standalone e instalador oficial v1.4.32 optimizados con WebView2 para Windows."
+                "- **Instalador Oficial v1.4.33 con Identidad y Metadatos Firmados:** Actualización integral de versión en el asistente instalador, ensamblado de Windows y ejecutables standalone.\n"
+                "- **Nuevo Sistema de Puntuación Sudoku:** +150 pts sin errores, +100 pts con 1 error, +50 pts con 2 errores, -50 pts con 3 errores (cierre de partida) y +50 pts adicionales para el mejor tiempo del día (1er podio).\n"
+                "- **Cuadro de Honor Multitestaña:** Pestañas 'Hoy' (todas las partidas del día de mejor a peor), 'Ranking' (acumulado del mes actual) e 'Histórico' (acumulado de todos los tiempos).\n"
+                "- **Sudoku con Dimensiones Fijas y Scroll:** Grilla contenida 100% en su frame sin desbordar y Cuadro de Honor con scroll independiente que no altera la interfaz al registrar nuevas partidas.\n"
+                "- **Calendario de Urgencia:** Omisión del domingo 1 de noviembre para iniciar de forma limpia directamente el lunes 2 de noviembre con 0 celdas vacías.\n"
+                "- **Estandarización de Fichas ECICEP:** Títulos de sección en Title Case: 'Valoración Integral' y 'Plan de Cuidado Integral (PCI) y Toma de Decisiones Compartidas' tanto en Ingreso como en Control ECICEP.\n"
+                "- **Webview Bundling:** Ejecutable standalone e instalador oficial v1.4.33 optimizados con WebView2 para Windows."
             ),
             'draft': False,
             'prerelease': False,

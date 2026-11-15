@@ -39,7 +39,7 @@ export const AppSettingsModal: React.FC<AppSettingsModalProps> = ({
   setComputerSector,
   onOpenUserProfile,
   onLogout,
-  appVersion = '1.4.32'
+  appVersion = '1.4.33'
 }) => {
   if (!isOpen) return null;
 

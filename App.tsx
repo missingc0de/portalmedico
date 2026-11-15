@@ -719,7 +719,7 @@ const App: React.FC = () => {
     error?: string;
   } | null>(null);
 
-  const APP_VERSION = '1.4.32';
+  const APP_VERSION = '1.4.33';
   useEffect(() => {
     document.title = 'PORTAL MÉDICO';
   }, []);
