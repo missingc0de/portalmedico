@@ -1025,12 +1025,12 @@ const FichaControlPscv: React.FC<FichaControlPscvProps> = ({
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-2.5 w-full items-start h-auto lg:h-[calc(100vh-72px)] lg:overflow-hidden">
         {/* Columna Central (Formulario) */}
-        <div className="lg:col-span-8 h-auto lg:h-full lg:overflow-y-auto pr-2 custom-scrollbar flex flex-col gap-4">
+        <div className="lg:col-span-8 h-auto lg:h-full lg:overflow-y-auto pr-1 custom-scrollbar flex flex-col gap-4">
           <div className="bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-sm flex flex-col gap-4 pb-16">
 
 
-            <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-3">
-              <div className="flex justify-between items-center border-b border-sky-200 pb-2">
+            <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-3">
+              <div className="flex justify-between items-center border-b border-sky-200 pb-1">
                 <h3 className="text-lg font-semibold text-sky-700">Tipo de Control Crónico</h3>
                 <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Marcar uno o varios</span>
               </div>
@@ -1065,8 +1065,8 @@ const FichaControlPscv: React.FC<FichaControlPscvProps> = ({
               </div>
             </section>
 
-            <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-2">
-              <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-2">Antecedentes Generales</h3>
+            <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2">
+              <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-1">Antecedentes Generales</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   label="Edad"
@@ -1141,8 +1141,8 @@ const FichaControlPscv: React.FC<FichaControlPscvProps> = ({
               </div>
             </section>
 
-            <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-2">
-              <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-2">Eventos previos y hábitos</h3>
+            <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2">
+              <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-1">Eventos previos y hábitos</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {checkboxClarificationConfig.slice(0, 6).map(renderCheckboxClarificationField)}
               </div>
@@ -1156,8 +1156,8 @@ const FichaControlPscv: React.FC<FichaControlPscvProps> = ({
 
             {/* SÍNTOMAS DINÁMICOS POR CONTROL */}
             {formData.incluirControlCardiovascular && (
-              <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-2">
-                <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-2">Signos y síntomas cardiovasculares</h3>
+              <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2">
+                <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-1">Signos y síntomas cardiovasculares</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {checkboxClarificationConfig.slice(6, 16).map(renderCheckboxClarificationField)}
                 </div>
@@ -1165,8 +1165,8 @@ const FichaControlPscv: React.FC<FichaControlPscvProps> = ({
             )}
 
             {formData.incluirControlHipotiroidismo && (
-              <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-2">
-                <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-2">Signos y síntomas - Hipotiroidismo</h3>
+              <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2">
+                <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-1">Signos y síntomas - Hipotiroidismo</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {[
                     { key: 'hipotiroidismoConstipacion', clarificationKey: 'hipotiroidismoConstipacionAclaracion', label: 'Constipación' },
@@ -1182,8 +1182,8 @@ const FichaControlPscv: React.FC<FichaControlPscvProps> = ({
             )}
 
             {formData.incluirControlEpilepsia && (
-              <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-2">
-                <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-2">Signos y Síntomas - Epilepsia</h3>
+              <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2">
+                <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-1">Signos y Síntomas - Epilepsia</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField label="Última crisis" id="epilepsiaUltimaCrisis" name="epilepsiaUltimaCrisis" value={formData.epilepsiaUltimaCrisis || ''} onChange={handleChange as any} placeholder="Fecha o descripción..." />
                   <FormField label="Desencadenante" id="epilepsiaDesencadenante" name="epilepsiaDesencadenante" value={formData.epilepsiaDesencadenante || ''} onChange={handleChange as any} placeholder="Desencadenante de crisis..." />
@@ -1194,8 +1194,8 @@ const FichaControlPscv: React.FC<FichaControlPscvProps> = ({
             )}
 
             {formData.incluirControlArtrosis && (
-              <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-2">
-                <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-2">Signos y síntomas - Artrosis</h3>
+              <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2">
+                <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-1">Signos y síntomas - Artrosis</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {[
                     { key: 'artrosisDolor', clarificationKey: 'artrosisDolorAclaracion', label: 'Dolor' },
@@ -1209,9 +1209,9 @@ const FichaControlPscv: React.FC<FichaControlPscvProps> = ({
             )}
 
             {/* 1. ESTUDIOS RECIENTES */}
-            <section id="sec-estudios" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-2">
+            <section id="sec-estudios" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2">
               <div className="flex justify-between items-center mb-1">
-                <h3 className="text-lg font-semibold text-sky-700 border-b border-sky-200 pb-2 flex-grow">Estudios Recientes (Lab, EKG, Imágenes)</h3>
+                <h3 className="text-lg font-semibold text-sky-700 border-b border-sky-200 pb-1 flex-grow">Estudios Recientes (Lab, EKG, Imágenes)</h3>
                 <input type="file" ref={labFileRef} onChange={handleLabFileChange} className="hidden" accept="application/pdf,image/*" />
                 <input type="file" ref={ekgFileRef} onChange={handleEkgFileChange} className="hidden" accept="application/pdf,image/*" />
                 <input type="file" ref={imgFileRef} onChange={handleImgFileChange} className="hidden" accept="application/pdf,image/*" />
@@ -1259,8 +1259,8 @@ const FichaControlPscv: React.FC<FichaControlPscvProps> = ({
             </section>
 
             {/* 2. EXPLORACIÓN FÍSICA */}
-            <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-2">
-              <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-2">Exploración Física</h3>
+            <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2">
+              <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-1">Exploración Física</h3>
               <div className="grid grid-cols-3 gap-3">
                 <FormField label="Peso (kg)" id="peso" name="peso" value={formData.peso} onChange={handleChange as any} type="number" step="0.1" inputClassName="text-slate-700" />
                 <FormField label="Talla (cm)" id="talla" name="talla" value={formData.talla} onChange={handleChange as any} type="number" inputClassName="text-slate-700" />
@@ -1285,8 +1285,8 @@ const FichaControlPscv: React.FC<FichaControlPscvProps> = ({
             </section>
 
             {/* PLAN DE CUIDADO INTEGRAL (PCI) */}
-            <section id="sec-pci" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-2">
-              <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-2">PLAN DE CUIDADO INTEGRAL (PCI) Y TOMA DE DECISIONES COMPARTIDAS</h3>
+            <section id="sec-pci" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2">
+              <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-1">PLAN DE CUIDADO INTEGRAL (PCI) Y TOMA DE DECISIONES COMPARTIDAS</h3>
 
               <div>
                 <h4 className="text-md font-bold text-slate-800 mb-1.5 uppercase text-xs tracking-wider">PROBLEMAS VISUALIZADOS</h4>
@@ -1403,16 +1403,20 @@ const FichaControlPscv: React.FC<FichaControlPscvProps> = ({
 
                 <div className="space-y-6">
                   {(formData.pccObjetivos || []).map((obj, index) => (
-                    <div key={index} className="p-4 bg-white border-2 border-slate-200 rounded-lg shadow-sm relative animate-fadeIn">
-                      <button
-                        type="button"
-                        onClick={() => handleRemovePccObjetivo(index)}
-                        className="absolute top-2 right-2 text-red-400 hover:text-red-600 p-1"
-                        title="Eliminar objetivo"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                      </button>
-                      <h5 className="text-sm font-bold text-sky-800 mb-4 bg-sky-50 px-2 py-1 inline-block rounded">OBJETIVO/META #{index + 1}</h5>
+                    <div key={index} className="p-3.5 bg-white border border-slate-200 rounded-lg shadow-xs relative space-y-2.5 animate-fadeIn">
+                      <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
+                        <span className="text-xs font-bold text-sky-800 bg-sky-50 px-2 py-0.5 rounded border border-sky-100">
+                          OBJETIVO / META #{index + 1}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemovePccObjetivo(index)}
+                          className="text-rose-500 hover:text-rose-700 p-1 rounded hover:bg-rose-50 transition-colors cursor-pointer"
+                          title="Eliminar objetivo"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                       <div className="space-y-4">
                         <AutoExpandingTextArea
                           label="Objetivo"
@@ -1488,8 +1492,8 @@ const FichaControlPscv: React.FC<FichaControlPscvProps> = ({
             </section>
 
             {/* 3. PRÓXIMO CONTROL */}
-            <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-2">
-              <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-2 flex items-center gap-2">
+            <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2">
+              <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-1 flex items-center gap-2">
                 Próximo Control
               </h3>
 

@@ -1328,11 +1328,11 @@ const FichaPreingresoEcicep: React.FC<FichaPreingresoEcicepProps> = ({ onBackToM
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-2.5 w-full items-start h-auto lg:h-[calc(100vh-72px)] lg:overflow-hidden relative">
 
           {/* Columna Central: Formulario (col-span-8) - Única columna scrolleable */}
-          <div className="lg:col-span-8 h-auto lg:h-full lg:overflow-y-auto pr-2 custom-scrollbar flex flex-col gap-4">
+          <div className="lg:col-span-8 h-auto lg:h-full lg:overflow-y-auto pr-1 custom-scrollbar flex flex-col gap-4">
               <form onSubmit={(e) => e.preventDefault()} className="bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-sm flex flex-col gap-4 pb-16">
 
-                 <section id="sec-identificacion-pre" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-2">
-                  <h3 className="text-lg font-semibold mb-2 text-sky-700 border-b border-sky-200 pb-2">Identificación</h3>
+                 <section id="sec-identificacion-pre" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2">
+                  <h3 className="text-lg font-semibold mb-2 text-sky-700 border-b border-sky-200 pb-1">Identificación</h3>
 
                   <div className="flex items-end gap-2.5 mt-0">
                     <div className="flex-grow">
@@ -1456,8 +1456,8 @@ const FichaPreingresoEcicep: React.FC<FichaPreingresoEcicepProps> = ({ onBackToM
                   </div>
                 </section>
 
-                <section id="sec-antecedentes-pre" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-2">
-                  <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-2">Antecedentes Generales</h3>
+                <section id="sec-antecedentes-pre" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2">
+                  <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-1">Antecedentes Generales</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                       label="Edad"
@@ -1535,8 +1535,8 @@ const FichaPreingresoEcicep: React.FC<FichaPreingresoEcicepProps> = ({ onBackToM
                   </div>
                 </section>
 
-                <section id="sec-habitos-pre" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-2">
-                  <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-2">Hábitos</h3>
+                <section id="sec-habitos-pre" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2">
+                  <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-1">Hábitos</h3>
                   {habitosCheckboxConfig.map(renderCheckboxClarificationField)}
 
                   <div className="flex items-end gap-3 mb-0">
@@ -1587,8 +1587,8 @@ const FichaPreingresoEcicep: React.FC<FichaPreingresoEcicepProps> = ({ onBackToM
                 </section>
 
                 {formData.sexo === 'Femenino' && (
-                  <section id="sec-gineco-pre" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-4">
-                    <h3 className="text-lg font-semibold mb-3 text-sky-700 border-b border-sky-200 pb-2">Gineco-Obstetricia</h3>
+                  <section id="sec-gineco-pre" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-4">
+                    <h3 className="text-lg font-semibold mb-3 text-sky-700 border-b border-sky-200 pb-1">Gineco-Obstetricia</h3>
                     <FormField label="Antecedentes Gineco-Obstétricos" id="antecedentesGineco" name="antecedentesGineco" value={formData.antecedentesGineco || ''} onChange={handleChange} isTextArea rows={2} />
                     <FormField label="FUM (Fecha Última Menstruación)" id="fum" name="fum" value={formData.fum || ''} onChange={handleChange} placeholder="Ej: 15-05-2023 o 'Hace 2 meses'" />
                     <FormField label="Síntomas Climaterio" id="sintomasClimaterio" name="sintomasClimaterio" value={formData.sintomasClimaterio || ''} onChange={handleChange} isTextArea rows={2} />
@@ -1597,7 +1597,7 @@ const FichaPreingresoEcicep: React.FC<FichaPreingresoEcicepProps> = ({ onBackToM
                   </section>
                 )}
 
-                <section id="sec-atenciones-pre" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-4"><h3 className="text-lg font-semibold mb-3 text-sky-700 border-b border-sky-200 pb-2">Atenciones Vigentes</h3>
+                <section id="sec-atenciones-pre" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-4"><h3 className="text-lg font-semibold mb-3 text-sky-700 border-b border-sky-200 pb-1">Atenciones Vigentes</h3>
                   {[
                     { label: "EMPAM", name: "empam", placeholder: "Escribe @ para seleccionar estado (NORMAL, ALTERADO, NO VIGENTE)...", options: empamSmartOptions },
                     { label: "Fondo de ojo", name: "fondoOjo", placeholder: "Escribe @ para seleccionar estado (NORMAL, ALTERADO, NO VIGENTE)...", options: fondoOjoSmartOptions },
@@ -1638,8 +1638,8 @@ const FichaPreingresoEcicep: React.FC<FichaPreingresoEcicepProps> = ({ onBackToM
                   <FormField label="Vacunas" id="vacunas" name="vacunas" value={formData.vacunas || ''} onChange={handleChange} />
                 </section>
 
-                <section id="sec-alimentacion" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-2">
-                  <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-2">Alimentación</h3>
+                <section id="sec-alimentacion" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2">
+                  <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-1">Alimentación</h3>
                   <SmartDietaTextarea
                     label="Encuesta alimentaria"
                     id="encuestaAlimentaria"
@@ -1668,8 +1668,8 @@ const FichaPreingresoEcicep: React.FC<FichaPreingresoEcicepProps> = ({ onBackToM
                   />
                 </section>
 
-                <section id="sec-animo-pre" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-2">
-                  <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-2">Ánimo</h3>
+                <section id="sec-animo-pre" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2">
+                  <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-1">Ánimo</h3>
                   <div className="space-y-2">
                     <button
                       type="button"
@@ -1760,8 +1760,8 @@ const FichaPreingresoEcicep: React.FC<FichaPreingresoEcicepProps> = ({ onBackToM
                   </div>
                 </section>
 
-                <section id="sec-dimension-social-pre" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-2">
-                  <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-2">Dimensión Social, Familiar y Comunitaria</h3>
+                <section id="sec-dimension-social-pre" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2">
+                  <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-1">Dimensión Social, Familiar y Comunitaria</h3>
                   <div className="flex items-end gap-3 mb-0">
                     <div className="flex-grow">
                       <label htmlFor="escolaridad" className="block text-sm font-medium text-slate-700 mb-1.5">Escolaridad</label>
@@ -1875,8 +1875,8 @@ const FichaPreingresoEcicep: React.FC<FichaPreingresoEcicepProps> = ({ onBackToM
 
                 </section>
 
-                <section id="sec-contacto-pre" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-2">
-                  <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-2">Datos de Contacto</h3>
+                <section id="sec-contacto-pre" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2">
+                  <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-1">Datos de Contacto</h3>
                   <div className="flex items-center gap-2">
                     <select name="telefonoPrefijo" value={formData.telefonoPrefijo} onChange={handleChange} className="px-3 py-2.5 bg-white border border-slate-300 rounded-lg shadow-sm text-slate-800 font-medium h-[42px] focus:ring-2 focus:ring-sky-500 outline-none">
                       <option value="+569" className="text-slate-800">+569</option>
@@ -1886,8 +1886,8 @@ const FichaPreingresoEcicep: React.FC<FichaPreingresoEcicepProps> = ({ onBackToM
                   </div>
                 </section>
 
-                <section id="sec-examenes-pre" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-2">
-                  <h3 className="text-lg font-semibold text-sky-700 mb-3 border-b border-sky-200 pb-2">Exámenes (Laboratorio)</h3>
+                <section id="sec-examenes-pre" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2">
+                  <h3 className="text-lg font-semibold text-sky-700 mb-3 border-b border-sky-200 pb-1">Exámenes (Laboratorio)</h3>
                   {labError && <p className="text-red-500 text-xs mt-1 mb-2">{labError}</p>}
                   <DateField label="Fecha Exámenes" id="examenesFecha" name="examenesFecha" value={formData.examenesFecha} onChange={handleChange as any} containerClassName="mb-3" />
                   <FormField label="" id="examenes" name="examenes" value={formData.examenes} onChange={handleChange as any} isTextArea rows={4} placeholder="Detallar resultados de exámenes relevantes..." inputClassName="text-black" />
@@ -1905,8 +1905,8 @@ const FichaPreingresoEcicep: React.FC<FichaPreingresoEcicepProps> = ({ onBackToM
                   <FormField label="" id="otrasImagenesResultados" name="otrasImagenesResultados" value={formData.otrasImagenesResultados || ''} onChange={handleChange as any} isTextArea rows={3} placeholder="Detallar resultados de otras imágenes..." inputClassName="text-black" />
                 </section>
 
-                <section id="sec-valoracion-pre" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-2">
-                  <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-2">VALORACIÓN INTEGRAL</h3>
+                <section id="sec-valoracion-pre" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2">
+                  <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-1">VALORACIÓN INTEGRAL</h3>
                   <div className="space-y-2">
                     <div>
                       <label htmlFor="integralIndividual" className="block text-sm font-medium text-slate-700 mb-1.5">Ciclo vital individual:</label>
@@ -1951,8 +1951,8 @@ const FichaPreingresoEcicep: React.FC<FichaPreingresoEcicepProps> = ({ onBackToM
                   </div>
                 </section>
 
-                <section id="sec-gestion-pre" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-0">
-                  <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-2">Gestión de ingreso ECICEP</h3>
+                <section id="sec-gestion-pre" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-0">
+                  <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-1">Gestión de ingreso ECICEP</h3>
                   {renderRadioGroup("Estado de Ingreso", "gestionIngresoEstado", [{ value: "Ingresa a ECICEP", label: "Ingresa a ECICEP" }, { value: "No se ingresa", label: "No se ingresa" }])}
                   {formData.gestionIngresoEstado === 'Ingresa a ECICEP' && (
                     <div className="mt-4 pt-4 border-t border-slate-200">
@@ -1983,8 +1983,8 @@ const FichaPreingresoEcicep: React.FC<FichaPreingresoEcicepProps> = ({ onBackToM
                   )}
                 </section>
 
-                <section id="sec-indicaciones-pre" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-0">
-                  <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-2">Indicaciones</h3>
+                <section id="sec-indicaciones-pre" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-0">
+                  <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-1">Indicaciones</h3>
                   <FormField label="" id="indicaciones" name="indicaciones" value={formData.indicaciones} onChange={handleChange as any} isTextArea rows={8} inputClassName="!text-slate-800 placeholder:opacity-50 font-sans text-sm leading-normal" />
                 </section>
               </form>

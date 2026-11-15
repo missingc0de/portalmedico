@@ -628,11 +628,11 @@ const FichaConsultaPasmi: React.FC<FichaConsultaPasmiProps> = ({ onBackToMenu, l
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-2.5 w-full items-start h-auto lg:h-[calc(100vh-72px)] lg:overflow-hidden relative">
         
         {/* Columna Central: Formulario (col-span-8) - Única columna scrolleable */}
-        <div className="lg:col-span-8 h-auto lg:h-full lg:overflow-y-auto pr-2 custom-scrollbar flex flex-col gap-4">
+        <div className="lg:col-span-8 h-auto lg:h-full lg:overflow-y-auto pr-1 custom-scrollbar flex flex-col gap-4">
               <form onSubmit={(e) => e.preventDefault()} className="bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-sm flex flex-col gap-4 pb-16">
                 
-                <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-3">
-                  <div className="flex items-center justify-between border-b border-sky-200 pb-2 mb-1">
+                <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-3">
+                  <div className="flex items-center justify-between border-b border-sky-200 pb-1 mb-1">
                     <h3 className="text-lg font-semibold text-sky-700">Antecedentes Personales</h3>
                     {/* Botón WIZARD TDAH */}
                     <button
@@ -730,8 +730,8 @@ const FichaConsultaPasmi: React.FC<FichaConsultaPasmiProps> = ({ onBackToMenu, l
                   </div>
                 </section>
 
-                <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-3">
-                  <h3 className="text-lg font-semibold mb-3 text-sky-700 border-b border-sky-200 pb-2">Contexto Escolar</h3>
+                <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-3">
+                  <h3 className="text-lg font-semibold mb-3 text-sky-700 border-b border-sky-200 pb-1">Contexto Escolar</h3>
                   <div className="space-y-4">
                     <div className="flex flex-col">
                       <ColegioAutocomplete
@@ -763,8 +763,8 @@ const FichaConsultaPasmi: React.FC<FichaConsultaPasmiProps> = ({ onBackToMenu, l
                   </div>
                 </section>
 
-                <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-3">
-                  <h3 className="text-lg font-semibold mb-3 text-sky-700 border-b border-sky-200 pb-2">Contexto Domiciliario</h3>
+                <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-3">
+                  <h3 className="text-lg font-semibold mb-3 text-sky-700 border-b border-sky-200 pb-1">Contexto Domiciliario</h3>
                   <div className="space-y-4">
                     <FormField label="Integrantes del grupo familiar" id="integrantesGrupoFamiliar" name="integrantesGrupoFamiliar" value={formData.integrantesGrupoFamiliar} onChange={handleChange} isTextArea rows={2} />
                     <FormField label="Ocupación de padres" id="ocupacionPadres" name="ocupacionPadres" value={formData.ocupacionPadres} onChange={handleChange} isTextArea rows={2} />
@@ -776,8 +776,8 @@ const FichaConsultaPasmi: React.FC<FichaConsultaPasmiProps> = ({ onBackToMenu, l
                   </div>
                 </section>
 
-                <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-3">
-                  <h3 className="text-lg font-semibold mb-3 text-sky-700 border-b border-sky-200 pb-2">Contexto Psicosocial</h3>
+                <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-3">
+                  <h3 className="text-lg font-semibold mb-3 text-sky-700 border-b border-sky-200 pb-1">Contexto Psicosocial</h3>
                   <div className="space-y-4">
                     <AutoExpandingTextArea label="Impulsividad/rabia" id="psicosocialImpulsividad" name="psicosocialImpulsividad" value={formData.psicosocialImpulsividad || ''} onChange={handleChange as any} />
                     <AutoExpandingTextArea label="Ánimo" id="psicosocialAnimo" name="psicosocialAnimo" value={formData.psicosocialAnimo || ''} onChange={handleChange as any} />
@@ -787,8 +787,8 @@ const FichaConsultaPasmi: React.FC<FichaConsultaPasmiProps> = ({ onBackToMenu, l
                   </div>
                 </section>
 
-                <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-3">
-                  <h3 className="text-lg font-semibold mb-3 text-sky-700 border-b border-sky-200 pb-2">Examen Mental</h3>
+                <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-3">
+                  <h3 className="text-lg font-semibold mb-3 text-sky-700 border-b border-sky-200 pb-1">Examen Mental</h3>
                   <div className="space-y-4">
                     <FormField label="Vigilancia y orientación" id="examenMentalVigilancia" name="examenMentalVigilancia" value={formData.examenMentalVigilancia} onChange={handleChange} />
                     <FormField label="Contacto e interacción" id="examenMentalContacto" name="examenMentalContacto" value={formData.examenMentalContacto} onChange={handleChange} />
@@ -804,7 +804,7 @@ const FichaConsultaPasmi: React.FC<FichaConsultaPasmiProps> = ({ onBackToMenu, l
                 </section>
 
                 <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-6">
-                  <h3 className="text-lg font-semibold text-sky-700 border-b border-sky-200 pb-2">PLAN DE CUIDADO INTEGRAL (PCI) Y TOMA DE DECISIONES COMPARTIDAS</h3>
+                  <h3 className="text-lg font-semibold text-sky-700 border-b border-sky-200 pb-1">PLAN DE CUIDADO INTEGRAL (PCI) Y TOMA DE DECISIONES COMPARTIDAS</h3>
 
                   <div>
                     <h4 className="text-md font-bold text-slate-800 mb-3 uppercase text-sm tracking-wider">PROBLEMAS VISUALIZADOS</h4>
@@ -917,16 +917,20 @@ const FichaConsultaPasmi: React.FC<FichaConsultaPasmiProps> = ({ onBackToMenu, l
 
                     <div className="space-y-6">
                       {(formData.pccObjetivos || []).map((obj, index) => (
-                        <div key={index} className="p-4 bg-white border-2 border-slate-200 rounded-lg shadow-sm relative animate-fadeIn">
-                          <button
-                            type="button"
-                            onClick={() => handleRemovePccObjetivo(index)}
-                            className="absolute top-2 right-2 text-red-400 hover:text-red-600 p-1"
-                            title="Eliminar objetivo"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                          </button>
-                          <h5 className="text-sm font-bold text-sky-800 mb-4 bg-sky-50 px-2 py-1 inline-block rounded">OBJETIVO/META #${index + 1}</h5>
+                        <div key={index} className="p-3.5 bg-white border border-slate-200 rounded-lg shadow-xs relative space-y-2.5 animate-fadeIn">
+                          <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
+                            <span className="text-xs font-bold text-sky-800 bg-sky-50 px-2 py-0.5 rounded border border-sky-100">
+                              OBJETIVO / META #{index + 1}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleRemovePccObjetivo(index)}
+                              className="text-rose-500 hover:text-rose-700 p-1 rounded hover:bg-rose-50 transition-colors cursor-pointer"
+                              title="Eliminar objetivo"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                           <div className="space-y-4">
                             <AutoExpandingTextArea label="Objetivo" id={`obj-objetivo-${index}`} name={`obj-objetivo-${index}`} value={obj.objetivo || ''} onChange={(e) => handleUpdatePccObjetivo(index, 'objetivo', e.target.value)} />
                             <AutoExpandingTextArea label="Acuerdo" id={`obj-acuerdo-${index}`} name={`obj-acuerdo-${index}`} value={obj.acuerdo || ''} onChange={(e) => handleUpdatePccObjetivo(index, 'acuerdo', e.target.value)} />
