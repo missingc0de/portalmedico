@@ -262,6 +262,14 @@ export const ChatLocal: React.FC<ChatLocalProps> = ({
     loadLocalTransfers();
     const handleTransferEvt = () => {
       loadLocalTransfers();
+      try {
+        soundService.play('/notification.mp3');
+      } catch (e) {
+        console.warn('Error playing notification sound:', e);
+      }
+      if (!isOpenRef.current || activeChannelRef.current !== 'archivos_recibidos') {
+        setUnreadCount(prev => prev + 1);
+      }
     };
     window.addEventListener('pc-transfer-received', handleTransferEvt);
     return () => {
@@ -1591,9 +1599,9 @@ Descargas / ${DEFAULT_RECIBIDOS_FOLDER_NAME}
                   {renderStatusBadge(myProfile.presenceStatus, "border-2 border-white")}
                 </div>
                 <span className="font-bold text-slate-800 text-[14px] tracking-wide select-none">Mensajes</span>
-                {unreadCount > 0 && !isOpen && (
+                {(unreadCount > 0 || unreadTransfersCount > 0) && !isOpen && (
                   <span className="bg-red-500 text-white text-[9px] font-black rounded-full px-1.5 py-0.5 shadow leading-none">
-                    {unreadCount}
+                    {Math.max(unreadCount, unreadTransfersCount)}
                   </span>
                 )}
               </div>
@@ -1975,12 +1983,15 @@ Descargas / ${DEFAULT_RECIBIDOS_FOLDER_NAME}
                     setCurrentPane('list');
                     setShowContacts(false);
                   }}
-                  className="text-slate-500 hover:bg-slate-100 p-1.5 rounded-full transition-colors flex items-center justify-center cursor-pointer shrink-0"
+                  className="text-slate-500 hover:bg-slate-100 p-1.5 rounded-full transition-colors flex items-center justify-center cursor-pointer shrink-0 relative"
                   title="Volver a la lista"
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
                     <line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" />
                   </svg>
+                  {(unreadCount > 0 || unreadTransfersCount > 0) && (
+                    <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full ring-2 ring-white animate-pulse" />
+                  )}
                 </button>
 
                 {activeChannel === 'archivos_recibidos' ? (

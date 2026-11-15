@@ -236,11 +236,14 @@ export async function sendToPcCloud(
   sender: { username: string; fullName: string },
   text: string,
   files: File[],
-  onProgress?: (status: string) => void
+  onProgress?: (status: string) => void,
+  targetUsername?: string
 ): Promise<void> {
   if (!text.trim() && files.length === 0) {
     throw new Error('Debe adjuntar al menos un archivo, foto o texto para enviar.');
   }
+
+  const recipient = (targetUsername && targetUsername.trim()) ? targetUsername.trim() : sender.username;
 
   onProgress?.('Preparando archivos...');
 
@@ -267,7 +270,7 @@ export async function sendToPcCloud(
     for (let i = 0; i < processedFiles.length; i++) {
       onProgress?.(`Enviando archivo ${i + 1} de ${processedFiles.length}...`);
       await addDoc(collection(db, 'pc_transfers'), {
-        targetUsername: sender.username,
+        targetUsername: recipient,
         senderUsername: sender.username,
         senderFullName: sender.fullName,
         text: i === 0 ? text.trim() : '', // attach text to first doc
@@ -278,7 +281,7 @@ export async function sendToPcCloud(
     }
   } else {
     await addDoc(collection(db, 'pc_transfers'), {
-      targetUsername: sender.username,
+      targetUsername: recipient,
       senderUsername: sender.username,
       senderFullName: sender.fullName,
       text: text.trim(),

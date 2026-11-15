@@ -1,6 +1,9 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { User } from '../types';
 import { sendToPcCloud } from '../services/pcTransferService';
+import { users as allUsersData } from '../data/userData';
+import { db } from '../services/firebase';
+import { collection, query, onSnapshot } from 'firebase/firestore';
 import { 
   Laptop, 
   Camera, 
@@ -12,7 +15,11 @@ import {
   CheckCircle2, 
   AlertCircle,
   Loader2,
-  Trash2
+  Trash2,
+  User as UserIcon,
+  UserCheck,
+  Search,
+  ChevronDown
 } from 'lucide-react';
 
 interface EnviarPcModalProps {
@@ -34,9 +41,92 @@ export const EnviarPcModal: React.FC<EnviarPcModalProps> = ({
   const [sendSuccess, setSendSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
+  // Target user selection state (defaults to self)
+  const [selectedTargetUsername, setSelectedTargetUsername] = useState<string>(loggedInUser.username);
+  const [historicalUsers, setHistoricalUsers] = useState<Array<{ id: string; fullName?: string; profession?: string }>>([]);
+  const [searchUserFilter, setSearchUserFilter] = useState('');
+
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const docInputRef = useRef<HTMLInputElement>(null);
+
+  // Listen to Firestore chat_users for dynamic user registration or name updates
+  useEffect(() => {
+    try {
+      const unsub = onSnapshot(query(collection(db, 'chat_users')), (snapshot) => {
+        const list: Array<{ id: string; fullName?: string; profession?: string }> = [];
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          list.push({ id: doc.id, fullName: data.fullName, profession: data.profession });
+        });
+        setHistoricalUsers(list);
+      }, (err) => console.warn('Error reading chat_users in EnviarPcModal:', err));
+      return () => unsub();
+    } catch (e) {
+      console.warn('chat_users listener error:', e);
+    }
+  }, []);
+
+  // Merged and deduplicated user list
+  const allAvailableUsers = useMemo(() => {
+    const map = new Map<string, { username: string; fullName: string; profession?: string }>();
+    allUsersData.forEach(u => {
+      if (u.username) {
+        map.set(u.username.toLowerCase(), {
+          username: u.username,
+          fullName: u.fullName || u.username,
+          profession: u.profession
+        });
+      }
+    });
+    historicalUsers.forEach(hu => {
+      if (hu.id) {
+        const key = hu.id.toLowerCase();
+        const existing = map.get(key);
+        map.set(key, {
+          username: hu.id,
+          fullName: hu.fullName || existing?.fullName || hu.id,
+          profession: hu.profession || existing?.profession
+        });
+      }
+    });
+    return Array.from(map.values());
+  }, [historicalUsers]);
+
+  // List of other users sorted alphabetically by fullName
+  const otherUsers = useMemo(() => {
+    const list = allAvailableUsers.filter(
+      u => u.username.toLowerCase() !== loggedInUser.username.toLowerCase()
+    );
+    return list.sort((a, b) => a.fullName.localeCompare(b.fullName, 'es', { sensitivity: 'base' }));
+  }, [allAvailableUsers, loggedInUser.username]);
+
+  // Filtered other users by search query
+  const filteredOtherUsers = useMemo(() => {
+    if (!searchUserFilter.trim()) return otherUsers;
+    const q = searchUserFilter.toLowerCase().trim();
+    return otherUsers.filter(u => 
+      u.fullName.toLowerCase().includes(q) || 
+      (u.profession && u.profession.toLowerCase().includes(q))
+    );
+  }, [otherUsers, searchUserFilter]);
+
+  // Current recipient details
+  const selectedRecipient = useMemo(() => {
+    if (!selectedTargetUsername || selectedTargetUsername.toLowerCase() === loggedInUser.username.toLowerCase()) {
+      return {
+        username: loggedInUser.username,
+        fullName: loggedInUser.fullName,
+        isSelf: true
+      };
+    }
+    const found = allAvailableUsers.find(u => u.username.toLowerCase() === selectedTargetUsername.toLowerCase());
+    return {
+      username: found?.username || selectedTargetUsername,
+      fullName: found?.fullName || selectedTargetUsername,
+      isSelf: false
+    };
+  }, [selectedTargetUsername, allAvailableUsers, loggedInUser]);
 
   if (!isOpen) return null;
 
@@ -90,7 +180,8 @@ export const EnviarPcModal: React.FC<EnviarPcModalProps> = ({
         },
         text,
         selectedFiles,
-        (status) => setProgressStatus(status)
+        (status) => setProgressStatus(status),
+        selectedTargetUsername
       );
 
       setSendSuccess(true);
@@ -99,6 +190,8 @@ export const EnviarPcModal: React.FC<EnviarPcModalProps> = ({
         setText('');
         setSelectedFiles([]);
         setFilePreviews({});
+        setSelectedTargetUsername(loggedInUser.username);
+        setSearchUserFilter('');
         setSendSuccess(false);
         setIsSending(false);
         onClose();
@@ -146,6 +239,100 @@ export const EnviarPcModal: React.FC<EnviarPcModalProps> = ({
 
         {/* Content Body */}
         <div className="p-4 overflow-y-auto space-y-4 flex-1">
+          {/* Recipient Selection (Destinatario) */}
+          <div className="bg-slate-50 border border-slate-200/90 rounded-2xl p-3 shadow-2xs space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                <UserCheck className="w-4 h-4 text-sky-600" />
+                <span>Destinatario (Enviar a)</span>
+              </label>
+              {!selectedRecipient.isSelf ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedTargetUsername(loggedInUser.username);
+                    setSearchUserFilter('');
+                  }}
+                  className="text-[10px] font-bold text-sky-600 hover:text-sky-800 bg-sky-50 px-2 py-0.5 rounded-full border border-sky-200 transition-colors cursor-pointer"
+                >
+                  ↩ Volver a mí mismo
+                </button>
+              ) : (
+                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                  Por defecto: Uno mismo
+                </span>
+              )}
+            </div>
+
+            {/* Quick search input to filter users by name */}
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400">
+                <Search className="w-3.5 h-3.5" />
+              </div>
+              <input
+                type="text"
+                value={searchUserFilter}
+                onChange={(e) => setSearchUserFilter(e.target.value)}
+                placeholder="Escribe el nombre de un colega para buscar..."
+                className="w-full pl-8 pr-7 py-1.5 text-xs bg-white border border-slate-200 rounded-xl focus:ring-1 focus:ring-sky-500 focus:border-sky-500 outline-none text-slate-700 placeholder-slate-400"
+              />
+              {searchUserFilter && (
+                <button
+                  type="button"
+                  onClick={() => setSearchUserFilter('')}
+                  className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+
+            {/* Select dropdown showing user full names */}
+            <div className="relative">
+              <select
+                value={selectedTargetUsername}
+                onChange={(e) => setSelectedTargetUsername(e.target.value)}
+                disabled={isSending}
+                className="w-full pl-8 pr-8 py-2 text-xs font-semibold bg-white border border-slate-300 rounded-xl text-slate-800 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition-all cursor-pointer appearance-none truncate"
+              >
+                <option value={loggedInUser.username}>
+                  👤 Para mí mismo ({loggedInUser.fullName}) [Por defecto]
+                </option>
+                <optgroup label={searchUserFilter ? "── Resultados encontrados ──" : "── Enviar a otro usuario (por nombre) ──"}>
+                  {filteredOtherUsers.map((user) => (
+                    <option key={user.username} value={user.username}>
+                      {user.fullName} {user.profession ? `• ${user.profession}` : ''}
+                    </option>
+                  ))}
+                  {filteredOtherUsers.length === 0 && searchUserFilter && (
+                    <option disabled value="">
+                      No se encontraron usuarios con "{searchUserFilter}"
+                    </option>
+                  )}
+                </optgroup>
+              </select>
+              <div className="absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                <UserIcon className="w-4 h-4 text-sky-600" />
+              </div>
+              <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                <ChevronDown className="w-4 h-4" />
+              </div>
+            </div>
+
+            {/* Helper status text */}
+            <p className="text-[10px] text-slate-500 leading-tight">
+              {selectedRecipient.isSelf ? (
+                <span>
+                  🟢 El archivo se descargará en tu propio PC (<strong className="text-slate-700">{loggedInUser.fullName}</strong>).
+                </span>
+              ) : (
+                <span>
+                  🔵 El archivo se enviará al computador o sesión de <strong className="text-sky-700 font-bold">{selectedRecipient.fullName}</strong>.
+                </span>
+              )}
+            </p>
+          </div>
+
           {/* Action Buttons to Attach */}
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
@@ -320,7 +507,11 @@ export const EnviarPcModal: React.FC<EnviarPcModalProps> = ({
           {sendSuccess && (
             <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-2 text-emerald-800 text-xs font-bold animate-fadeIn">
               <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-              <span>¡Enviado a tu PC! Aparecerá en el chat «Archivos recibidos».</span>
+              <span>
+                {selectedRecipient.isSelf 
+                  ? '¡Enviado a tu PC! Aparecerá en el chat «Archivos recibidos».'
+                  : `¡Enviado con éxito a ${selectedRecipient.fullName}! Aparecerá en sus archivos recibidos.`}
+              </span>
             </div>
           )}
         </div>
@@ -355,7 +546,11 @@ export const EnviarPcModal: React.FC<EnviarPcModalProps> = ({
             ) : (
               <>
                 <Send className="w-4 h-4" />
-                <span>Enviar a PC</span>
+                <span>
+                  {selectedRecipient.isSelf 
+                    ? 'Enviar a PC' 
+                    : `Enviar a ${selectedRecipient.fullName.split(' ')[0]}`}
+                </span>
               </>
             )}
           </button>

@@ -102,7 +102,8 @@ import { Home, Users, MessageSquare, Hospital, Menu, ChevronLeft, ClipboardList,
 import { App as CapApp } from '@capacitor/app';
 import FichasCatalog from './components/FichasCatalog';
 import AppSettingsView from './components/AppSettingsView';
-import { initNotificationChannels, requestNotificationPermission } from './services/notificationService';
+import { initNotificationChannels, requestNotificationPermission, showChatMessageNotification } from './services/notificationService';
+import { soundService } from './services/soundService';
 import { listenAndConsumePcTransfers } from './services/pcTransferService';
 
 const MaskedDateInput: React.FC<{ value: string; onChange: (val: string) => void; className?: string }> = ({ value, onChange, className }) => {
@@ -649,6 +650,7 @@ const App: React.FC = () => {
   const [computerSector, setComputerSector] = useState<string>(localStorage.getItem('computerSector') || '');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState<boolean>(false);
+  const [mobileChatUnreadCount, setMobileChatUnreadCount] = useState<number>(0);
 
   useEffect(() => {
     const handleResize = () => {
@@ -863,18 +865,31 @@ const App: React.FC = () => {
   }, [isAuthenticated]);
 
   useEffect(() => {
+    if (currentView === 'chat') {
+      setMobileChatUnreadCount(0);
+    }
+  }, [currentView]);
+
+  useEffect(() => {
     if (!loggedInUser?.username) return;
     const unsub = listenAndConsumePcTransfers(loggedInUser.username, (transfer) => {
-      if ('Notification' in window && Notification.permission === 'granted') {
-        try {
-          new Notification('Archivo recibido desde el teléfono', {
-            body: transfer.text ? transfer.text.slice(0, 80) : `${transfer.files.length} archivo(s) recibido(s)`,
-            icon: '/favicon.ico'
-          });
-        } catch (e) {
-          console.error(e);
-        }
+      const senderName = transfer.senderFullName || transfer.senderUsername || 'Remitente';
+      const bodyText = transfer.text 
+        ? transfer.text.slice(0, 80) 
+        : `${transfer.files.length} archivo(s) recibido(s) para descargar`;
+
+      // 1. Reproducir sonido de notificación
+      try {
+        soundService.play('/notification.mp3');
+      } catch (e) {
+        console.warn('Error playing notification sound:', e);
       }
+
+      // 2. Notificación en app / sistema / móvil
+      showChatMessageNotification(senderName, bodyText);
+
+      // 3. Indicador de nuevo mensaje en barra inferior móvil
+      setMobileChatUnreadCount(prev => prev + 1);
     });
     return unsub;
   }, [loggedInUser?.username]);
@@ -3603,13 +3618,20 @@ const App: React.FC = () => {
               onClick={() => {
                 setIsNotesOpen(false);
                 setIsMobileDrawerOpen(false);
+                setMobileChatUnreadCount(0);
                 navigateTo('chat');
               }}
               className={`flex flex-col items-center justify-center flex-1 py-1 transition-colors cursor-pointer relative ${currentView === 'chat' ? 'text-sky-600 font-bold' : 'text-slate-500 hover:text-slate-800'}`}
             >
               <div className="relative">
                 <MessageSquare className="w-5 h-5 mb-0.5" />
-                <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white"></span>
+                {mobileChatUnreadCount > 0 ? (
+                  <span className="absolute -top-1.5 -right-2 px-1 min-w-[16px] h-4 text-[9px] font-black text-white bg-red-500 rounded-full flex items-center justify-center ring-2 ring-white animate-bounce">
+                    {mobileChatUnreadCount}
+                  </span>
+                ) : (
+                  <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white"></span>
+                )}
               </div>
               <span className="text-[10px] leading-tight font-medium">Chat</span>
             </button>
