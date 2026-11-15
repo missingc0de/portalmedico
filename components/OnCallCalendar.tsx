@@ -165,9 +165,11 @@ const OnCallCalendar: React.FC<OnCallCalendarProps> = ({
   const renderMonthView = () => {
     const cells = [];
     const isAugust2026 = year === 2026 && currentDisplayDate.getMonth() === 7;
+    const isNovember = currentDisplayDate.getMonth() === 10;
+    const omitSundayNov1 = isNovember && (year === 2026 || new Date(year, 10, 1).getDay() === 0);
 
-    const startDayNumber = isAugust2026 ? 3 : 1;
-    const paddingCells = isAugust2026 ? 0 : firstDayOfMonth;
+    const startDayNumber = isAugust2026 ? 3 : omitSundayNov1 ? 2 : 1;
+    const paddingCells = (isAugust2026 || omitSundayNov1) ? 0 : firstDayOfMonth;
 
     // Empty padding cells for Monday-first layout
     for (let i = 0; i < paddingCells; i++) {
