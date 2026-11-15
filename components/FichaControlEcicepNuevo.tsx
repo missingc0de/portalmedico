@@ -1803,33 +1803,68 @@ export const FichaControlEcicepNuevo: React.FC<FichaControlEcicepNuevoProps> = (
                 </section>
 
                 <section id="sec-estudios-control" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2">
-                  <div className="flex justify-between items-center mb-3">
-                    <h3 className="text-lg font-semibold text-sky-700">Estudios Recientes (Lab, EKG, Imágenes)</h3>
-                  </div>
-
-                  <div className="mb-2">
-                    <h4 className="text-md font-medium text-slate-600">Laboratorio</h4>
+                  <div className="flex justify-between items-center mb-1">
+                    <h3 className="text-lg font-semibold text-sky-700 border-b border-sky-200 pb-1 flex-grow">Estudios Recientes (Lab, EKG, Imágenes)</h3>
                     <input type="file" ref={labFileRef} onChange={handleLabFileChange} className="hidden" accept="application/pdf,image/*" />
-                  </div>
-                  {labError && <p className="text-red-500 text-xs mb-2">{labError}</p>}
-                  <DateField label="Fecha Examen Laboratorio" id="fechaExamenLaboratorio" name="fechaExamenLaboratorio" value={formData.fechaExamenLaboratorio} onChange={handleChange as any} containerClassName="mb-2" />
-                  <FormField label="" id="resultadosLaboratorio" name="resultadosLaboratorio" value={formData.resultadosLaboratorio} onChange={handleChange as any} isTextArea rows={3} placeholder="Resultados del último laboratorio..." />
-
-                  <div className="mt-6 mb-2">
-                    <h4 className="text-md font-medium text-slate-600">EKG</h4>
                     <input type="file" ref={ekgFileRef} onChange={handleEkgFileChange} className="hidden" accept="application/pdf,image/*" />
-                  </div>
-                  {ekgError && <p className="text-red-500 text-xs mt-1 mb-2">{ekgError}</p>}
-                  <DateField label="Fecha EKG" id="ekgFecha" name="ekgFecha" value={formData.ekgFecha} onChange={handleChange as any} containerClassName="mb-2" />
-                  <FormField label="" id="ekgResultados" name="ekgResultados" value={formData.ekgResultados} onChange={handleChange as any} isTextArea rows={2} />
-
-                  <div className="mt-6 mb-2">
-                    <h4 className="text-md font-medium text-slate-600">Estudios de imágenes</h4>
                     <input type="file" id="img-upload-control" ref={imgFileRef} onChange={handleImgFileChange} className="hidden" accept="application/pdf,image/*" />
                   </div>
-                  {imgError && <p className="text-red-500 text-xs mt-1 mb-2">{imgError}</p>}
-                  <DateField label="Fecha Imágenes" id="otrasImagenesFecha" name="otrasImagenesFecha" value={formData.otrasImagenesFecha} onChange={handleChange as any} containerClassName="mb-2" />
-                  <FormField label="" id="otrasImagenesResultados" name="otrasImagenesResultados" value={formData.otrasImagenesResultados} onChange={handleChange as any} isTextArea rows={2} />
+
+                  {labError && <p className="text-red-500 text-xs mb-0">{labError}</p>}
+                  <div className="mb-0">
+                    <DateField
+                      label="Laboratorio"
+                      id="fechaExamenLaboratorio"
+                      name="fechaExamenLaboratorio"
+                      value={formData.fechaExamenLaboratorio || ''}
+                      onChange={handleChange as any}
+                      containerClassName="mb-0 flex-grow"
+                      labelPrefix={
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 text-sky-700 shrink-0 ml-1">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                        </svg>
+                      }
+                    />
+                  </div>
+                  <textarea
+                    value={formData.resultadosLaboratorio || ''}
+                    onChange={handleChange as any}
+                    name="resultadosLaboratorio"
+                    className="w-full p-2 bg-white border border-slate-300 rounded-md shadow-sm custom-scrollbar font-sans text-sm leading-normal text-slate-800 focus:ring-1 focus:ring-sky-500 focus:border-sky-500 min-h-[100px]"
+                    placeholder="Resultados del último laboratorio..."
+                  ></textarea>
+
+                  {ekgError && <p className="text-red-500 text-xs mt-1 mb-0">{ekgError}</p>}
+                  <DateField
+                    label="Electrocardiograma"
+                    id="ekgFecha"
+                    name="ekgFecha"
+                    value={formData.ekgFecha || ''}
+                    onChange={handleChange as any}
+                    containerClassName="mb-0 flex-grow"
+                    labelPrefix={
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 text-sky-700 shrink-0 ml-1">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 12h2l2-5 4 10 3-7 2 2h5" />
+                      </svg>
+                    }
+                  />
+                  <textarea
+                    value={formData.ekgResultados || ''}
+                    onChange={handleChange as any}
+                    name="ekgResultados"
+                    className="w-full p-2 bg-white border border-slate-300 rounded-md shadow-sm custom-scrollbar font-sans text-sm leading-normal text-slate-800 focus:ring-1 focus:ring-sky-500 focus:border-sky-500 min-h-[60px]"
+                  ></textarea>
+
+                  <div className="flex items-center gap-1.5 mb-1 mt-1">
+                    <h4 className="block text-sm font-medium text-slate-700">Imágenes y otros estudios</h4>
+                  </div>
+                  {imgError && <p className="text-red-500 text-xs mt-1 mb-1">{imgError}</p>}
+                  <textarea
+                    value={formData.otrasImagenesResultados || ''}
+                    onChange={handleChange as any}
+                    name="otrasImagenesResultados"
+                    className="w-full p-2 bg-white border border-slate-300 rounded-md shadow-sm custom-scrollbar font-sans text-sm leading-normal text-slate-800 focus:ring-1 focus:ring-sky-500 focus:border-sky-500 min-h-[60px]"
+                  ></textarea>
                 </section>
 
                 <section id="sec-examen-fisico-control" className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2">
