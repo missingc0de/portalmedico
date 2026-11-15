@@ -556,11 +556,11 @@ const FichaSeguimientoEcicep: React.FC<FichaSeguimientoEcicepProps> = ({
       <div className="w-full relative">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-2.5 w-full items-start h-auto lg:h-[calc(100vh-72px)] lg:overflow-hidden relative">
           {/* Columna Central: Formulario (col-span-8) - Única columna scrolleable */}
-          <div className="lg:col-span-8 h-auto lg:h-full lg:overflow-y-auto pr-2 custom-scrollbar flex flex-col gap-4">
+          <div className="lg:col-span-8 h-auto lg:h-full lg:overflow-y-auto pr-1 custom-scrollbar flex flex-col gap-4">
                 <form onSubmit={(e) => e.preventDefault()} className="bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-sm flex flex-col gap-4 pb-16">
                 
-                <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-3">
-                    <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-2">Identificación</h3>
+                <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-3">
+                    <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-1">Identificación</h3>
                     <div className="grid grid-cols-1 gap-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">
                             <FormField label="Edad" id="edad" name="edad" type="number" value={formData.edad} onChange={handleChange as any} inputClassName="!h-[42px] text-black" />
@@ -691,8 +691,8 @@ const FichaSeguimientoEcicep: React.FC<FichaSeguimientoEcicepProps> = ({
                     </div>
                 </section>
 
-                <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-3">
-                    <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-2">Anamnesis</h3>
+                <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-3">
+                    <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-1">Anamnesis</h3>
                     
                     <div className="mb-4">
                       <label className="block text-sm font-medium text-slate-700 mb-1.5">Fecha Último Control ECICEP:</label>
@@ -754,8 +754,8 @@ const FichaSeguimientoEcicep: React.FC<FichaSeguimientoEcicepProps> = ({
                     {renderRadioClarification({ keyBase: 'cumplioMetasPropuestas', label: '¿Cumplió metas propuestas?' }, 'No')}
                 </section>
 
-                <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-3">
-                    <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-2">Atenciones de Salud</h3>
+                <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-3">
+                    <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-1">Atenciones de Salud</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {renderRadioClarification({ keyBase: 'molestiasReferidas', label: 'Molestias referidas' })}
                         {renderRadioClarification({ keyBase: 'atencionesDesdeUltimo', label: 'Atenciones de salud desde último control' })}
@@ -764,8 +764,8 @@ const FichaSeguimientoEcicep: React.FC<FichaSeguimientoEcicepProps> = ({
                     </div>
                 </section>
 
-                <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-3">
-                    <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-2">Revisión de Fármacos</h3>
+                <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-3">
+                    <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-1">Revisión de Fármacos</h3>
                     <SmartFarmacosTextarea 
                         label="Fármacos en uso" 
                         id="farmacosEnUso" 
@@ -780,16 +780,16 @@ const FichaSeguimientoEcicep: React.FC<FichaSeguimientoEcicepProps> = ({
                     </div>
                 </section>
 
-                <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-2">
+                <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2">
                   <div className="flex justify-between items-center mb-1">
-                    <h3 className="text-lg font-semibold text-sky-700 border-b border-sky-200 pb-2 flex-grow">Estudios Recientes (Lab, EKG, Imágenes)</h3>
+                    <h3 className="text-lg font-semibold text-sky-700 border-b border-sky-200 pb-1 flex-grow">Estudios Recientes (Lab, EKG, Imágenes)</h3>
                     <input type="file" ref={labFileRef} onChange={handleLabFileChange} className="hidden" accept="application/pdf,image/*" />
                     <input type="file" ref={ekgFileRef} onChange={handleEkgFileChange} className="hidden" accept="application/pdf,image/*" />
                     <input type="file" ref={imgFileRef} onChange={handleImgFileChange} className="hidden" accept="application/pdf,image/*" />
                   </div>
 
                   {labError && <p className="text-red-500 text-xs mb-0">{labError}</p>}
-                  <div className="mb-0 flex items-center justify-between">
+                  <div className="mb-0">
                     <DateField
                       label="Laboratorio"
                       id="labFecha"
@@ -803,52 +803,50 @@ const FichaSeguimientoEcicep: React.FC<FichaSeguimientoEcicepProps> = ({
                         </svg>
                       }
                     />
-                    <button type="button" onClick={() => labFileRef.current?.click()} disabled={isLabLoading || loggedInUser?.profession !== 'medicina'} className="text-[9px] bg-sky-100 text-sky-700 px-2 py-1 rounded font-black uppercase hover:bg-sky-200 disabled:bg-slate-200 disabled:text-slate-500 shrink-0 mt-6">
-                      {isLabLoading ? '...' : (loggedInUser?.profession === 'medicina' ? 'Importar' : 'No disponible')}
-                    </button>
                   </div>
-                  <textarea value={formData.labResultados || ''} onChange={handleChange as any} name="labResultados" className="w-full p-2 bg-white border border-slate-300 rounded-md shadow-sm custom-scrollbar font-sans text-sm leading-normal text-slate-800 focus:ring-1 focus:ring-sky-500 focus:border-sky-500 min-h-[100px]" placeholder="Resultados del último laboratorio..."></textarea>
+                  <textarea
+                    value={formData.labResultados || ''}
+                    onChange={handleChange as any}
+                    name="labResultados"
+                    className="w-full p-2 bg-white border border-slate-300 rounded-md shadow-sm custom-scrollbar font-sans text-sm leading-normal text-slate-800 focus:ring-1 focus:ring-sky-500 focus:border-sky-500 min-h-[100px]"
+                    placeholder="Resultados del último laboratorio..."
+                  ></textarea>
 
                   {ekgError && <p className="text-red-500 text-xs mt-1 mb-0">{ekgError}</p>}
-                  <div className="mb-0 flex items-center justify-between">
-                    <DateField
-                      label="Electrocardiograma"
-                      id="ekgFecha"
-                      name="ekgFecha"
-                      value={formData.ekgFecha || ''}
-                      onChange={handleChange as any}
-                      containerClassName="mb-0 flex-grow"
-                      labelPrefix={
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 text-sky-700 shrink-0 ml-1">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 12h2l2-5 4 10 3-7 2 2h5" />
-                        </svg>
-                      }
-                    />
-                    <button type="button" onClick={() => ekgFileRef.current?.click()} disabled={isEkgLoading || loggedInUser?.profession !== 'medicina'} className="text-[9px] bg-sky-100 text-sky-700 px-2 py-1 rounded font-black uppercase hover:bg-sky-200 disabled:bg-slate-200 disabled:text-slate-500 shrink-0 mt-6">
-                      {isEkgLoading ? '...' : (loggedInUser?.profession === 'medicina' ? 'Importar' : 'No disponible')}
-                    </button>
-                  </div>
-                  <textarea value={formData.ekgResultados || ''} onChange={handleChange as any} name="ekgResultados" className="w-full p-2 bg-white border border-slate-300 rounded-md shadow-sm custom-scrollbar font-sans text-sm leading-normal text-slate-800 focus:ring-1 focus:ring-sky-500 focus:border-sky-500 min-h-[60px]" placeholder="Resultados EKG..."></textarea>
+                  <DateField
+                    label="Electrocardiograma"
+                    id="ekgFecha"
+                    name="ekgFecha"
+                    value={formData.ekgFecha || ''}
+                    onChange={handleChange as any}
+                    containerClassName="mb-0 flex-grow"
+                    labelPrefix={
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 text-sky-700 shrink-0 ml-1">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 12h2l2-5 4 10 3-7 2 2h5" />
+                      </svg>
+                    }
+                  />
+                  <textarea
+                    value={formData.ekgResultados || ''}
+                    onChange={handleChange as any}
+                    name="ekgResultados"
+                    className="w-full p-2 bg-white border border-slate-300 rounded-md shadow-sm custom-scrollbar font-sans text-sm leading-normal text-slate-800 focus:ring-1 focus:ring-sky-500 focus:border-sky-500 min-h-[60px]"
+                  ></textarea>
 
-                  <div className="flex items-center justify-between gap-1.5 mb-1 mt-1">
-                    <DateField
-                      label="Fecha Otras Imágenes"
-                      id="imgFecha"
-                      name="imgFecha"
-                      value={formData.imgFecha || ''}
-                      onChange={handleChange as any}
-                      containerClassName="mb-0 flex-grow"
-                    />
-                    <button type="button" onClick={() => imgFileRef.current?.click()} disabled={isImgLoading || loggedInUser?.profession !== 'medicina'} className="text-[9px] bg-sky-100 text-sky-700 px-2 py-1 rounded font-black uppercase hover:bg-sky-200 disabled:bg-slate-200 disabled:text-slate-500 shrink-0 mt-6">
-                      {isImgLoading ? '...' : (loggedInUser?.profession === 'medicina' ? 'Importar' : 'No disponible')}
-                    </button>
+                  <div className="flex items-center gap-1.5 mb-1 mt-1">
+                    <h4 className="block text-sm font-medium text-slate-700">Imágenes y otros estudios</h4>
                   </div>
                   {imgError && <p className="text-red-500 text-xs mt-1 mb-1">{imgError}</p>}
-                  <textarea value={formData.imgResultados || ''} onChange={handleChange as any} name="imgResultados" className="w-full p-2 bg-white border border-slate-300 rounded-md shadow-sm custom-scrollbar font-sans text-sm leading-normal text-slate-800 focus:ring-1 focus:ring-sky-500 focus:border-sky-500 min-h-[60px]" placeholder="Resultados de otras imágenes..."></textarea>
+                  <textarea
+                    value={formData.imgResultados || ''}
+                    onChange={handleChange as any}
+                    name="imgResultados"
+                    className="w-full p-2 bg-white border border-slate-300 rounded-md shadow-sm custom-scrollbar font-sans text-sm leading-normal text-slate-800 focus:ring-1 focus:ring-sky-500 focus:border-sky-500 min-h-[60px]"
+                  ></textarea>
                 </section>
 
-                <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-3">
-                    <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-2">Actuación</h3>
+                <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-3">
+                    <h3 className="text-lg font-semibold mb-1 text-sky-700 border-b border-sky-200 pb-1">Actuación</h3>
                     <FormField isTextArea rows={4} label="Plan de Seguimiento" id="planSeguimiento" name="planSeguimiento" value={formData.planSeguimiento} onChange={handleChange as any} inputClassName="text-black" />
                     <div className="p-3 border border-slate-200 rounded-lg bg-white mt-4 shadow-sm">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

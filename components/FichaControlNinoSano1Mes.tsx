@@ -233,10 +233,10 @@ const FichaControlNinoSano1Mes: React.FC<FichaControlNinoSano1MesProps> = ({ onB
     return (
       <div className="w-full flex flex-col">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-2.5 w-full items-start h-auto lg:h-[calc(100vh-72px)] lg:overflow-hidden relative">
-          <div className="lg:col-span-8 h-auto lg:h-full lg:overflow-y-auto pr-2 custom-scrollbar flex flex-col gap-4">
+          <div className="lg:col-span-8 h-auto lg:h-full lg:overflow-y-auto pr-1 custom-scrollbar flex flex-col gap-4">
               <form onSubmit={(e) => e.preventDefault()} className="bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-sm flex flex-col gap-4">
-                    <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-2">
-                      <h3 className="text-lg font-semibold mb-3 text-sky-700 border-b border-sky-200 pb-2">Identificación y Crecimiento</h3>
+                    <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2">
+                      <h3 className="text-lg font-semibold mb-1.5 text-sky-700 border-b border-sky-200 pb-1">Identificación y Crecimiento</h3>
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                         <div>
                             <label htmlFor="sexo" className="block text-sm font-medium text-slate-700 mb-1.5">Sexo</label>
@@ -271,8 +271,8 @@ const FichaControlNinoSano1Mes: React.FC<FichaControlNinoSano1MesProps> = ({ onB
 
                     {/* BLOQUE ANAMNESIS */}
                     {formSections.anamnesis.map(section => (
-                        <section key={section.title} className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-2">
-                            <h3 className="text-lg font-semibold mb-3 text-sky-700 border-b border-sky-200 pb-2">{section.title}</h3>
+                        <section key={section.title} className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2">
+                            <h3 className="text-lg font-semibold mb-1.5 text-sky-700 border-b border-sky-200 pb-1">{section.title}</h3>
                             <div className="space-y-3">
                                 {section.fields.map(field => (
                                     <FormField
@@ -293,8 +293,8 @@ const FichaControlNinoSano1Mes: React.FC<FichaControlNinoSano1MesProps> = ({ onB
 
                     {/* BLOQUE EXPLORACIÓN */}
                     {formSections.exploracion.map(section => (
-                        <section key={section.title} className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-2">
-                            <h3 className="text-lg font-semibold mb-3 text-sky-700 border-b border-sky-200 pb-2">{section.title}</h3>
+                        <section key={section.title} className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2">
+                            <h3 className="text-lg font-semibold mb-1.5 text-sky-700 border-b border-sky-200 pb-1">{section.title}</h3>
                             <div className="space-y-3">
                                 {section.fields.map(field => (
                                     <FormField
@@ -313,8 +313,8 @@ const FichaControlNinoSano1Mes: React.FC<FichaControlNinoSano1MesProps> = ({ onB
                         </section>
                     ))}
 
-                    <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-2">
-                        <h3 className="text-lg font-semibold mb-3 text-sky-700 border-b border-sky-200 pb-2">Reflejos Arcaicos</h3>
+                    <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2">
+                        <h3 className="text-lg font-semibold mb-1.5 text-sky-700 border-b border-sky-200 pb-1">Reflejos Arcaicos</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {reflejosList.map(reflejo => (
                                 <div key={reflejo.key} className="p-3 bg-white border border-slate-200 rounded-lg shadow-sm">
@@ -358,8 +358,8 @@ const FichaControlNinoSano1Mes: React.FC<FichaControlNinoSano1MesProps> = ({ onB
                         </div>
                     </section>
 
-                    <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-2">
-                        <h3 className="text-lg font-semibold mb-3 text-sky-700 border-b border-sky-200 pb-2">Antropometría y Scores</h3>
+                    <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2">
+                        <h3 className="text-lg font-semibold mb-1.5 text-sky-700 border-b border-sky-200 pb-1">Antropometría y Scores</h3>
                         <div className="space-y-4">
                              <div>
                                 <h4 className="text-sm font-medium text-slate-700 mb-1">Scores</h4>
@@ -377,8 +377,8 @@ const FichaControlNinoSano1Mes: React.FC<FichaControlNinoSano1MesProps> = ({ onB
 
                     {/* BLOQUE ACTUACIÓN */}
                     {formSections.actuacion.map(section => (
-                        <section key={section.title} className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-2">
-                            <h3 className="text-lg font-semibold mb-3 text-sky-700 border-b border-sky-200 pb-2">{section.title}</h3>
+                        <section key={section.title} className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2">
+                            <h3 className="text-lg font-semibold mb-1.5 text-sky-700 border-b border-sky-200 pb-1">{section.title}</h3>
                             <div className="space-y-3">
                                 {section.fields.map(field => (
                                     <FormField
@@ -397,8 +397,8 @@ const FichaControlNinoSano1Mes: React.FC<FichaControlNinoSano1MesProps> = ({ onB
                         </section>
                     ))}
 
-                    <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-2">
-                        <h3 className="text-lg font-semibold mb-3 text-sky-700 border-b border-sky-200 pb-2">Próximo Control</h3>
+                    <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2">
+                        <h3 className="text-lg font-semibold mb-1.5 text-sky-700 border-b border-sky-200 pb-1">Próximo Control</h3>
                         <div className="p-3 border border-slate-200 rounded-md bg-white">
                             <label htmlFor="proximoControl" className="block text-sm font-medium text-slate-700 mb-1.5">Tiempo para próximo control</label>
                             <select 

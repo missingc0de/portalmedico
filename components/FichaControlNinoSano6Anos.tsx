@@ -678,11 +678,11 @@ const FichaControlNinoSano6Anos: React.FC<FichaControlNinoSano6AnosProps> = ({ o
   return (
     <div className="w-full flex flex-col">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-2.5 w-full items-start h-auto lg:h-[calc(100vh-72px)] lg:overflow-hidden relative">
-        <div className="lg:col-span-8 h-auto lg:h-full lg:overflow-y-auto pr-2 custom-scrollbar flex flex-col gap-4">
+        <div className="lg:col-span-8 h-auto lg:h-full lg:overflow-y-auto pr-1 custom-scrollbar flex flex-col gap-4">
           <form onSubmit={(e) => e.preventDefault()} className="bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-sm flex flex-col gap-4">
             {formSections.map(section => (
-              <section key={section.title} className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col gap-2">
-                <h3 className="text-base font-bold text-sky-700 border-b border-sky-200 pb-1.5">{section.title}</h3>
+              <section key={section.title} className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2">
+                <h3 className="text-base font-bold text-sky-700 border-b border-sky-200 pb-1">{section.title}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-1">
                   {section.fields.map(field => (
                     <div key={field.name} className={field.isTextArea ? "md:col-span-2" : ""}>

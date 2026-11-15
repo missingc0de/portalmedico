@@ -316,12 +316,12 @@ export default function FichaVisitaDomiciliaria({ onBackToMenu, loggedInUser }: 
     <div className="w-full relative">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-2.5 w-full items-start h-auto lg:h-[calc(100vh-72px)] lg:overflow-hidden relative">
         {/* === Columna Izquierda: Formulario === */}
-        <div className="lg:col-span-8 h-auto lg:h-full lg:overflow-y-auto pr-2 custom-scrollbar flex flex-col gap-4">
+        <div className="lg:col-span-8 h-auto lg:h-full lg:overflow-y-auto pr-1 custom-scrollbar flex flex-col gap-4">
               <form onSubmit={(e) => e.preventDefault()} className="bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-sm flex flex-col gap-4 pb-16">
 
                 {/* IDENTIFICACIÓN */}
-                <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-6">
-                  <h3 className="text-lg font-semibold mb-3 text-sky-700 border-b border-sky-200 pb-2">Identificación</h3>
+                <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2">
+                  <h3 className="text-lg font-semibold mb-1.5 text-sky-700 border-b border-sky-200 pb-1">Identificación</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-slate-700 mb-1.5">Sector</label>
@@ -350,8 +350,8 @@ export default function FichaVisitaDomiciliaria({ onBackToMenu, loggedInUser }: 
                 </section>
 
                 {/* INTEGRANTES DEL GRUPO FAMILIAR */}
-                <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-6">
-                  <div className="flex justify-between items-center mb-3 border-b border-sky-200 pb-2">
+                <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2">
+                  <div className="flex justify-between items-center mb-3 border-b border-sky-200 pb-1">
                     <h3 className="text-lg font-semibold text-sky-700">Integrantes del Grupo Familiar</h3>
                     <button onClick={addIntegrante} className="text-white bg-sky-600 hover:bg-sky-700 px-3 py-1 rounded-md text-xs font-bold">+ AGREGAR</button>
                   </div>
@@ -369,8 +369,8 @@ export default function FichaVisitaDomiciliaria({ onBackToMenu, loggedInUser }: 
                 </section>
 
                 {/* OBJETIVOS Y EXPECTATIVAS */}
-                <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-6">
-                  <h3 className="text-lg font-semibold mb-3 text-sky-700 border-b border-sky-200 pb-2">Objetivos y Expectativas</h3>
+                <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2">
+                  <h3 className="text-lg font-semibold mb-1.5 text-sky-700 border-b border-sky-200 pb-1">Objetivos y Expectativas</h3>
                   <div className="space-y-4">
                     <div>
                       <div className="flex justify-between items-center mb-2">
@@ -390,8 +390,8 @@ export default function FichaVisitaDomiciliaria({ onBackToMenu, loggedInUser }: 
                 </section>
 
                 {/* CUIDADOR */}
-                <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-6">
-                  <h3 className="text-lg font-semibold mb-3 text-sky-700 border-b border-sky-200 pb-2">Antecedentes de Cuidador</h3>
+                <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2">
+                  <h3 className="text-lg font-semibold mb-1.5 text-sky-700 border-b border-sky-200 pb-1">Antecedentes de Cuidador</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField label="Cuidador principal" id="cuidadorPrincipal" name="cuidadorPrincipal" value={formData.cuidadorPrincipal} onChange={handleChange} />
                     <FormField label="Edad del cuidador" id="cuidadorEdad" name="cuidadorEdad" value={formData.cuidadorEdad} onChange={handleChange} />
@@ -400,8 +400,8 @@ export default function FichaVisitaDomiciliaria({ onBackToMenu, loggedInUser }: 
                 </section>
 
                 {/* VIVIENDA Y ENTORNO */}
-                <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-6">
-                  <h3 className="text-lg font-semibold mb-3 text-sky-700 border-b border-sky-200 pb-2">Vivienda y Entorno</h3>
+                <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2">
+                  <h3 className="text-lg font-semibold mb-1.5 text-sky-700 border-b border-sky-200 pb-1">Vivienda y Entorno</h3>
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-slate-700 mb-1.5">Tenencia</label>
@@ -431,8 +431,8 @@ export default function FichaVisitaDomiciliaria({ onBackToMenu, loggedInUser }: 
                 </section>
 
                 {/* PRIORIZACIÓN DE PROBLEMAS */}
-                <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-6">
-                  <div className="flex justify-between items-center mb-3 border-b border-sky-200 pb-2">
+                <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2">
+                  <div className="flex justify-between items-center mb-3 border-b border-sky-200 pb-1">
                     <h3 className="text-lg font-semibold text-sky-700">Análisis y Priorización de Problemas</h3>
                     <button onClick={addProblema} className="text-white bg-sky-600 hover:bg-sky-700 px-3 py-1 rounded-md text-xs font-bold transition-colors">+ AGREGAR</button>
                   </div>
@@ -455,8 +455,8 @@ export default function FichaVisitaDomiciliaria({ onBackToMenu, loggedInUser }: 
                 </section>
 
                 {/* IDENTIFICACIÓN DE RECURSOS */}
-                <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-6">
-                  <h3 className="text-lg font-semibold mb-3 text-sky-700 border-b border-sky-200 pb-2">Identificación de los Recursos</h3>
+                <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2">
+                  <h3 className="text-lg font-semibold mb-1.5 text-sky-700 border-b border-sky-200 pb-1">Identificación de los Recursos</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField label="Personales" id="recursosPersonales" name="recursosPersonales" value={formData.recursosPersonales} onChange={handleChange} />
                     <FormField label="Materiales" id="recursosMateriales" name="recursosMateriales" value={formData.recursosMateriales} onChange={handleChange} />
@@ -466,8 +466,8 @@ export default function FichaVisitaDomiciliaria({ onBackToMenu, loggedInUser }: 
                 </section>
 
                 {/* OTRAS INTERVENCIONES E INSTRUMENTOS */}
-                <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-6">
-                  <h3 className="text-lg font-semibold mb-3 text-sky-700 border-b border-sky-200 pb-2">Intervenciones e Instrumentos</h3>
+                <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2">
+                  <h3 className="text-lg font-semibold mb-1.5 text-sky-700 border-b border-sky-200 pb-1">Intervenciones e Instrumentos</h3>
                   <div className="space-y-6">
                     <div className="space-y-2">
                       <p className="font-medium text-sm text-slate-700">Otras Intervenciones del Intersector</p>
@@ -503,8 +503,8 @@ export default function FichaVisitaDomiciliaria({ onBackToMenu, loggedInUser }: 
                 </section>
 
                 {/* PLAN Y EVALUACIÓN FINAL */}
-                <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-6">
-                  <h3 className="text-lg font-semibold mb-3 text-sky-700 border-b border-sky-200 pb-2">Plan y Evaluación Final</h3>
+                <section className="bg-[#F8FAFC] rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col gap-2">
+                  <h3 className="text-lg font-semibold mb-1.5 text-sky-700 border-b border-sky-200 pb-1">Plan y Evaluación Final</h3>
                   <div className="space-y-6">
                     <div className="space-y-4">
                       <p className="font-semibold text-sm text-slate-700">Plan de Continuidad de Atención</p>
