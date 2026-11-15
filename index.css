@@ -380,8 +380,15 @@ body {
 
 /* ==========================================================================
    Antigravity IDE Dark Mode Theme
-   Palette: Deep Navy (#0b0f19), Card Surface (#131b2e), Wells/Subcards (#182238),
-   Borders (#24314c), Input (#0c121e), Royal Blue Accent (#3b82f6 / #2563eb).
+   Palette from reference:
+   - Deep Navy Canvas: #0b0f19 / #0f1422
+   - Card Surface / Container: #131b2e / #141a2e
+   - Wells / Inner Sections / Subcards: #182238 / #161e36
+   - Subtle Borders: #24314c / #202945
+   - Inputs / Textareas / Terminal: #0c121e / #0e1424
+   - Primary Accent: #3b82f6 / #2563eb
+   - Headings / Cyan Highlights: #38bdf8
+   - Text Primary: #f8fafc, Text Secondary: #94a3b8
    ========================================================================== */
 
 html.dark,
@@ -399,9 +406,10 @@ html.dark header.bg-gradient-to-r {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45) !important;
 }
 
-/* Sidebar & Navigation */
+/* Sidebar & Left Navigation */
 html.dark aside,
-html.dark .bg-\[\#f8fafc\] {
+html.dark aside .bg-\[\#f8fafc\],
+html.dark aside .bg-\[\#F8FAFC\] {
   background-color: #0d1322 !important;
   border-color: #1e293b !important;
   color: #cbd5e1 !important;
@@ -412,18 +420,41 @@ html.dark aside button:hover:not(.bg-gradient-to-r) {
   color: #f8fafc !important;
 }
 
-/* Surfaces and Cards */
+/* Main Background and Containers */
+html.dark main,
+html.dark .bg-slate-100 {
+  background-color: #0b0f19 !important;
+}
+
+/* Clinical Ficha Forms & Outer Cards (Desktop & Mobile) */
+html.dark .mobile-ficha-container,
+html.dark .mobile-ficha-container form,
+html.dark form.bg-white,
+html.dark .lg\:col-span-8 > form,
+html.dark .lg\:col-span-4,
 html.dark .bg-white {
   background-color: #131b2e !important;
+  border-color: #24314c !important;
   color: #e2e8f0 !important;
 }
 
-html.dark .bg-slate-50 {
+/* Inner Sections and Subcards in Fichas (All #F8FAFC, #f8fafc, slate-50 blocks) */
+html.dark .mobile-ficha-container form section,
+html.dark .mobile-ficha-container section,
+html.dark form section,
+html.dark section,
+html.dark section.bg-\[\#F8FAFC\],
+html.dark section.bg-\[\#f8fafc\],
+html.dark .bg-\[\#F8FAFC\],
+html.dark .bg-\[\#f8fafc\],
+html.dark [class*="bg-[#F8FAFC]"],
+html.dark [class*="bg-[#f8fafc]"],
+html.dark .bg-slate-50,
+html.dark [class*="bg-slate-50"],
+html.dark [class*="bg-gray-50"] {
   background-color: #182238 !important;
-}
-
-html.dark .bg-slate-100 {
-  background-color: #0b0f19 !important;
+  border-color: #24314c !important;
+  color: #f1f5f9 !important;
 }
 
 html.dark .bg-slate-200 {
@@ -434,13 +465,40 @@ html.dark .bg-slate-300 {
   background-color: #263554 !important;
 }
 
-/* Subtle Borders */
+/* Borders across all cards, containers, and inputs */
 html.dark .border-slate-100,
 html.dark .border-slate-150,
 html.dark .border-slate-200,
 html.dark .border-slate-300,
+html.dark .border-slate-400,
 html.dark .border-gray-200,
-html.dark .border-gray-300 {
+html.dark .border-gray-300,
+html.dark [class*="border-slate-200"],
+html.dark [class*="border-slate-300"] {
+  border-color: #24314c !important;
+}
+
+/* Headings and Titles inside Clinical Fichas */
+html.dark .mobile-ficha-container form section > h3,
+html.dark .mobile-ficha-container form h3,
+html.dark form section > h3,
+html.dark form h3,
+html.dark section > h3,
+html.dark h2,
+html.dark h3.text-sky-700,
+html.dark h3.text-sky-800,
+html.dark .text-sky-700,
+html.dark .text-sky-800,
+html.dark .text-blue-700,
+html.dark .text-blue-800 {
+  color: #38bdf8 !important;
+  border-color: #24314c !important;
+}
+
+html.dark .border-sky-200,
+html.dark .border-sky-100,
+html.dark .border-sky-300,
+html.dark .border-blue-200 {
   border-color: #24314c !important;
 }
 
@@ -467,13 +525,40 @@ html.dark .text-gray-500 {
   color: #64748b !important;
 }
 
-/* Form Controls (Inputs, Textareas, Selects) */
+/* Field Labels across all forms */
+html.dark .mobile-ficha-container form label,
+html.dark .mobile-ficha-container label,
+html.dark form label,
+html.dark label {
+  color: #e2e8f0 !important;
+}
+
+/* Form Controls (Inputs, Textareas, Selects, DateFields) */
 html.dark input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]):not([type="range"]),
 html.dark textarea,
-html.dark select {
+html.dark select,
+html.dark .mobile-ficha-container form input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]):not([type="range"]),
+html.dark .mobile-ficha-container form textarea,
+html.dark .mobile-ficha-container form select,
+html.dark input.bg-white,
+html.dark textarea.bg-white,
+html.dark select.bg-white,
+html.dark input.bg-slate-50,
+html.dark textarea.bg-slate-50,
+html.dark select.bg-slate-50 {
   background-color: #0c121e !important;
   border: 1px solid #24314c !important;
-  color: #f1f5f9 !important;
+  color: #f8fafc !important;
+  box-shadow: none !important;
+}
+
+html.dark input[type="date"] {
+  color-scheme: dark !important;
+}
+
+html.dark select option {
+  background-color: #0c121e !important;
+  color: #f8fafc !important;
 }
 
 html.dark input::placeholder,
@@ -483,9 +568,36 @@ html.dark textarea::placeholder {
 
 html.dark input:focus,
 html.dark textarea:focus,
-html.dark select:focus {
+html.dark select:focus,
+html.dark .mobile-ficha-container form input:focus,
+html.dark .mobile-ficha-container form textarea:focus,
+html.dark .mobile-ficha-container form select:focus {
   border-color: #3b82f6 !important;
-  outline: 1px solid rgba(59, 130, 246, 0.4) !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3) !important;
+  outline: none !important;
+}
+
+/* Smart Textareas Layer Underlay (SmartFarmacosTextarea, SmartAntecedentes, SmartDieta) */
+html.dark .pointer-events-none.bg-white,
+html.dark .absolute.inset-0.bg-white,
+html.dark [class*="pointer-events-none"][class*="bg-white"],
+html.dark [class*="absolute"][class*="inset-0"][class*="bg-white"] {
+  background-color: #0c121e !important;
+  border: 1px solid #24314c !important;
+  box-shadow: none !important;
+}
+
+/* Resumen Ficha Clínica Column & Editable Textareas */
+html.dark .lg\:col-span-4 .bg-\[\#F8FAFC\],
+html.dark .lg\:col-span-4 [class*="bg-[#F8FAFC]"] {
+  background-color: #182238 !important;
+  border-color: #24314c !important;
+}
+
+html.dark .lg\:col-span-4 textarea {
+  background-color: #0c121e !important;
+  border: 1px solid #24314c !important;
+  color: #f8fafc !important;
 }
 
 /* Interactive Hover States */
@@ -499,12 +611,17 @@ html.dark .hover\:bg-gray-100:hover {
   color: #f8fafc !important;
 }
 
-/* Floating Menus, Modals & Dialogs */
+/* Autocomplete Dropdowns, Floating Menus & Modals */
 html.dark .shadow-xl,
 html.dark .shadow-2xl,
-html.dark [role="dialog"] {
+html.dark [role="dialog"],
+html.dark .absolute.z-50,
+html.dark .absolute.z-\[100\],
+html.dark .absolute.z-\[110\],
+html.dark [class*="absolute"][class*="z-"] {
   background-color: #131b2e !important;
   border-color: #24314c !important;
+  color: #f8fafc !important;
 }
 
 html.dark [role="dialog"] header,
@@ -513,7 +630,50 @@ html.dark [role="dialog"] footer {
   border-color: #24314c !important;
 }
 
-/* Tables */
+/* Clinical Sub-cards and Category Badges */
+html.dark .bg-sky-50,
+html.dark [class*="bg-sky-50"] {
+  background-color: #11233d !important;
+  border-color: #1e3a66 !important;
+  color: #93c5fd !important;
+}
+
+html.dark .bg-blue-50,
+html.dark [class*="bg-blue-50"] {
+  background-color: #11233d !important;
+  border-color: #1e3a66 !important;
+  color: #93c5fd !important;
+}
+
+html.dark .bg-emerald-50,
+html.dark [class*="bg-emerald-50"] {
+  background-color: #11271e !important;
+  border-color: #1a4a35 !important;
+  color: #86efac !important;
+}
+
+html.dark .bg-red-50,
+html.dark [class*="bg-red-50"] {
+  background-color: #2a151b !important;
+  border-color: #5c242a !important;
+  color: #fca5a5 !important;
+}
+
+html.dark .bg-amber-50,
+html.dark [class*="bg-amber-50"] {
+  background-color: #2b2212 !important;
+  border-color: #5c431b !important;
+  color: #fcd34d !important;
+}
+
+html.dark .bg-indigo-50,
+html.dark [class*="bg-indigo-50"] {
+  background-color: #1c1c38 !important;
+  border-color: #323269 !important;
+  color: #c7d2fe !important;
+}
+
+/* Tables in Dark Mode */
 html.dark table thead th,
 html.dark table thead tr {
   background-color: #101726 !important;
@@ -549,8 +709,38 @@ html.dark ::-webkit-scrollbar-track {
   background-color: #0d1322;
 }
 
-/* Mobile overrides for dark mode */
+/* Mobile Overrides for Dark Mode */
 @media (max-width: 767px) {
+  html.dark .mobile-ficha-container form section,
+  html.dark .mobile-ficha-container form [class*="bg-slate-50"]:not(.fixed *):not([role="dialog"] *),
+  html.dark .mobile-ficha-container form [class*="bg-gray-50"]:not(.fixed *):not([role="dialog"] *),
+  html.dark .mobile-ficha-container form .bg-\[\#F8FAFC\],
+  html.dark .mobile-ficha-container form [class*="bg-[#F8FAFC]"] {
+    background-color: #182238 !important;
+    border: 1px solid #24314c !important;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.4) !important;
+    color: #f1f5f9 !important;
+  }
+
+  html.dark .mobile-ficha-container form input:not([type="checkbox"]):not([type="radio"]),
+  html.dark .mobile-ficha-container form select,
+  html.dark .mobile-ficha-container form textarea {
+    background-color: #0c121e !important;
+    border: 1.5px solid #24314c !important;
+    color: #f8fafc !important;
+  }
+
+  html.dark .mobile-ficha-container form input:not([type="checkbox"]):not([type="radio"]):focus,
+  html.dark .mobile-ficha-container form select:focus,
+  html.dark .mobile-ficha-container form textarea:focus {
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 2.5px rgba(59, 130, 246, 0.3) !important;
+  }
+
+  html.dark .mobile-ficha-container form label:not(.fixed *):not([role="dialog"] *):not(.flex) {
+    color: #e2e8f0 !important;
+  }
+
   html.dark .mobile-ficha-container .fixed.inset-0 footer,
   html.dark .mobile-ficha-container [role="dialog"] footer,
   html.dark .fixed.inset-0 footer {
@@ -566,6 +756,7 @@ html.dark ::-webkit-scrollbar-track {
   html.dark .mobile-ficha-container [class*="absolute"][class*="shadow-lg"] {
     background-color: #131b2e !important;
     border-color: #24314c !important;
+    color: #f8fafc !important;
   }
 
   html.dark .mobile-ficha-container .pointer-events-none.bg-white,

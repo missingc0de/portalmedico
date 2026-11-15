@@ -3034,7 +3034,7 @@ const App: React.FC = () => {
 
   return (
     <ErrorBoundary fallbackTitle="Se produjo un error en la aplicación">
-      <div className="h-[100dvh] max-h-[100dvh] w-full overflow-hidden bg-slate-100 font-sans flex flex-col">
+      <div className="h-[100dvh] max-h-[100dvh] w-full overflow-hidden bg-slate-100 dark:bg-[#0b0f19] font-sans flex flex-col">
       <header className="bg-gradient-to-r from-sky-600 to-sky-700 shadow-md text-white sticky top-0 z-50">
         <div className="w-full px-3 sm:px-6 h-12 flex justify-between items-center gap-x-2 sm:gap-x-4">
           <div className="flex items-center flex-shrink-0 min-w-0">
