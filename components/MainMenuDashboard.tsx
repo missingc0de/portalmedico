@@ -115,7 +115,7 @@ const MainMenuDashboard: React.FC<MainMenuDashboardProps> = ({
 
     return (
       <span 
-        className="w-full text-xs font-sans leading-snug text-amber-950 break-words inline-block"
+        className="w-full text-xs font-sans leading-snug text-amber-950 dark:text-white break-words inline-block"
         dangerouslySetInnerHTML={{ __html: formatted }}
       />
     );
@@ -425,11 +425,11 @@ const MainMenuDashboard: React.FC<MainMenuDashboardProps> = ({
         </div>
 
         {/* 3. Avisos Card (Avisos del Equipo compacto y flechas debajo) */}
-        <div className="bg-white rounded-2xl shadow-2xs border border-slate-200/80 p-3 flex flex-col shrink-0">
-          <div className="flex items-center justify-between pb-1.5 border-b border-slate-100 shrink-0">
+        <div className="bg-white dark:bg-[#1A1B26] rounded-2xl shadow-2xs border border-slate-200/80 dark:border-[#2E303E] p-3 flex flex-col shrink-0">
+          <div className="flex items-center justify-between pb-1.5 border-b border-slate-100 dark:border-[#2E303E] shrink-0">
             <div className="flex items-center gap-1.5">
               <Megaphone className="w-4 h-4 text-sky-600 shrink-0" />
-              <h3 className="text-xs font-bold text-slate-800 tracking-tight uppercase">Avisos del Equipo</h3>
+              <h3 className="text-xs font-bold text-slate-800 dark:text-white tracking-tight uppercase">Avisos del Equipo</h3>
             </div>
             <div className="flex items-center gap-1 shrink-0">
               <button 
@@ -493,17 +493,17 @@ const MainMenuDashboard: React.FC<MainMenuDashboardProps> = ({
                         )}
                       </div>
                       <div className="flex-1 min-w-0 flex items-center justify-between">
-                        <span className="text-xs font-bold text-slate-900 truncate">
+                        <span className="text-xs font-bold text-slate-900 dark:text-white truncate">
                           {authorName}
                         </span>
-                        <span className="text-[10px] font-semibold text-slate-400 shrink-0">
+                        <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-300 shrink-0">
                           {currentAviso.createdAt || ''}
                         </span>
                       </div>
                     </div>
 
                     {/* Bloque amarillo: altura máxima para 3 renglones de texto */}
-                    <div className="text-xs leading-snug text-amber-950 w-full break-words bg-yellow-50 py-1.5 px-2.5 rounded-xl border border-yellow-200/80 max-h-[4.5rem] overflow-hidden flex items-center">
+                    <div className="text-xs leading-snug text-amber-950 dark:text-white w-full break-words bg-yellow-50 dark:bg-[#1E1F2A] py-1.5 px-2.5 rounded-xl border border-yellow-200/80 dark:border-[#2E303E] max-h-[4.5rem] overflow-hidden flex items-center">
                       <div className="line-clamp-3 w-full">
                         {renderFormattedText(currentAviso.content)}
                       </div>
@@ -518,12 +518,12 @@ const MainMenuDashboard: React.FC<MainMenuDashboardProps> = ({
                             e.stopPropagation();
                             setActiveAvisoIndex(prev => (prev - 1 + avisos.length) % avisos.length);
                           }}
-                          className="w-7 h-6 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 flex items-center justify-center cursor-pointer active:scale-95 transition-colors"
+                          className="w-7 h-6 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-[#16161E] dark:hover:bg-[#1E1F2A] text-slate-700 dark:text-white border border-slate-200 dark:border-[#2E303E] flex items-center justify-center cursor-pointer active:scale-95 transition-colors"
                           title="Aviso anterior"
                         >
                           <ChevronLeft className="w-3.5 h-3.5 stroke-[2.5]" />
                         </button>
-                        <span className="text-[10px] font-bold text-slate-500">
+                        <span className="text-[10px] font-bold text-slate-500 dark:text-slate-300">
                           {(activeAvisoIndex % avisos.length) + 1} de {avisos.length}
                         </span>
                         <button
@@ -532,7 +532,7 @@ const MainMenuDashboard: React.FC<MainMenuDashboardProps> = ({
                             e.stopPropagation();
                             setActiveAvisoIndex(prev => (prev + 1) % avisos.length);
                           }}
-                          className="w-7 h-6 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 flex items-center justify-center cursor-pointer active:scale-95 transition-colors"
+                          className="w-7 h-6 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-[#16161E] dark:hover:bg-[#1E1F2A] text-slate-700 dark:text-white border border-slate-200 dark:border-[#2E303E] flex items-center justify-center cursor-pointer active:scale-95 transition-colors"
                           title="Siguiente aviso"
                         >
                           <ChevronRight className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -575,12 +575,12 @@ const MainMenuDashboard: React.FC<MainMenuDashboardProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full items-stretch">
             
             {/* Left 50%: AVISOS Card */}
-            <div className="bg-white rounded-2xl shadow-2xs border border-slate-200/80 p-3 flex flex-col justify-between gap-1.5 h-[160px] max-h-[160px] min-h-[160px] overflow-hidden">
+            <div className="bg-white dark:bg-[#1A1B26] rounded-2xl shadow-2xs border border-slate-200/80 dark:border-[#2E303E] p-3 flex flex-col justify-between gap-1.5 h-[160px] max-h-[160px] min-h-[160px] overflow-hidden">
               <div className="flex-grow flex flex-col min-h-0 overflow-hidden">
-                <div className="flex items-center justify-between pb-1 border-b border-slate-100 mb-1.5 shrink-0">
+                <div className="flex items-center justify-between pb-1 border-b border-slate-100 dark:border-[#2E303E] mb-1.5 shrink-0">
                   <div className="flex items-center gap-1.5">
                     <Megaphone className="w-4 h-4 text-sky-600 shrink-0" />
-                    <h2 className="text-xs font-bold text-slate-800 tracking-tight uppercase">AVISOS</h2>
+                    <h2 className="text-xs font-bold text-slate-800 dark:text-white tracking-tight uppercase">AVISOS</h2>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
                     <button 
@@ -656,10 +656,10 @@ const MainMenuDashboard: React.FC<MainMenuDashboardProps> = ({
                               </div>
                             </div>
                             <div className="flex-1 min-w-0 flex flex-col justify-center leading-none">
-                              <span className="text-[12.5px] font-bold text-slate-900 block truncate font-sans">
+                              <span className="text-[12.5px] font-bold text-slate-900 dark:text-white block truncate font-sans">
                                 {authorName}
                               </span>
-                              <span className="text-[10px] font-semibold text-slate-400 block mt-0.5 font-sans">
+                              <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-300 block mt-0.5 font-sans">
                                 {currentAviso.createdAt || ''}
                               </span>
                             </div>
@@ -829,17 +829,17 @@ const MainMenuDashboard: React.FC<MainMenuDashboardProps> = ({
       {/* Aviso Creation Modal */}
       {isAddAvisoOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[9999] animate-fadeIn font-sans">
-          <div className="bg-white rounded-xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden animate-scaleUp">
+          <div className="bg-white dark:bg-[#1A1B26] rounded-xl max-w-md w-full shadow-2xl border border-slate-200 dark:border-[#2E303E] overflow-hidden animate-scaleUp">
             
             {/* Modal Header */}
-            <div className="px-5 py-3.5 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
-              <div className="flex items-center gap-2 text-slate-800 font-semibold text-xs">
+            <div className="px-5 py-3.5 bg-slate-50 dark:bg-[#16161E] border-b border-slate-200 dark:border-[#2E303E] flex justify-between items-center">
+              <div className="flex items-center gap-2 text-slate-800 dark:text-white font-semibold text-xs">
                 <Plus className="w-4 h-4 text-sky-600" />
                 <span>{editingAviso ? 'Editar Aviso' : 'Publicar Nuevo Aviso'}</span>
               </div>
               <button 
                 onClick={() => setIsAddAvisoOpen(false)}
-                className="p-1 hover:bg-slate-200 rounded-full text-slate-500 transition-colors cursor-pointer"
+                className="p-1 hover:bg-slate-200 dark:hover:bg-[#1E1F2A] rounded-full text-slate-500 dark:text-slate-400 transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -849,7 +849,7 @@ const MainMenuDashboard: React.FC<MainMenuDashboardProps> = ({
             <form onSubmit={handleCreateAviso} className="p-5 space-y-3">
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
                     Contenido del Aviso
                   </label>
                   {/* Rich Text Toolbar */}
@@ -857,7 +857,7 @@ const MainMenuDashboard: React.FC<MainMenuDashboardProps> = ({
                     <button
                       type="button"
                       onClick={() => applyFormatting('bold')}
-                      className="px-2 py-1 bg-slate-100 hover:bg-sky-100 hover:text-sky-700 text-slate-700 rounded transition-colors text-xs font-bold border border-slate-200 cursor-pointer flex items-center gap-1 active:scale-95"
+                      className="px-2 py-1 bg-slate-100 hover:bg-sky-100 dark:bg-[#16161E] dark:hover:bg-[#1E1F2A] hover:text-sky-700 dark:hover:text-sky-300 text-slate-700 dark:text-white rounded transition-colors text-xs font-bold border border-slate-200 dark:border-[#2E303E] cursor-pointer flex items-center gap-1 active:scale-95"
                       title="Negrita"
                     >
                       <Bold className="w-3.5 h-3.5" />
@@ -866,7 +866,7 @@ const MainMenuDashboard: React.FC<MainMenuDashboardProps> = ({
                     <button
                       type="button"
                       onClick={() => applyFormatting('italic')}
-                      className="px-2 py-1 bg-slate-100 hover:bg-sky-100 hover:text-sky-700 text-slate-700 rounded transition-colors text-xs italic border border-slate-200 cursor-pointer flex items-center gap-1 active:scale-95"
+                      className="px-2 py-1 bg-slate-100 hover:bg-sky-100 dark:bg-[#16161E] dark:hover:bg-[#1E1F2A] hover:text-sky-700 dark:hover:text-sky-300 text-slate-700 dark:text-white rounded transition-colors text-xs italic border border-slate-200 dark:border-[#2E303E] cursor-pointer flex items-center gap-1 active:scale-95"
                       title="Cursiva"
                     >
                       <Italic className="w-3.5 h-3.5" />
@@ -882,16 +882,16 @@ const MainMenuDashboard: React.FC<MainMenuDashboardProps> = ({
                   placeholder="Escriba el aviso que desea compartir. Seleccione texto y presione Negrita o Cursiva..."
                   value={newAvisoContent}
                   onChange={e => setNewAvisoContent(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none resize-none text-slate-800 leading-normal font-sans"
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-[#2E303E] rounded-lg text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none resize-none text-slate-800 dark:text-white dark:bg-[#16161E] leading-normal font-sans"
                 />
 
                 {/* Live Formatted Preview */}
                 {newAvisoContent.trim() && (
-                  <div className="mt-2 p-2 bg-yellow-50/80 border border-yellow-200 rounded-lg">
-                    <span className="block text-[9.5px] font-extrabold uppercase text-amber-900 tracking-wider mb-1">
+                  <div className="mt-2 p-2 bg-yellow-50/80 dark:bg-[#1E1F2A] border border-yellow-200 dark:border-[#2E303E] rounded-lg">
+                    <span className="block text-[9.5px] font-extrabold uppercase text-amber-900 dark:text-[#89B1D6] tracking-wider mb-1">
                       Vista previa de formato:
                     </span>
-                    <div className="text-xs leading-snug">
+                    <div className="text-xs leading-snug text-amber-950 dark:text-white">
                       {renderFormattedText(newAvisoContent)}
                     </div>
                   </div>
@@ -902,7 +902,7 @@ const MainMenuDashboard: React.FC<MainMenuDashboardProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsAddAvisoOpen(false)}
-                  className="flex-1 py-2 px-4 border border-slate-300 hover:bg-slate-100 text-slate-700 font-semibold rounded-lg text-xs transition-colors cursor-pointer text-center"
+                  className="flex-1 py-2 px-4 border border-slate-300 dark:border-[#2E303E] hover:bg-slate-100 dark:hover:bg-[#1E1F2A] text-slate-700 dark:text-white font-semibold rounded-lg text-xs transition-colors cursor-pointer text-center"
                 >
                   Cancelar
                 </button>
