@@ -31,8 +31,8 @@ def main():
     }
 
     repo = 'missingc0de/portalmedico'
-    tag = 'v1.4.33'
-    version = '1.4.33'
+    tag = 'v1.4.34'
+    version = '1.4.34'
     
     release_id = None
     upload_url_base = None
@@ -52,13 +52,12 @@ def main():
             'name': f'Portal Médico {tag}',
             'body': (
                 f"### Novedades {tag}:\n"
-                "- **Instalador Oficial v1.4.33 con Identidad y Metadatos Firmados:** Actualización integral de versión en el asistente instalador, ensamblado de Windows y ejecutables standalone.\n"
-                "- **Nuevo Sistema de Puntuación Sudoku:** +150 pts sin errores, +100 pts con 1 error, +50 pts con 2 errores, -50 pts con 3 errores (cierre de partida) y +50 pts adicionales para el mejor tiempo del día (1er podio).\n"
-                "- **Cuadro de Honor Multitestaña:** Pestañas 'Hoy' (todas las partidas del día de mejor a peor), 'Ranking' (acumulado del mes actual) e 'Histórico' (acumulado de todos los tiempos).\n"
-                "- **Sudoku con Dimensiones Fijas y Scroll:** Grilla contenida 100% en su frame sin desbordar y Cuadro de Honor con scroll independiente que no altera la interfaz al registrar nuevas partidas.\n"
-                "- **Calendario de Urgencia:** Omisión del domingo 1 de noviembre para iniciar de forma limpia directamente el lunes 2 de noviembre con 0 celdas vacías.\n"
-                "- **Estandarización de Fichas ECICEP:** Títulos de sección en Title Case: 'Valoración Integral' y 'Plan de Cuidado Integral (PCI) y Toma de Decisiones Compartidas' tanto en Ingreso como en Control ECICEP.\n"
-                "- **Webview Bundling:** Ejecutable standalone e instalador oficial v1.4.33 optimizados con WebView2 para Windows."
+                "- **Modo Oscuro Integral:** Selector en barra superior (sol / luna) con persistencia de preferencia y paleta personalizada (#16161E base, #1A1B26 intermedio, #1E1F2A claro, #89B1D6 acentos/títulos y textos blancos en fichas y formularios).\n"
+                "- **Bloque de Avisos y Fichas Adaptados:** Contraste optimizado con textos perfectamente legibles en modo oscuro.\n"
+                "- **Transferencia de Archivos Móvil Mejorada:** Notificación de sonido y distintivo/aviso de nuevo mensaje al recibir archivos para descarga, con posibilidad de seleccionar destinatario por nombre desde el móvil (manteniendo a uno mismo por defecto).\n"
+                "- **Acceso Rápido a Google Drive:** Nuevo botón en barra superior (entre calculadora y pautas) con ventana flotante para macros de Google Drive.\n"
+                "- **Calendario y Barra Lateral:** Adaptación de colores y bloques de urgencia en modo oscuro.\n"
+                "- **Webview Bundling v1.4.34:** Asistente instalador oficial firmado y ejecutable standalone optimizado con WebView2 para Windows."
             ),
             'draft': False,
             'prerelease': False,
