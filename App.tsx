@@ -19,6 +19,7 @@ import { OrdenLaboratorioWindow } from './components/OrdenLaboratorioWindow';
 import { OrdenImagenologiaWindow } from './components/OrdenImagenologiaWindow';
 import { FichaFirmarGesWindow } from './components/FichaFirmarGesWindow';
 import { PautasAlimentariasWindow } from './components/PautasAlimentariasWindow';
+import { GoogleDriveMacroWindow, GoogleDriveWhiteIcon } from './components/GoogleDriveMacroWindow';
 import OnCallCalendar from './components/OnCallCalendar';
 import MainMenuDashboard from './components/MainMenuDashboard';
 import LoginForm from './components/LoginForm';
@@ -1010,6 +1011,7 @@ const App: React.FC = () => {
   const [isImagenologiaWindowOpen, setIsImagenologiaWindowOpen] = useState<boolean>(false);
   const [isGesWindowOpen, setIsGesWindowOpen] = useState<boolean>(false);
   const [isPautasAlimentariasWindowOpen, setIsPautasAlimentariasWindowOpen] = useState<boolean>(false);
+  const [isGoogleDriveMacroOpen, setIsGoogleDriveMacroOpen] = useState<boolean>(false);
   const [showUpdateNotification, setShowUpdateNotification] = useState(false);
   const [installPromptEvent, setInstallPromptEvent] = useState<any | null>(null);
   const [loginToastUsers, setLoginToastUsers] = useState<Array<{ id: string; name: string; avatar?: string }>>([]);
@@ -1025,6 +1027,7 @@ const App: React.FC = () => {
       setIsImagenologiaWindowOpen(false);
       setIsGesWindowOpen(false);
       setIsPautasAlimentariasWindowOpen(false);
+      setIsGoogleDriveMacroOpen(false);
       setIsCalcOpen(false);
       setIsNotesOpen(false);
     } else if (windowName === 'certificado') {
@@ -1035,6 +1038,7 @@ const App: React.FC = () => {
       setIsImagenologiaWindowOpen(false);
       setIsGesWindowOpen(false);
       setIsPautasAlimentariasWindowOpen(false);
+      setIsGoogleDriveMacroOpen(false);
       setIsCalcOpen(false);
       setIsNotesOpen(false);
     } else if (windowName === 'receta') {
@@ -1045,6 +1049,7 @@ const App: React.FC = () => {
       setIsImagenologiaWindowOpen(false);
       setIsGesWindowOpen(false);
       setIsPautasAlimentariasWindowOpen(false);
+      setIsGoogleDriveMacroOpen(false);
       setIsCalcOpen(false);
       setIsNotesOpen(false);
     } else if (windowName === 'lab') {
@@ -1055,6 +1060,7 @@ const App: React.FC = () => {
       setIsImagenologiaWindowOpen(false);
       setIsGesWindowOpen(false);
       setIsPautasAlimentariasWindowOpen(false);
+      setIsGoogleDriveMacroOpen(false);
       setIsCalcOpen(false);
       setIsNotesOpen(false);
     } else if (windowName === 'imagenologia') {
@@ -1065,6 +1071,7 @@ const App: React.FC = () => {
       setIsLabWindowOpen(false);
       setIsGesWindowOpen(false);
       setIsPautasAlimentariasWindowOpen(false);
+      setIsGoogleDriveMacroOpen(false);
       setIsCalcOpen(false);
       setIsNotesOpen(false);
     } else if (windowName === 'ges') {
@@ -1075,16 +1082,7 @@ const App: React.FC = () => {
       setIsLabWindowOpen(false);
       setIsImagenologiaWindowOpen(false);
       setIsPautasAlimentariasWindowOpen(false);
-      setIsCalcOpen(false);
-      setIsNotesOpen(false);
-    } else if (windowName === 'pautasAlimentarias') {
-      setIsPautasAlimentariasWindowOpen(!isPautasAlimentariasWindowOpen);
-      setIsDriveOpen(false);
-      setIsCertificadoWindowOpen(false);
-      setIsRecetaWindowOpen(false);
-      setIsLabWindowOpen(false);
-      setIsImagenologiaWindowOpen(false);
-      setIsGesWindowOpen(false);
+      setIsGoogleDriveMacroOpen(false);
       setIsCalcOpen(false);
       setIsNotesOpen(false);
     } else if (windowName === 'calc') {
@@ -1096,6 +1094,29 @@ const App: React.FC = () => {
       setIsImagenologiaWindowOpen(false);
       setIsGesWindowOpen(false);
       setIsPautasAlimentariasWindowOpen(false);
+      setIsGoogleDriveMacroOpen(false);
+      setIsNotesOpen(false);
+    } else if (windowName === 'googleDriveMacro') {
+      setIsGoogleDriveMacroOpen(!isGoogleDriveMacroOpen);
+      setIsDriveOpen(false);
+      setIsCertificadoWindowOpen(false);
+      setIsRecetaWindowOpen(false);
+      setIsLabWindowOpen(false);
+      setIsImagenologiaWindowOpen(false);
+      setIsGesWindowOpen(false);
+      setIsPautasAlimentariasWindowOpen(false);
+      setIsCalcOpen(false);
+      setIsNotesOpen(false);
+    } else if (windowName === 'pautasAlimentarias') {
+      setIsPautasAlimentariasWindowOpen(!isPautasAlimentariasWindowOpen);
+      setIsDriveOpen(false);
+      setIsCertificadoWindowOpen(false);
+      setIsRecetaWindowOpen(false);
+      setIsLabWindowOpen(false);
+      setIsImagenologiaWindowOpen(false);
+      setIsGesWindowOpen(false);
+      setIsGoogleDriveMacroOpen(false);
+      setIsCalcOpen(false);
       setIsNotesOpen(false);
     } else if (windowName === 'notes') {
       setIsNotesOpen(!isNotesOpen);
@@ -1105,6 +1126,7 @@ const App: React.FC = () => {
       setIsLabWindowOpen(false);
       setIsGesWindowOpen(false);
       setIsPautasAlimentariasWindowOpen(false);
+      setIsGoogleDriveMacroOpen(false);
       setIsCalcOpen(false);
     }
   };
@@ -1254,6 +1276,7 @@ const App: React.FC = () => {
     setIsImagenologiaWindowOpen(false);
     setIsGesWindowOpen(false);
     setIsPautasAlimentariasWindowOpen(false);
+    setIsGoogleDriveMacroOpen(false);
     setIsMobileDrawerOpen(false);
 
     if (patientData) {
@@ -3411,6 +3434,15 @@ const App: React.FC = () => {
                 </svg>
               </button>
 
+              {/* Google Drive */}
+              <button
+                onClick={() => toggleWindow('googleDriveMacro')}
+                title="Google Drive"
+                className="relative w-10 h-10 rounded-full text-white hover:text-white/85 hover:bg-white/10 transition-colors duration-150 cursor-pointer flex items-center justify-center shrink-0"
+              >
+                <GoogleDriveWhiteIcon className="w-[22px] h-[22px]" />
+              </button>
+
               {/* Pautas Alimentarias */}
               <button
                 onClick={() => toggleWindow('pautasAlimentarias')}
@@ -3672,6 +3704,7 @@ const App: React.FC = () => {
       <OrdenImagenologiaWindow isOpen={isImagenologiaWindowOpen} onClose={() => setIsImagenologiaWindowOpen(false)} loggedInUser={loggedInUser} />
       <FichaFirmarGesWindow isOpen={isGesWindowOpen} onClose={() => setIsGesWindowOpen(false)} loggedInUser={loggedInUser} />
       <PautasAlimentariasWindow isOpen={isPautasAlimentariasWindowOpen} onClose={() => setIsPautasAlimentariasWindowOpen(false)} loggedInUser={loggedInUser} />
+      <GoogleDriveMacroWindow isOpen={isGoogleDriveMacroOpen} onClose={() => setIsGoogleDriveMacroOpen(false)} />
       
       {/* MSN Login Toast Stacked on Y Axis & Minimized Update Floating Tab */}
       <div className="fixed bottom-[64px] right-6 z-[99999] flex flex-col gap-3 items-end" style={{ pointerEvents: 'none' }}>
