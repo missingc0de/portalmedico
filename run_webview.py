@@ -11,7 +11,7 @@ from http.server import SimpleHTTPRequestHandler
 from socketserver import TCPServer
 import webview
 
-APP_VERSION = "1.4.34"
+APP_VERSION = "1.4.35"
 UPDATE_URL = "https://raw.githubusercontent.com/missingc0de/portalmedico/main/latest.yml"
 
 def check_webview2_runtime():
@@ -191,6 +191,15 @@ class Api:
             return {"success": True, "path": filepath}
         except Exception as e:
             print("Error saving/opening PDF:", e)
+            return {"success": False, "error": str(e)}
+
+    def open_external_url(self, url):
+        try:
+            import webbrowser
+            webbrowser.open(url)
+            return {"success": True}
+        except Exception as e:
+            print("Error opening external URL:", e)
             return {"success": False, "error": str(e)}
 
     def open_pdf(self, base64_data, filename="documento.pdf"):

@@ -11,7 +11,7 @@ import { DriveEcicepWindow } from './DriveEcicepWindow';
 import { GmailWindow } from './GmailWindow';
 import { soundService } from '../services/soundService';
 import { LoginToast } from './LoginToast';
-import { showUserConnectNotification, showChatMessageNotification, showChatNudgeNotification, requestNotificationPermission } from '../services/notificationService';
+import { showUserConnectNotification, showChatMessageNotification, showChatNudgeNotification, requestNotificationPermission, isPhoneDevice } from '../services/notificationService';
 import { App as CapApp } from '@capacitor/app';
 import { 
   Download, 
@@ -263,9 +263,9 @@ export const ChatLocal: React.FC<ChatLocalProps> = ({
     const handleTransferEvt = () => {
       loadLocalTransfers();
       try {
-        soundService.play('/notification.mp3');
+        soundService.play('/download.mp3');
       } catch (e) {
-        console.warn('Error playing notification sound:', e);
+        console.warn('Error playing download sound:', e);
       }
       if (!isOpenRef.current || activeChannelRef.current !== 'archivos_recibidos') {
         setUnreadCount(prev => prev + 1);
@@ -2561,18 +2561,20 @@ Descargas / ${DEFAULT_RECIBIDOS_FOLDER_NAME}
 
       {/* Unificated Profile Dialog handled globally */}
 
-      {/* LOGIN TOASTS FALLBACK STACKED ON Y AXIS */}
-      <div className="fixed bottom-[64px] right-6 flex flex-col gap-3 items-end z-[99999]" style={{ pointerEvents: 'none' }}>
-        {loginToasts.map(toast => (
-          <div key={toast.id} style={{ pointerEvents: 'auto' }}>
-            <LoginToast 
-              userName={toast.fullName} 
-              avatarUrl={toast.avatarUrl} 
-              onClose={() => setLoginToasts(prev => prev.filter(t => t.id !== toast.id))} 
-            />
-          </div>
-        ))}
-      </div>
+      {/* LOGIN TOASTS FALLBACK STACKED ON Y AXIS (solo en PC / escritorio / navegador) */}
+      {!isPhoneDevice() && (
+        <div className="fixed bottom-[64px] right-6 flex flex-col gap-3 items-end z-[99999]" style={{ pointerEvents: 'none' }}>
+          {loginToasts.map(toast => (
+            <div key={toast.id} style={{ pointerEvents: 'auto' }}>
+              <LoginToast 
+                userName={toast.fullName} 
+                avatarUrl={toast.avatarUrl} 
+                onClose={() => setLoginToasts(prev => prev.filter(t => t.id !== toast.id))} 
+              />
+            </div>
+          ))}
+        </div>
+      )}
       <style>{`
         @keyframes slideInRight {
           from { transform: translateX(100%); opacity: 0; }

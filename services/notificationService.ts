@@ -41,6 +41,19 @@ export const initNotificationChannels = async () => {
       lightColor: '#ef4444'
     });
 
+    // Canal para recepción de archivos / descargas
+    await LocalNotifications.createChannel({
+      id: 'chat_downloads_v1',
+      name: 'Archivos y Descargas',
+      description: 'Notificaciones de archivos recibidos para descarga',
+      importance: 5,
+      visibility: 1,
+      sound: 'download.mp3',
+      vibration: true,
+      lights: true,
+      lightColor: '#10b981'
+    });
+
     channelsInitialized = true;
   } catch (err) {
     console.warn('Error creating Android notification channels:', err);
@@ -57,10 +70,23 @@ export const requestNotificationPermission = () => {
   }
 };
 
+export const isPhoneDevice = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  if (Capacitor.isNativePlatform()) return true;
+  const isMobileUA = /Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  const isSmallScreen = window.innerWidth < 768;
+  return isMobileUA || isSmallScreen;
+};
+
 export const showUserConnectNotification = (
   fullName: string, 
   avatarUrl?: string
-): 'external' | 'in-app' => {
+): 'external' | 'in-app' | 'none' => {
+  // En versión de teléfono/móvil no mostrar quiénes acaban de iniciar sesión ni reproducir sonido
+  if (isPhoneDevice()) {
+    return 'none';
+  }
+
   if (!Capacitor.isNativePlatform()) {
     soundService.play('/msn_login.mp3');
   }
@@ -111,10 +137,11 @@ export const showUserConnectNotification = (
 export const showChatMessageNotification = async (
   senderName: string,
   messageText: string,
-  avatarUrl?: string
+  avatarUrl?: string,
+  soundUrl: string = '/notification.mp3'
 ) => {
   // Deduplicación rápida para evitar disparos múltiples del mismo mensaje
-  const notifKey = `msg_${senderName}_${messageText}`;
+  const notifKey = `msg_${senderName}_${messageText}_${soundUrl}`;
   if (recentNotificationKeys.has(notifKey)) return;
   recentNotificationKeys.add(notifKey);
   setTimeout(() => recentNotificationKeys.delete(notifKey), 3000);
@@ -126,15 +153,19 @@ export const showChatMessageNotification = async (
     try {
       await initNotificationChannels();
 
+      const isDownload = soundUrl.includes('download');
+      const soundFile = isDownload ? 'download.mp3' : 'notification.mp3';
+      const channelId = isDownload ? 'chat_downloads_v1' : 'chat_messages_v4';
+
       await LocalNotifications.schedule({
         notifications: [
           {
             id: Math.floor(Date.now() % 100000) + Math.floor(Math.random() * 1000),
-            title: senderName || 'Mensaje de Chat',
-            body: messageText || 'Nuevo mensaje',
-            channelId: 'chat_messages_v4',
+            title: senderName || (isDownload ? 'Archivo Recibido' : 'Mensaje de Chat'),
+            body: messageText || (isDownload ? 'Nuevo archivo recibido para descargar' : 'Nuevo mensaje'),
+            channelId: channelId,
             smallIcon: 'ic_launcher',
-            sound: 'notification.mp3',
+            sound: soundFile,
             foreground: true
           }
         ]
@@ -146,7 +177,7 @@ export const showChatMessageNotification = async (
   }
 
   // 2. Entorno Web / Desktop
-  soundService.play('/notification.mp3');
+  soundService.play(soundUrl);
   if (typeof navigator !== 'undefined' && navigator.vibrate) {
     navigator.vibrate([100, 80, 100]);
   }

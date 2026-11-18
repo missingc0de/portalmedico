@@ -34,6 +34,39 @@ export const GoogleDriveWhiteIcon: React.FC<{ className?: string }> = ({ classNa
   </svg>
 );
 
+export const openGoogleDriveMacroFloating = () => {
+  const width = Math.min(1040, (typeof window !== 'undefined' ? window.screen.availWidth : 1200) - 60);
+  const height = Math.min(780, (typeof window !== 'undefined' ? window.screen.availHeight : 800) - 60);
+  const left = Math.max(0, Math.round(((typeof window !== 'undefined' ? window.screen.availWidth : 1200) - width) / 2));
+  const top = Math.max(0, Math.round(((typeof window !== 'undefined' ? window.screen.availHeight : 800) - height) / 2));
+
+  let popup: Window | null = null;
+  try {
+    popup = window.open(
+      GOOGLE_DRIVE_MACRO_URL,
+      'GoogleDriveMacroWindow',
+      `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes,status=no,toolbar=no,menubar=no,location=no`
+    );
+    if (popup && !popup.closed) {
+      try { popup.focus(); } catch (e) {}
+      return popup;
+    }
+  } catch (err) {
+    console.warn('Error opening popup window:', err);
+  }
+
+  const pywebviewApi = typeof window !== 'undefined' ? (window as any).pywebview?.api : null;
+  if (pywebviewApi && typeof pywebviewApi.open_external_url === 'function') {
+    pywebviewApi.open_external_url(GOOGLE_DRIVE_MACRO_URL);
+    return null;
+  }
+
+  if (typeof window !== 'undefined') {
+    return window.open(GOOGLE_DRIVE_MACRO_URL, '_blank');
+  }
+  return null;
+};
+
 export const GoogleDriveMacroWindow: React.FC<GoogleDriveMacroWindowProps> = ({
   isOpen,
   onClose,
@@ -230,14 +263,52 @@ export const GoogleDriveMacroWindow: React.FC<GoogleDriveMacroWindowProps> = ({
             />
           </div>
         ) : (
-          <iframe
-            ref={iframeRef}
-            src={GOOGLE_DRIVE_MACRO_URL}
-            className="w-full h-full border-none"
-            title="Google Drive Macro"
-            onLoad={() => setIsLoading(false)}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          />
+          <div className="absolute inset-0 flex flex-col items-center justify-center p-6 bg-slate-50 dark:bg-[#16161E] text-center select-none">
+            <div className="w-16 h-16 rounded-2xl bg-white dark:bg-[#1A1B26] border border-slate-200 dark:border-[#2E303E] flex items-center justify-center mb-4 shadow-md p-3">
+              <GoogleDriveColorIcon className="w-10 h-10" />
+            </div>
+
+            <h3 className="text-base font-bold text-slate-800 dark:text-white mb-1.5 flex items-center gap-2">
+              Macro de Google Drive
+              <span className="text-[11px] font-semibold text-sky-700 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/50 border border-sky-200 dark:border-sky-800 px-2 py-0.5 rounded-full">
+                Acceso Directo
+              </span>
+            </h3>
+
+            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mb-6 leading-relaxed">
+              Google Apps Script bloquea su visualización en marcos internos (iframes) por políticas de seguridad (<code className="px-1 py-0.5 rounded bg-slate-200 dark:bg-[#1E1F2A] font-mono text-[11px] text-slate-700 dark:text-slate-300">X-Frame-Options</code>). 
+              Para interactuar con la macro y tu cuenta de Google, ábrela en su <b>ventana flotante dedicada</b>.
+            </p>
+
+            <div className="flex flex-col sm:flex-row items-center gap-3 w-full max-w-sm">
+              <button
+                type="button"
+                onClick={openGoogleDriveMacroFloating}
+                className="w-full sm:flex-1 px-4 py-2.5 bg-gradient-to-r from-blue-600 via-sky-600 to-emerald-600 hover:from-blue-700 hover:to-emerald-700 text-white font-semibold rounded-xl shadow-md transition-all text-xs flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+                Abrir en Ventana Flotante
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  const pywebviewApi = (window as any).pywebview?.api;
+                  if (pywebviewApi && typeof pywebviewApi.open_external_url === 'function') {
+                    pywebviewApi.open_external_url(GOOGLE_DRIVE_MACRO_URL);
+                  } else {
+                    window.open(GOOGLE_DRIVE_MACRO_URL, '_blank');
+                  }
+                }}
+                className="w-full sm:w-auto px-3.5 py-2.5 bg-white dark:bg-[#1A1B26] border border-slate-300 dark:border-[#2E303E] hover:bg-slate-100 dark:hover:bg-[#1E1F2A] text-slate-700 dark:text-slate-200 font-semibold rounded-xl transition-colors text-xs flex items-center justify-center gap-1.5 cursor-pointer"
+                title="Abrir en pestaña nueva del navegador"
+              >
+                Nueva pestaña
+              </button>
+            </div>
+          </div>
         )}
       </div>
 

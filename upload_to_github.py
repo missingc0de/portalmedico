@@ -31,8 +31,8 @@ def main():
     }
 
     repo = 'missingc0de/portalmedico'
-    tag = 'v1.4.34'
-    version = '1.4.34'
+    tag = 'v1.4.35'
+    version = '1.4.35'
     
     release_id = None
     upload_url_base = None
@@ -52,12 +52,11 @@ def main():
             'name': f'Portal Médico {tag}',
             'body': (
                 f"### Novedades {tag}:\n"
-                "- **Modo Oscuro Integral:** Selector en barra superior (sol / luna) con persistencia de preferencia y paleta personalizada (#16161E base, #1A1B26 intermedio, #1E1F2A claro, #89B1D6 acentos/títulos y textos blancos en fichas y formularios).\n"
-                "- **Bloque de Avisos y Fichas Adaptados:** Contraste optimizado con textos perfectamente legibles en modo oscuro.\n"
-                "- **Transferencia de Archivos Móvil Mejorada:** Notificación de sonido y distintivo/aviso de nuevo mensaje al recibir archivos para descarga, con posibilidad de seleccionar destinatario por nombre desde el móvil (manteniendo a uno mismo por defecto).\n"
-                "- **Acceso Rápido a Google Drive:** Nuevo botón en barra superior (entre calculadora y pautas) con ventana flotante para macros de Google Drive.\n"
-                "- **Calendario y Barra Lateral:** Adaptación de colores y bloques de urgencia en modo oscuro.\n"
-                "- **Webview Bundling v1.4.34:** Asistente instalador oficial firmado y ejecutable standalone optimizado con WebView2 para Windows."
+                "- **Optimización para Móviles / Teléfonos:** Se ocultan las notificaciones toast de inicio de sesión de usuarios y los avisos / modal de descarga de actualizaciones en dispositivos móviles, manteniéndolos activos exclusivamente en PC y escritorio.\n"
+                "- **Sonido Personalizado de Descarga:** Al recibir un archivo enviado se reproduce el audio dedicado `download.mp3`.\n"
+                "- **Integración con Google Drive:** Acceso directo y apertura mediante popup flotante evitando bloqueos de visualización.\n"
+                "- **Modo Oscuro Completo:** Paleta refinada (#16161E, #1A1B26, #1E1F2A, #89B1D6) con máxima legibilidad en avisos, fichas y formularios.\n"
+                "- **Instalador y Ejecutable Webview v1.4.35:** Asistente instalador oficial firmado y binario standalone para Windows."
             ),
             'draft': False,
             'prerelease': False,

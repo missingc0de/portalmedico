@@ -121,6 +121,26 @@ public class MainActivity extends BridgeActivity {
             } catch (Exception ignored) {}
 
             notificationManager.createNotificationChannel(nudgeChannel);
+
+            // 3. Canal de Archivos y Descargas (v1)
+            NotificationChannel downloadChannel = new NotificationChannel(
+                "chat_downloads_v1",
+                "Archivos y Descargas",
+                NotificationManager.IMPORTANCE_HIGH
+            );
+            downloadChannel.setDescription("Notificaciones de archivos recibidos para descarga");
+            downloadChannel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
+            downloadChannel.enableVibration(true);
+            downloadChannel.setVibrationPattern(new long[]{0, 200, 100, 200});
+            downloadChannel.enableLights(true);
+            downloadChannel.setLightColor(Color.parseColor("#10b981"));
+
+            try {
+                Uri downloadSoundUri = Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE + "://" + getPackageName() + "/raw/download");
+                downloadChannel.setSound(downloadSoundUri, audioAttributes);
+            } catch (Exception ignored) {}
+
+            notificationManager.createNotificationChannel(downloadChannel);
         }
     }
 

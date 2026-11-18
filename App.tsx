@@ -19,7 +19,7 @@ import { OrdenLaboratorioWindow } from './components/OrdenLaboratorioWindow';
 import { OrdenImagenologiaWindow } from './components/OrdenImagenologiaWindow';
 import { FichaFirmarGesWindow } from './components/FichaFirmarGesWindow';
 import { PautasAlimentariasWindow } from './components/PautasAlimentariasWindow';
-import { GoogleDriveMacroWindow, GoogleDriveWhiteIcon } from './components/GoogleDriveMacroWindow';
+import { GoogleDriveMacroWindow, GoogleDriveWhiteIcon, openGoogleDriveMacroFloating } from './components/GoogleDriveMacroWindow';
 import OnCallCalendar from './components/OnCallCalendar';
 import MainMenuDashboard from './components/MainMenuDashboard';
 import LoginForm from './components/LoginForm';
@@ -103,7 +103,7 @@ import { Home, Users, MessageSquare, Hospital, Menu, ChevronLeft, ClipboardList,
 import { App as CapApp } from '@capacitor/app';
 import FichasCatalog from './components/FichasCatalog';
 import AppSettingsView from './components/AppSettingsView';
-import { initNotificationChannels, requestNotificationPermission, showChatMessageNotification } from './services/notificationService';
+import { initNotificationChannels, requestNotificationPermission, showChatMessageNotification, showUserConnectNotification, isPhoneDevice } from './services/notificationService';
 import { soundService } from './services/soundService';
 import { listenAndConsumePcTransfers } from './services/pcTransferService';
 
@@ -743,7 +743,15 @@ const App: React.FC = () => {
     error?: string;
   } | null>(null);
 
-  const APP_VERSION = '1.4.34';
+  const APP_VERSION = '1.4.35';
+  const [isPhone, setIsPhone] = useState<boolean>(() => isPhoneDevice());
+
+  useEffect(() => {
+    const handleResize = () => setIsPhone(isPhoneDevice());
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   useEffect(() => {
     document.title = 'PORTAL MÉDICO';
   }, []);
@@ -775,6 +783,7 @@ const App: React.FC = () => {
   }, []);
 
   const checkAppUpdates = useCallback(async (manual: boolean = false) => {
+    if (!manual && isPhoneDevice()) return;
     setUpdateInfo(prev => ({ ...prev, checking: true, hasUpdate: false, error: undefined }));
     try {
       let result: any = null;
@@ -816,6 +825,7 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    if (isPhoneDevice()) return;
     const timer = setTimeout(() => {
       checkAppUpdates(false);
     }, 3000);
@@ -879,15 +889,15 @@ const App: React.FC = () => {
         ? transfer.text.slice(0, 80) 
         : `${transfer.files.length} archivo(s) recibido(s) para descargar`;
 
-      // 1. Reproducir sonido de notificación
+      // 1. Reproducir sonido de descarga
       try {
-        soundService.play('/notification.mp3');
+        soundService.play('/download.mp3');
       } catch (e) {
-        console.warn('Error playing notification sound:', e);
+        console.warn('Error playing download notification sound:', e);
       }
 
-      // 2. Notificación en app / sistema / móvil
-      showChatMessageNotification(senderName, bodyText);
+      // 2. Notificación en app / sistema / móvil con sonido download.mp3
+      showChatMessageNotification(senderName, bodyText, undefined, '/download.mp3');
 
       // 3. Indicador de nuevo mensaje en barra inferior móvil
       setMobileChatUnreadCount(prev => prev + 1);
@@ -1446,14 +1456,16 @@ const App: React.FC = () => {
     if (user) {
       loginUser(user, rememberMe, box, sector);
       
-      // MSN login toast
-      setTimeout(() => {
-        const notifResult = showUserConnectNotification(user.fullName, user.profilePictureUrl);
-        if (notifResult === 'in-app') {
-          const toastId = Date.now().toString() + Math.random();
-          setLoginToastUsers(prev => [...prev, { id: toastId, name: user.fullName, avatar: user.profilePictureUrl }]);
-        }
-      }, 1000);
+      // MSN login toast (solo en versión de PC / escritorio / navegador)
+      if (!isPhoneDevice()) {
+        setTimeout(() => {
+          const notifResult = showUserConnectNotification(user.fullName, user.profilePictureUrl);
+          if (notifResult === 'in-app') {
+            const toastId = Date.now().toString() + Math.random();
+            setLoginToastUsers(prev => [...prev, { id: toastId, name: user.fullName, avatar: user.profilePictureUrl }]);
+          }
+        }, 1000);
+      }
     }
   };
 
@@ -3436,8 +3448,13 @@ const App: React.FC = () => {
 
               {/* Google Drive */}
               <button
-                onClick={() => toggleWindow('googleDriveMacro')}
-                title="Google Drive"
+                onClick={() => {
+                  const popup = openGoogleDriveMacroFloating();
+                  if (!popup || popup.closed) {
+                    toggleWindow('googleDriveMacro');
+                  }
+                }}
+                title="Google Drive Macro"
                 className="relative w-10 h-10 rounded-full text-white hover:text-white/85 hover:bg-white/10 transition-colors duration-150 cursor-pointer flex items-center justify-center shrink-0"
               >
                 <GoogleDriveWhiteIcon className="w-[22px] h-[22px]" />
@@ -3478,7 +3495,7 @@ const App: React.FC = () => {
       </header>
 
       {/* Update Notification Toast */}
-      {showUpdateNotification && (
+      {!isPhone && showUpdateNotification && (
         <div
           className="fixed top-20 right-4 z-[100] bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded-lg shadow-lg animate-fadeIn"
           role="alert"
@@ -3708,7 +3725,7 @@ const App: React.FC = () => {
       
       {/* MSN Login Toast Stacked on Y Axis & Minimized Update Floating Tab */}
       <div className="fixed bottom-[64px] right-6 z-[99999] flex flex-col gap-3 items-end" style={{ pointerEvents: 'none' }}>
-        {isUpdateModalOpen && isUpdateModalMinimized && (
+        {!isPhone && isUpdateModalOpen && isUpdateModalMinimized && (
           <div style={{ pointerEvents: 'auto' }} className="animate-fadeIn shadow-2xl rounded-xl overflow-hidden bg-slate-900/95 backdrop-blur-md border border-slate-700 p-3.5 text-slate-100 min-w-[320px] max-w-xs flex flex-col gap-2.5 font-sans">
             <div className="flex items-center justify-between border-b border-slate-800 pb-2">
               <div className="flex items-center gap-2">
@@ -3784,7 +3801,7 @@ const App: React.FC = () => {
           </div>
         )}
 
-        {loginToastUsers.map(toast => (
+        {!isPhone && loginToastUsers.map(toast => (
           <div key={toast.id} style={{ pointerEvents: 'auto' }}>
             <LoginToast 
               userName={toast.name} 
@@ -3797,7 +3814,7 @@ const App: React.FC = () => {
 
       {/* Modal de Actualización de la App */}
       {/* Modal / Ventana de Sistema de Actualizaciones */}
-      {isUpdateModalOpen && !isUpdateModalMinimized && (
+      {!isPhone && isUpdateModalOpen && !isUpdateModalMinimized && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-fadeIn">
           {/* Main System Window Frame */}
           <div className="bg-slate-900 text-slate-100 rounded-xl shadow-2xl border border-slate-700 w-full max-w-lg overflow-hidden flex flex-col font-sans">
