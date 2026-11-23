@@ -853,7 +853,6 @@ const FichaSeguimientoEcicep: React.FC<FichaSeguimientoEcicepProps> = ({
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1.5">Tiempo para próximo control</label>
                                 <select name="planProximoControlTiempo" value={formData.planProximoControlTiempo} onChange={handleChange as any} className="w-full px-4 py-2.5 h-[42px] bg-white border border-slate-300 rounded-lg shadow-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none text-sm font-sans font-normal text-slate-800">
-                                    <option value="" className="text-slate-800">Seleccione...</option>
                                     {tiempoControlOptions.map(option => <option key={option.value} value={option.value} className="text-slate-800">{option.label}</option>)}
                                 </select>
                             </div>

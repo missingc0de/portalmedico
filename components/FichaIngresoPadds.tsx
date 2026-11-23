@@ -3739,7 +3739,6 @@ export const FichaIngresoPadds: React.FC<FichaIngresoPaddsProps> = ({ onBackToMe
                           onChange={handleChange}
                           className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg shadow-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 text-slate-800 font-sans text-sm font-normal outline-none"
                         >
-                          <option value="">Seleccione...</option>
                           {tiempoControlOptions.map(option => (
                             <option key={option.value} value={option.value}>{option.label}</option>
                           ))}

@@ -1881,16 +1881,16 @@ export const generateAtencionResumenPdf = async (data: any, user: User, options?
         const baseUrl = window.location.origin !== "null" && !window.location.origin.includes("file://") 
            ? window.location.origin 
            : '.';
-        const url = `${baseUrl}/base_ecicep.pdf`.replace('//base', '/base');
+        const url = `${baseUrl}/base_generica.pdf?v=${Date.now()}`.replace('//base', '/base');
 
         let existingPdfBytes;
         try {
-            const res = await fetch(url);
+            const res = await fetch(url, { cache: 'no-store' });
             if (!res.ok) throw new Error(`HTTP ${res.status} al cargar plantilla`);
             existingPdfBytes = await res.arrayBuffer();
         } catch (fetchErr) {
             console.error("Error fetching PDF template:", fetchErr);
-            throw new Error(`No se pudo cargar la plantilla PDF (base_ecicep.pdf). Intente recargar la página. Detalle: ${fetchErr}`);
+            throw new Error(`No se pudo cargar la plantilla PDF (base_generica.pdf). Intente recargar la página. Detalle: ${fetchErr}`);
         }
 
         const pdfDoc = await PDFDocument.load(existingPdfBytes);
@@ -1927,79 +1927,166 @@ export const generateAtencionResumenPdf = async (data: any, user: User, options?
         
         const today = getChileDate();
         const formattedDate = getChileDDMMYYYY(today);
-        const customTitle = options?.title || 'RESUMEN DE ATENCIÓN MÉDICA';
+        const customTitle = options?.title ? options.title.replace(' MÉDICA', '') : 'RESUMEN DE ATENCIÓN';
         const titleText = `${customTitle} ${formattedDate}`.toUpperCase();
         
-        // Helper to wrap text robustly
+        // Helper to wrap text robustly respecting newlines
         const drawWrappedText = (text: string, x: number, y: number, font: any, size: number, maxWidth: number) => {
             if (!text || typeof text !== 'string') text = 'No ingresado';
             
-            const words = text.split(' ');
-            let line = '';
+            const paragraphs = text.split('\n');
             let currentY = y;
-            for (let i = 0; i < words.length; i++) {
-                const word = words[i].replace(/\n/g, '');
-                const testLine = line + word + ' ';
-                const testWidth = font.widthOfTextAtSize(testLine, size);
-                if (testWidth > maxWidth && i > 0) {
-                    firstPage.drawText(line, { x, y: currentY, size, font, color: rgb(0,0,0) });
-                    line = word + ' ';
-                    currentY -= (size + 4);
-                } else {
-                    line = testLine;
+
+            for (const para of paragraphs) {
+                const trimmedPara = para.trim();
+                if (!trimmedPara) {
+                    currentY -= (size * 0.4);
+                    continue;
                 }
-            }
-            if (line.trim()) {
-                firstPage.drawText(line, { x, y: currentY, size, font, color: rgb(0,0,0) });
-                currentY -= (size + 4);
+                const words = trimmedPara.split(' ');
+                let line = '';
+                for (let i = 0; i < words.length; i++) {
+                    const word = words[i];
+                    const testLine = line + word + ' ';
+                    const testWidth = font.widthOfTextAtSize(testLine, size);
+                    if (testWidth > maxWidth && i > 0) {
+                        firstPage.drawText(line.trim(), { x, y: currentY, size, font, color: rgb(0, 0, 0) });
+                        line = word + ' ';
+                        currentY -= (size + 4);
+                    } else {
+                        line = testLine;
+                    }
+                }
+                if (line.trim()) {
+                    firstPage.drawText(line.trim(), { x, y: currentY, size, font, color: rgb(0, 0, 0) });
+                    currentY -= (size + 4);
+                }
             }
             return currentY;
         };
 
         const marginX = 50;
         const availableWidth = width - (marginX * 2);
-        let startY = height - 120; // Title offset
+        let startY = height - 70; // Top-left corner, positioned higher up
 
+        // Title with date included, in top-left, with original institutional blue color
         firstPage.drawText(titleText, {
-            x: width / 2 - (helveticaBold.widthOfTextAtSize(titleText, 13) / 2),
+            x: marginX,
             y: startY,
-            size: 13,
+            size: 13.5,
             font: helveticaBold,
             color: rgb(0.04, 0.4, 0.61),
         });
-        startY -= 30;
+
+        startY -= 24;
 
         const getVal = (val: any) => (val === undefined || val === null || String(val).trim() === '') ? 'No ingresado' : String(val);
 
-        // Métricas / Signos Vitales (si existen en el formulario o data)
-        const metricasParts: string[] = [];
-        if (data.peso) metricasParts.push(`Peso: ${data.peso} kg`);
-        if (data.talla) metricasParts.push(`Talla: ${data.talla} cm`);
-        if (data.imc) metricasParts.push(`IMC: ${data.imc} kg/m2`);
-        if (data.pa) metricasParts.push(`P.A: ${data.pa} mmHg`);
-        if (data.fc) metricasParts.push(`F.C: ${data.fc} lpm`);
-        if (data.satO2 || data.saturacion) metricasParts.push(`SatO2: ${data.satO2 || data.saturacion}%`);
-        if (data.temperatura) metricasParts.push(`Temp: ${data.temperatura}°C`);
-
-        if (metricasParts.length > 0) {
-            const metricasLine = metricasParts.join('    ');
-            firstPage.drawText(metricasLine, {
-                x: marginX,
-                y: startY,
-                size: 10,
-                font: helveticaBold,
-                color: rgb(0, 0, 0),
+        // Métricas / Signos Vitales (Aparecen una debajo de la otra, a la derecha, con un icono respectivo antes de cada texto)
+        interface MetricaItem {
+            label: string;
+            iconPath: string;
+            color: any;
+        }
+        const metricasItems: MetricaItem[] = [];
+        if (data.peso) {
+            metricasItems.push({
+                label: `Peso: ${data.peso} kg`,
+                iconPath: 'M 4 4 H 20 A 2 2 0 0 1 22 6 V 18 A 2 2 0 0 1 20 20 H 4 A 2 2 0 0 1 2 18 V 6 A 2 2 0 0 1 4 4 Z M 9 8 A 3 3 0 0 1 15 8 Z',
+                color: rgb(0.04, 0.4, 0.61)
             });
-            startY -= 30;
+        }
+        if (data.talla) {
+            metricasItems.push({
+                label: `Talla: ${data.talla} cm`,
+                iconPath: 'M 8 2 H 16 V 22 H 8 Z M 16 6 H 12 M 16 10 H 13 M 16 14 H 12 M 16 18 H 13',
+                color: rgb(0.04, 0.4, 0.61)
+            });
+        }
+        if (data.imc) {
+            metricasItems.push({
+                label: `IMC: ${data.imc} kg/m2`,
+                iconPath: 'M 12 3 A 3 3 0 1 0 12 9 A 3 3 0 1 0 12 3 Z M 6 21 V 17 A 4 4 0 0 1 10 13 H 14 A 4 4 0 0 1 18 17 V 21',
+                color: rgb(0.04, 0.4, 0.61)
+            });
+        }
+        if (data.pa) {
+            metricasItems.push({
+                label: `P.A: ${data.pa} mmHg`,
+                iconPath: 'M 12 3 A 9 9 0 1 0 12 21 A 9 9 0 1 0 12 3 Z M 12 12 L 15 9',
+                color: rgb(0.8, 0.15, 0.15)
+            });
+        }
+        if (data.fc) {
+            metricasItems.push({
+                label: `F.C: ${data.fc} lpm`,
+                iconPath: 'M 2 12 H 6 L 9 4 L 15 20 L 18 12 H 22',
+                color: rgb(0.85, 0.2, 0.3)
+            });
+        }
+        if (data.satO2 || data.saturacion) {
+            metricasItems.push({
+                label: `SatO2: ${data.satO2 || data.saturacion}%`,
+                iconPath: 'M 12 3 A 9 9 0 1 0 12 21 A 9 9 0 1 0 12 3 Z M 12 7 V 12 L 15 15',
+                color: rgb(0.1, 0.5, 0.7)
+            });
+        }
+        if (data.temperatura) {
+            metricasItems.push({
+                label: `Temp: ${data.temperatura}°C`,
+                iconPath: 'M 12 2 A 3 3 0 0 0 9 5 V 13 A 5 5 0 1 0 15 13 V 5 A 3 3 0 0 0 12 2 Z',
+                color: rgb(0.9, 0.45, 0.1)
+            });
+        }
+
+        if (metricasItems.length > 0) {
+            const metricasFontSize = 8.5;
+            const maxTextWidth = Math.max(...metricasItems.map(it => helveticaBold.widthOfTextAtSize(it.label, metricasFontSize)));
+            const colWidth = maxTextWidth + 18; // icon (11 pt) + spacing (7 pt)
+            const rightMargin = 30; // Desplazado más a la derecha
+            const colX = width - rightMargin - colWidth;
+            
+            const lineSpacing = 13.5;
+            const bottomY = 85; // Desplazado un poco más arriba
+            let currentItemY = bottomY + (metricasItems.length - 1) * lineSpacing;
+
+            for (const item of metricasItems) {
+                // Draw respective icon
+                try {
+                    firstPage.drawSvgPath(item.iconPath, {
+                        x: colX,
+                        y: currentItemY + 7.5,
+                        scale: 0.42,
+                        borderColor: item.color,
+                        borderWidth: 1.2
+                    });
+                } catch {
+                    // Fallback bullet if svg path parsing fails
+                    firstPage.drawText('•', {
+                        x: colX,
+                        y: currentItemY,
+                        size: metricasFontSize,
+                        font: helveticaBold,
+                        color: item.color
+                    });
+                }
+
+                // Draw label
+                firstPage.drawText(item.label, {
+                    x: colX + 16,
+                    y: currentItemY,
+                    size: metricasFontSize,
+                    font: helveticaBold,
+                    color: rgb(0.2, 0.2, 0.2),
+                });
+
+                currentItemY -= lineSpacing;
+            }
         }
 
         const includePci = options?.hasPci ?? false;
 
         if (includePci) {
-            // Titulo PCI
-            firstPage.drawText(`PLAN DE CUIDADO INTEGRAL (PCI) Y TOMA DE DECISIONES COMPARTIDAS:`, { x: marginX, y: startY, size: 10, font: helveticaBold, color: rgb(0, 0, 0) });
-            startY -= 20;
-
             // Problemas 
             firstPage.drawText(`PROBLEMAS VISUALIZADOS:`, { x: marginX, y: startY, size: 10, font: helveticaBold, color: rgb(0, 0, 0) });
             startY -= 15;
@@ -2008,11 +2095,29 @@ export const generateAtencionResumenPdf = async (data: any, user: User, options?
             startY = drawWrappedText(`Equipo de salud: ${getVal(data.pccEquipoSalud)}`, marginX, startY, helveticaFont, 10, availableWidth);
             startY -= 15;
 
-            // Priorizacion Problemas
+            // Priorización Problemas (listados uno debajo del otro)
             firstPage.drawText(`PRIORIZACIÓN DE PROBLEMAS:`, { x: marginX, y: startY, size: 10, font: helveticaBold, color: rgb(0, 0, 0) });
             startY -= 15;
-            startY = drawWrappedText(getVal(data.tomaDecisionesCompartidas), marginX, startY, helveticaFont, 10, availableWidth);
-            startY -= 15;
+            
+            const rawProblemas = getVal(data.tomaDecisionesCompartidas);
+            if (rawProblemas === 'No ingresado') {
+                startY = drawWrappedText('No ingresado', marginX, startY, helveticaFont, 10, availableWidth);
+                startY -= 15;
+            } else {
+                let probLines = rawProblemas.split('\n').map(l => l.trim()).filter(Boolean);
+                // Si viene en una sola línea con numeración secuencial (ej. "1. ... 2. ...")
+                if (probLines.length === 1 && /\b[1-9]\.\s/.test(probLines[0])) {
+                    const splitNumbered = probLines[0].split(/(?=\b[1-9]\.\s)/).map(p => p.trim()).filter(Boolean);
+                    if (splitNumbered.length > 1) {
+                        probLines = splitNumbered;
+                    }
+                }
+                for (const item of probLines) {
+                    startY = drawWrappedText(item, marginX, startY, helveticaFont, 10, availableWidth);
+                    startY -= 2;
+                }
+                startY -= 12;
+            }
             
             if (data.opcionesConversadas) {
                 firstPage.drawText(`OPCIONES CONVERSADAS:`, { x: marginX, y: startY, size: 10, font: helveticaBold, color: rgb(0, 0, 0) });
@@ -2066,12 +2171,14 @@ export const generateAtencionResumenPdf = async (data: any, user: User, options?
         if (proxTiempo) {
             let propControlText = '';
             if (proxDupla) {
-                const cleanDupla = String(proxDupla).trim();
+                let cleanDupla = String(proxDupla).trim();
                 if (cleanDupla.toUpperCase().startsWith('CON ')) {
-                    propControlText = `PRÓXIMO CONTROL EN ${proxTiempo} ${cleanDupla}`.toUpperCase();
-                } else {
-                    propControlText = `PRÓXIMO CONTROL EN ${proxTiempo} CON ${cleanDupla}`.toUpperCase();
+                    cleanDupla = cleanDupla.substring(4).trim();
                 }
+                const duplaText = /m[eé]dico/i.test(cleanDupla)
+                    ? cleanDupla
+                    : `MÉDICO + ${cleanDupla}`;
+                propControlText = `PRÓXIMO CONTROL EN ${proxTiempo} CON ${duplaText}`.toUpperCase();
             } else {
                 propControlText = `PRÓXIMO CONTROL: ${proxTiempo}`.toUpperCase();
             }
@@ -2285,16 +2392,16 @@ export const generateSoloPautaAlimentariaPdf = async (
         const baseUrl = window.location.origin !== "null" && !window.location.origin.includes("file://") 
            ? window.location.origin 
            : '.';
-        const url = `${baseUrl}/base_ecicep.pdf`.replace('//base', '/base');
+        const url = `${baseUrl}/base_generica.pdf?v=${Date.now()}`.replace('//base', '/base');
 
         let existingPdfBytes;
         try {
-            const res = await fetch(url);
+            const res = await fetch(url, { cache: 'no-store' });
             if (!res.ok) throw new Error(`HTTP ${res.status} al cargar plantilla`);
             existingPdfBytes = await res.arrayBuffer();
         } catch (fetchErr) {
             console.error("Error fetching PDF template:", fetchErr);
-            throw new Error(`No se pudo cargar la plantilla PDF (base_ecicep.pdf). Intente recargar la página. Detalle: ${fetchErr}`);
+            throw new Error(`No se pudo cargar la plantilla PDF (base_generica.pdf). Intente recargar la página. Detalle: ${fetchErr}`);
         }
 
         const pdfDoc = await PDFDocument.load(existingPdfBytes);

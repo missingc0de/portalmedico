@@ -99,10 +99,11 @@ import { DriveEcicepWindow } from './components/DriveEcicepWindow';
 import { NotesWindow } from './components/NotesWindow';
 import { CalculatorWindow } from './components/CalculatorWindow';
 import { LoginToast } from './components/LoginToast';
-import { Home, Users, MessageSquare, Hospital, Menu, ChevronLeft, ClipboardList, BookOpen, Settings, Copy, CloudUpload, Trash2, X, Drumstick } from 'lucide-react';
+import { Home, Users, MessageSquare, Hospital, Menu, ChevronLeft, ClipboardList, BookOpen, Settings, Copy, CloudUpload, Trash2, X, Drumstick, Camera, Video } from 'lucide-react';
 import { App as CapApp } from '@capacitor/app';
 import FichasCatalog from './components/FichasCatalog';
 import AppSettingsView from './components/AppSettingsView';
+import { OtoscopioWindow } from './components/OtoscopioWindow';
 import { initNotificationChannels, requestNotificationPermission, showChatMessageNotification, showUserConnectNotification, isPhoneDevice } from './services/notificationService';
 import { soundService } from './services/soundService';
 import { listenAndConsumePcTransfers } from './services/pcTransferService';
@@ -696,6 +697,7 @@ const App: React.FC = () => {
   const [isDriveOpen, setIsDriveOpen] = useState(false);
   const [isCalcOpen, setIsCalcOpen] = useState(false);
   const [isNotesOpen, setIsNotesOpen] = useState(false);
+  const [isOtoscopioOpen, setIsOtoscopioOpen] = useState(false);
   const [zoomLevel, setZoomLevel] = useState<number>(() => {
     const saved = localStorage.getItem('appZoomLevel');
     return saved ? parseInt(saved, 10) : 100;
@@ -743,7 +745,7 @@ const App: React.FC = () => {
     error?: string;
   } | null>(null);
 
-  const APP_VERSION = '1.4.35';
+  const APP_VERSION = '1.4.36';
   const [isPhone, setIsPhone] = useState<boolean>(() => isPhoneDevice());
 
   useEffect(() => {
@@ -3592,6 +3594,18 @@ const App: React.FC = () => {
             isNotesOpen={isNotesOpen}
             setIsNotesOpen={setIsNotesOpen}
           />
+          {/* Botón flotante para acceder al Otoscopio (a la izquierda del chat en escritorio) */}
+          <button
+            type="button"
+            onClick={() => setIsOtoscopioOpen(true)}
+            className="hidden md:flex fixed bottom-0 right-[390px] z-50 h-12 rounded-t-xl cursor-pointer bg-gradient-to-b from-[#d9e8fc] to-[#bdd8fb] hover:from-[#d0e2fb] hover:to-[#b0d0fa] dark:from-[#1A2333] dark:to-[#161D2A] dark:hover:from-[#1E293B] dark:hover:to-[#192233] border border-[#a6c1e3] dark:border-[#2E303E] shadow-[0_-2px_10px_rgba(0,0,0,0.06)] px-3.5 items-center gap-2.5 transition-all select-none group"
+            title="Abrir Cámara del Otoscopio"
+          >
+            <div className="relative w-8 h-8 rounded-full border border-sky-300 dark:border-sky-700 bg-sky-100 dark:bg-sky-900/60 flex items-center justify-center shrink-0 shadow-xs group-hover:scale-105 transition-transform text-sky-600 dark:text-sky-300">
+              <Video className="w-4 h-4 fill-current" />
+            </div>
+            <span className="font-bold text-slate-800 dark:text-slate-100 text-[14px] tracking-wide select-none">Otoscopio</span>
+          </button>
           {/* Mobile Ficha Action Bar (Copiar texto, Guardar en la nube, Borrar todo) */}
           {isClinicalRecord(currentView) && (
             <div className="md:hidden fixed bottom-14 left-0 right-0 h-[52px] bg-white/95 backdrop-blur-md border-t border-slate-200/90 shadow-[0_-2px_10px_rgba(0,0,0,0.06)] z-[80] flex items-center justify-between px-3 gap-2 select-none pointer-events-auto">
@@ -3722,6 +3736,7 @@ const App: React.FC = () => {
       <FichaFirmarGesWindow isOpen={isGesWindowOpen} onClose={() => setIsGesWindowOpen(false)} loggedInUser={loggedInUser} />
       <PautasAlimentariasWindow isOpen={isPautasAlimentariasWindowOpen} onClose={() => setIsPautasAlimentariasWindowOpen(false)} loggedInUser={loggedInUser} />
       <GoogleDriveMacroWindow isOpen={isGoogleDriveMacroOpen} onClose={() => setIsGoogleDriveMacroOpen(false)} />
+      <OtoscopioWindow isOpen={isOtoscopioOpen} onClose={() => setIsOtoscopioOpen(false)} />
       
       {/* MSN Login Toast Stacked on Y Axis & Minimized Update Floating Tab */}
       <div className="fixed bottom-[64px] right-6 z-[99999] flex flex-col gap-3 items-end" style={{ pointerEvents: 'none' }}>

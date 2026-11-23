@@ -2075,7 +2075,12 @@ export const FichaIngresoEcicep: React.FC<FichaIngresoEcicepProps> = ({ onBackTo
     const monthNames = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
     const futureMonthName = monthNames[date.getMonth()];
 
-    const textToCopy = `Próximo control en ${formData.planProximoControlTiempo || 'X meses'} (${futureMonthName}) con ${formData.planProximoControlDupla.toLowerCase() || 'profesional'}.`;
+    const duplaStr = formData.planProximoControlDupla ? (
+      /m[eé]dico/i.test(formData.planProximoControlDupla)
+        ? formData.planProximoControlDupla.toLowerCase()
+        : `médico + ${formData.planProximoControlDupla.toLowerCase()}`
+    ) : 'médico + profesional';
+    const textToCopy = `Próximo control en ${formData.planProximoControlTiempo || 'X meses'} (${futureMonthName}) con ${duplaStr}.`;
 
     navigator.clipboard.writeText(textToCopy);
 
@@ -3411,7 +3416,6 @@ export const FichaIngresoEcicep: React.FC<FichaIngresoEcicepProps> = ({ onBackTo
                           onChange={handleChange}
                           className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg shadow-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 text-slate-800 font-sans text-sm font-normal outline-none"
                         >
-                          <option value="">Seleccione...</option>
                           {tiempoControlOptions.map(option => (
                             <option key={option.value} value={option.value}>{option.label}</option>
                           ))}

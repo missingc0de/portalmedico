@@ -31,8 +31,8 @@ def main():
     }
 
     repo = 'missingc0de/portalmedico'
-    tag = 'v1.4.35'
-    version = '1.4.35'
+    tag = 'v1.4.36'
+    version = '1.4.36'
     
     release_id = None
     upload_url_base = None
@@ -52,11 +52,12 @@ def main():
             'name': f'Portal Médico {tag}',
             'body': (
                 f"### Novedades {tag}:\n"
-                "- **Optimización para Móviles / Teléfonos:** Se ocultan las notificaciones toast de inicio de sesión de usuarios y los avisos / modal de descarga de actualizaciones en dispositivos móviles, manteniéndolos activos exclusivamente en PC y escritorio.\n"
-                "- **Sonido Personalizado de Descarga:** Al recibir un archivo enviado se reproduce el audio dedicado `download.mp3`.\n"
-                "- **Integración con Google Drive:** Acceso directo y apertura mediante popup flotante evitando bloqueos de visualización.\n"
-                "- **Modo Oscuro Completo:** Paleta refinada (#16161E, #1A1B26, #1E1F2A, #89B1D6) con máxima legibilidad en avisos, fichas y formularios.\n"
-                "- **Instalador y Ejecutable Webview v1.4.35:** Asistente instalador oficial firmado y binario standalone para Windows."
+                "- **Otoscopía Digital Avanzada:** Integración con otoscopio inalámbrico / USB, captura continua de fotogramas de alta resolución, generador de collage comparativo y exportación directa.\n"
+                "- **Nueva Plantilla de Resumen ECICEP:** Fondo unificado con `base_generica.pdf` de alta resolución y eliminación de caché residual.\n"
+                "- **Resumen Clínico con Dupla Médica:** Próximo control formateado automáticamente como `MÉDICO + [DUPLA]` (ej. Médico + Nutricionista) en PDF y sincronización con Drive.\n"
+                "- **Métricas y Signos Vitales con Iconos Vectoriales:** Alineación e iconos clínicos profesionales (peso, talla, IMC, PA, FC, SatO2, Temp).\n"
+                "- **Corrección en Selectores de Próximo Control:** Se eliminó la opción duplicada 'Seleccione...'.\n"
+                f"- **Instalador y Ejecutable Webview {tag}:** Asistente instalador oficial firmado y binario standalone para Windows."
             ),
             'draft': False,
             'prerelease': False,

@@ -37,7 +37,7 @@ export const AppSettingsView: React.FC<AppSettingsViewProps> = ({
   setComputerSector,
   onOpenUserProfile,
   onLogout,
-  appVersion = '1.4.35'
+  appVersion = '1.4.36'
 }) => {
   const [localBox, setLocalBox] = useState(computerBox || '');
   const [localSector, setLocalSector] = useState<Sector>(computerSector || 'Verde');

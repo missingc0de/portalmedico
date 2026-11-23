@@ -10,8 +10,9 @@ import subprocess
 from http.server import SimpleHTTPRequestHandler
 from socketserver import TCPServer
 import webview
+from ne3_streamer import otoscope_service
 
-APP_VERSION = "1.4.35"
+APP_VERSION = "1.4.36"
 UPDATE_URL = "https://raw.githubusercontent.com/missingc0de/portalmedico/main/latest.yml"
 
 def check_webview2_runtime():
@@ -205,6 +206,62 @@ class Api:
     def open_pdf(self, base64_data, filename="documento.pdf"):
         return self.save_and_open_pdf(base64_data, filename)
 
+    def save_image_dialog(self, data_url, filename="otoscopia.png"):
+        try:
+            import base64
+            if not data_url:
+                return {"success": False, "error": "No data"}
+            if "," in data_url:
+                data_url = data_url.split(",", 1)[1]
+            raw_bytes = base64.b64decode(data_url)
+            
+            chosen_path = None
+            if self._window:
+                try:
+                    res = self._window.create_file_dialog(
+                        webview.SAVE_DIALOG,
+                        save_filename=filename,
+                        file_types=('Imagen Médica PNG (*.png)', 'Todos los archivos (*.*)')
+                    )
+                    if res:
+                        if isinstance(res, (list, tuple)) and len(res) > 0:
+                            chosen_path = res[0]
+                        elif isinstance(res, str):
+                            chosen_path = res
+                    else:
+                        # User clicked Cancel
+                        return {"success": False, "cancelled": True}
+                except Exception as e:
+                    print(f"Error with create_file_dialog: {e}")
+
+            if not chosen_path:
+                try:
+                    import tkinter as tk
+                    from tkinter import filedialog
+                    root = tk.Tk()
+                    root.withdraw()
+                    root.attributes('-topmost', True)
+                    chosen_path = filedialog.asksaveasfilename(
+                        initialfile=filename,
+                        defaultextension=".png",
+                        filetypes=[("Imagen Médica PNG", "*.png"), ("Todos los archivos", "*.*")]
+                    )
+                    root.destroy()
+                except Exception:
+                    pass
+
+            if not chosen_path:
+                return {"success": False, "cancelled": True}
+
+            with open(chosen_path, "wb") as f:
+                f.write(raw_bytes)
+
+            print(f"Image successfully saved to: {chosen_path}")
+            return {"success": True, "path": chosen_path}
+        except Exception as e:
+            print("Error in save_image_dialog:", e)
+            return {"success": False, "error": str(e)}
+
     def save_received_file(self, filename, data_base64="", is_text=False, text_content=""):
         try:
             import base64, os
@@ -241,7 +298,141 @@ def create_handler_class(dist_directory):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, directory=dist_directory, **kwargs)
 
+        def do_OPTIONS(self):
+            self.send_response(200)
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+            self.send_header('Access-Control-Allow-Headers', '*')
+            self.end_headers()
+
+        def do_GET(self):
+            if self.path.startswith('/api/otoscopio/stream'):
+                self.send_response(200)
+                self.send_header('Content-Type', 'multipart/x-mixed-replace; boundary=frame')
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.send_header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+                self.send_header('Pragma', 'no-cache')
+                self.send_header('Expires', '0')
+                self.end_headers()
+                
+                try:
+                    while True:
+                        otoscope_service.new_frame_event.wait(timeout=0.5)
+                        otoscope_service.new_frame_event.clear()
+                        with otoscope_service.lock:
+                            frame = otoscope_service.latest_jpeg
+                        if frame:
+                            header = b'--frame\r\nContent-Type: image/jpeg\r\nContent-Length: ' + str(len(frame)).encode() + b'\r\n\r\n'
+                            self.wfile.write(header + frame + b'\r\n')
+                        else:
+                            time.sleep(0.04)
+                except (ConnectionResetError, BrokenPipeError, Exception):
+                    return
+
+            elif self.path.startswith('/api/otoscopio/snapshot'):
+                with otoscope_service.lock:
+                    frame = otoscope_service.latest_jpeg
+                if not frame:
+                    self.send_response(503)
+                    self.send_header('Access-Control-Allow-Origin', '*')
+                    self.end_headers()
+                    return
+                self.send_response(200)
+                self.send_header('Content-Type', 'image/jpeg')
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.send_header('Content-Length', str(len(frame)))
+                self.send_header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+                self.end_headers()
+                self.wfile.write(frame)
+                return
+
+            elif self.path.startswith('/api/otoscopio/status'):
+                status = json.dumps(otoscope_service.get_status()).encode('utf-8')
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/json')
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.send_header('Content-Length', str(len(status)))
+                self.end_headers()
+                self.wfile.write(status)
+                return
+
+            super().do_GET()
+
+        def do_POST(self):
+            if self.path.startswith('/api/otoscopio/reconnect'):
+                otoscope_service.reconnect()
+                res = json.dumps({"success": True}).encode('utf-8')
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/json')
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.send_header('Content-Length', str(len(res)))
+                self.end_headers()
+                self.wfile.write(res)
+                return
+            elif self.path.startswith('/api/otoscopio/save_dialog'):
+                try:
+                    content_len = int(self.headers.get('Content-Length', 0))
+                    post_body = self.rfile.read(content_len)
+                    body = json.loads(post_body.decode('utf-8'))
+                    data_url = body.get('dataUrl', '')
+                    filename = body.get('filename', 'otoscopia.png')
+                    
+                    import base64
+                    if "," in data_url:
+                        data_url = data_url.split(",", 1)[1]
+                    file_bytes = base64.b64decode(data_url)
+
+                    saved_path = None
+                    try:
+                        import tkinter as tk
+                        from tkinter import filedialog
+                        root = tk.Tk()
+                        root.withdraw()
+                        root.attributes('-topmost', True)
+                        saved_path = filedialog.asksaveasfilename(
+                            initialfile=filename,
+                            defaultextension=".png",
+                            filetypes=[("Imagen Médica PNG", "*.png"), ("Todos los archivos", "*.*")]
+                        )
+                        root.destroy()
+                    except Exception:
+                        pass
+
+                    if not saved_path:
+                        res = json.dumps({"success": False, "cancelled": True}).encode('utf-8')
+                        self.send_response(200)
+                        self.send_header('Content-Type', 'application/json')
+                        self.send_header('Access-Control-Allow-Origin', '*')
+                        self.send_header('Content-Length', str(len(res)))
+                        self.end_headers()
+                        self.wfile.write(res)
+                        return
+
+                    with open(saved_path, 'wb') as f:
+                        f.write(file_bytes)
+
+                    res = json.dumps({"success": True, "path": saved_path}).encode('utf-8')
+                    self.send_response(200)
+                    self.send_header('Content-Type', 'application/json')
+                    self.send_header('Access-Control-Allow-Origin', '*')
+                    self.send_header('Content-Length', str(len(res)))
+                    self.end_headers()
+                    self.wfile.write(res)
+                    return
+                except Exception as e:
+                    err_res = json.dumps({"success": False, "error": str(e)}).encode('utf-8')
+                    self.send_response(500)
+                    self.send_header('Content-Type', 'application/json')
+                    self.send_header('Access-Control-Allow-Origin', '*')
+                    self.send_header('Content-Length', str(len(err_res)))
+                    self.end_headers()
+                    self.wfile.write(err_res)
+                    return
+
+            self.send_error(404, "Not Found")
+
         def end_headers(self):
+            self.send_header('Access-Control-Allow-Origin', '*')
             self.send_header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
             self.send_header('Pragma', 'no-cache')
             self.send_header('Expires', '0')
@@ -252,6 +443,12 @@ def create_handler_class(dist_directory):
     return SafeHTTPRequestHandler
 
 def start_server_on_free_port(dist_directory):
+    # Start otoscope background receiver thread
+    try:
+        otoscope_service.start()
+    except Exception as e:
+        print(f"Notice: Could not start otoscope service: {e}")
+
     ports = [15432, 15433, 15434, 15435, 15436, 15437, 0]
     handler_class = create_handler_class(dist_directory)
     
